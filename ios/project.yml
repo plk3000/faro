@@ -1,0 +1,54 @@
+name: FARO
+
+options:
+  bundleIdPrefix: com.jdsolissmith
+  deploymentTarget:
+    iOS: "26.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  FARO:
+    type: application
+    platform: iOS
+    sources:
+      - path: FARO
+    info:
+      path: FARO/Info.plist
+      properties:
+        CFBundleDisplayName: FARO
+        UILaunchScreen: {}
+        NSCameraUsageDescription: FARO uses the camera to describe nearby scenes and remember places you choose.
+        NSLocationWhenInUseUsageDescription: FARO uses coarse location to improve recognition of places you save.
+        NSMicrophoneUsageDescription: FARO uses the microphone while you hold the voice-command button.
+        NSSpeechRecognitionUsageDescription: FARO transcribes commands such as describe and where am I.
+        NSBluetoothAlwaysUsageDescription: FARO connects to its optional ESP32 obstacle module.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jdsolissmith.faro
+        PRODUCT_NAME: FARO
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+    scheme:
+      testTargets:
+        - FAROTests
+      gatherCoverageData: true
+
+  FAROTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: FAROTests
+    dependencies:
+      - target: FARO
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jdsolissmith.faro.tests
+        GENERATE_INFOPLIST_FILE: YES

@@ -3,8 +3,36 @@
 ## Repository state and source of truth
 
 - Treat `project-faro.md` as the canonical product, architecture, hardware, and prototype-scope document.
-- The repository currently has no application source, firmware source, or checked-in build, test, or lint configuration. Do not invent commands; add exact full-suite and single-test commands here when those projects are introduced.
+- The native iOS application lives under `ios/`. `ios/project.yml` is the source of truth for the generated Xcode project; do not hand-edit or commit `ios/FARO.xcodeproj`.
+- `IOS-TASKS.md` is the implementation roadmap. The ESP32 firmware is intentionally maintained in a separate repository.
 - Keep the project framed as a co-designed FHL prototype and secondary assistive companion, not as a replacement for a white cane, guide dog, or orientation-and-mobility training.
+
+## Build and test
+
+Install XcodeGen with `brew install xcodegen`, then run commands from `ios/`:
+
+```bash
+# Regenerate the ignored Xcode project after changing project.yml or adding files
+xcodegen generate
+
+# Build for the simulator
+xcodebuild -project FARO.xcodeproj -scheme FARO \
+  -destination 'platform=iOS Simulator,name=iPhone 17' build CODE_SIGNING_ALLOWED=NO
+
+# Run all tests
+xcodebuild test -project FARO.xcodeproj -scheme FARO \
+  -destination 'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO
+
+# Run one Swift Testing test
+xcodebuild test -project FARO.xcodeproj -scheme FARO \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  '-only-testing:FAROTests/FAROTests/appModuleLoads()' \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+- If `iPhone 17` is unavailable, choose an installed device from `xcrun simctl list devices available`.
+- Regenerate before building; XcodeGen discovers Swift source files from the configured source directories.
+- No standalone lint command is configured.
 
 ## High-level architecture
 

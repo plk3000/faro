@@ -1,1 +1,6 @@
 .DS_Store
+DerivedData/
+ios/*.xcodeproj/
+ios/*.xcworkspace/
+**/xcuserdata/
+ios/FARO/Info.plist
