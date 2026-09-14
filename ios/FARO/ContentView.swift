@@ -13,6 +13,31 @@ struct ContentView: View {
 
                     Button {
                         Task {
+                            await captureModel.describe()
+                        }
+                    } label: {
+                        Label(
+                            captureModel.isDescribing
+                                ? "Describing..."
+                                : "Describe scene",
+                            systemImage: "text.bubble"
+                        )
+                        .font(.title3.bold())
+                        .frame(maxWidth: .infinity, minHeight: 64)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(isBusy)
+                    .accessibilityLabel(
+                        captureModel.isDescribing
+                            ? "Describing scene"
+                            : "Describe scene"
+                    )
+                    .accessibilityHint(
+                        "Captures an image and speaks a brief description"
+                    )
+
+                    Button {
+                        Task {
                             await captureModel.capture()
                         }
                     } label: {
@@ -26,7 +51,8 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, minHeight: 64)
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(captureModel.isCapturing)
+                    .tint(.secondary)
+                    .disabled(isBusy)
                     .accessibilityLabel(
                         captureModel.isCapturing
                             ? "Capturing image"
@@ -37,6 +63,20 @@ struct ContentView: View {
                     )
 
                     status
+
+                    if let description = captureModel.latestDescription {
+                        Text(description)
+                            .font(.title3)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                .regularMaterial,
+                                in: RoundedRectangle(cornerRadius: 16)
+                            )
+                            .accessibilityLabel(
+                                "Scene description: \(description)"
+                            )
+                    }
 
                     NavigationLink {
                         SavedCapturesView(images: captureModel.storedImages)
@@ -59,6 +99,10 @@ struct ContentView: View {
                 await captureModel.prepare()
             }
         }
+    }
+
+    private var isBusy: Bool {
+        captureModel.isCapturing || captureModel.isDescribing
     }
 
     private var preview: some View {
@@ -110,7 +154,7 @@ struct ContentView: View {
                 .font(.body)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Capture status: \(captureModel.statusMessage)")
+        .accessibilityLabel("Status: \(captureModel.statusMessage)")
     }
 
     private var modeCard: some View {

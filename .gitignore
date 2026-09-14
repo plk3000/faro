@@ -4,3 +4,4 @@ ios/*.xcodeproj/
 ios/*.xcworkspace/
 **/xcuserdata/
 ios/FARO/Info.plist
+ios/Config/Local.xcconfig

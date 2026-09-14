@@ -1,0 +1,4 @@
+// Copy this file to Local.xcconfig. Local.xcconfig is gitignored.
+FARO_VISION_MODE = live
+FARO_VISION_BASE_URL = https:/$()/vision.example.internal
+FARO_VISION_TOKEN = replace-with-a-development-token

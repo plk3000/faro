@@ -16,6 +16,9 @@ targets:
   FARO:
     type: application
     platform: iOS
+    configFiles:
+      Debug: Config/Shared.xcconfig
+      Release: Config/Shared.xcconfig
     sources:
       - path: FARO
         excludes:
@@ -32,6 +35,9 @@ targets:
         NSMicrophoneUsageDescription: FARO uses the microphone while you hold the voice-command button.
         NSSpeechRecognitionUsageDescription: FARO transcribes commands such as describe and where am I.
         NSBluetoothAlwaysUsageDescription: FARO connects to its optional ESP32 obstacle module.
+        FAROVisionMode: $(FARO_VISION_MODE)
+        FAROVisionBaseURL: $(FARO_VISION_BASE_URL)
+        FAROVisionToken: $(FARO_VISION_TOKEN)
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
     settings:

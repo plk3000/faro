@@ -1,0 +1,5 @@
+FARO_VISION_MODE = mock
+FARO_VISION_BASE_URL =
+FARO_VISION_TOKEN =
+
+#include? "Local.xcconfig"
