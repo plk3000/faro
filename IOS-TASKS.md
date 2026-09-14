@@ -5,7 +5,7 @@
 | Phase | Status |
 |---|---|
 | Phase 0 — Foundation | Complete |
-| Phase 1 — Image capture | Not started |
+| Phase 1 — Image capture | Implemented; awaiting physical-device validation |
 | Phase 2 — Scene description | Not started |
 | Phase 3 — Place memory | Not started |
 | Phase 4 — Operating modes | Not started |

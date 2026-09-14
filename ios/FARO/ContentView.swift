@@ -1,43 +1,116 @@
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
+    @State private var captureModel = CaptureViewModel()
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     modeCard
+                    preview
 
-                    Text("FARO can describe what is ahead and remember familiar places.")
-                        .font(.title2)
-                        .accessibilityLabel(
-                            "FARO can describe what is ahead and remember familiar places."
+                    Button {
+                        Task {
+                            await captureModel.capture()
+                        }
+                    } label: {
+                        Label(
+                            captureModel.isCapturing
+                                ? "Capturing..."
+                                : "Capture image",
+                            systemImage: "camera.shutter.button"
                         )
-
-                    VStack(spacing: 16) {
-                        actionButton(
-                            title: "Describe",
-                            systemImage: "camera.viewfinder",
-                            hint: "Captures an image and describes the scene"
-                        )
-
-                        actionButton(
-                            title: "Where am I?",
-                            systemImage: "location.viewfinder",
-                            hint: "Captures an image and identifies a remembered place"
-                        )
-
-                        actionButton(
-                            title: "Remember a place",
-                            systemImage: "plus.viewfinder",
-                            hint: "Starts saving views of a named place"
-                        )
+                        .font(.title3.bold())
+                        .frame(maxWidth: .infinity, minHeight: 64)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(captureModel.isCapturing)
+                    .accessibilityLabel(
+                        captureModel.isCapturing
+                            ? "Capturing image"
+                            : "Capture image"
+                    )
+                    .accessibilityHint(
+                        "Captures and saves one image from the rear camera"
+                    )
+
+                    status
+
+                    NavigationLink {
+                        SavedCapturesView(images: captureModel.storedImages)
+                    } label: {
+                        Label(
+                            "Saved captures (\(captureModel.storedImages.count))",
+                            systemImage: "photo.on.rectangle"
+                        )
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityHint("Shows the images saved on this device")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
             }
             .navigationTitle("FARO")
+            .task {
+                await captureModel.prepare()
+            }
         }
+    }
+
+    private var preview: some View {
+        Group {
+            if let session = captureModel.cameraSession {
+                CameraPreview(session: session)
+                    .accessibilityLabel("Rear camera preview")
+            } else if let data = captureModel.latestImageData,
+                      let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .accessibilityLabel("Latest captured image")
+            } else {
+                ZStack {
+                    Color.black
+                    VStack(spacing: 8) {
+                        Image(systemName: "camera.viewfinder")
+                            .font(.largeTitle)
+                        Text("Simulator camera fixture")
+                            .font(.headline)
+                    }
+                    .foregroundStyle(.white)
+                }
+                .accessibilityLabel(
+                    "Camera fixture preview. Capture an image to continue."
+                )
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .aspectRatio(3 / 4, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipped()
+    }
+
+    private var status: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(
+                systemName: captureModel.errorMessage == nil
+                    ? "checkmark.circle"
+                    : "exclamationmark.triangle"
+            )
+            .foregroundStyle(
+                captureModel.errorMessage == nil
+                    ? Color.secondary
+                    : Color.red
+            )
+            Text(captureModel.statusMessage)
+                .font(.body)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Capture status: \(captureModel.statusMessage)")
     }
 
     private var modeCard: some View {
@@ -59,21 +132,6 @@ struct ContentView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Current mode: Inactive")
-    }
-
-    private func actionButton(
-        title: String,
-        systemImage: String,
-        hint: String
-    ) -> some View {
-        Button(action: {}) {
-            Label(title, systemImage: systemImage)
-                .font(.headline)
-                .frame(maxWidth: .infinity, minHeight: 56)
-        }
-        .buttonStyle(.borderedProminent)
-        .accessibilityLabel(title)
-        .accessibilityHint(hint)
     }
 }
 

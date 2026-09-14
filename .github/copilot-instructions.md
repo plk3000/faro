@@ -26,7 +26,7 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
 # Run one Swift Testing test
 xcodebuild test -project FARO.xcodeproj -scheme FARO \
   -destination 'platform=iOS Simulator,name=iPhone 17' \
-  '-only-testing:FAROTests/FAROTests/appModuleLoads()' \
+  '-only-testing:FAROTests/ImageStoreTests/savesFixturesAsPersistentJPEGs()' \
   CODE_SIGNING_ALLOWED=NO
 ```
 

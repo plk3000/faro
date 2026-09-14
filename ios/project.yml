@@ -18,6 +18,10 @@ targets:
     platform: iOS
     sources:
       - path: FARO
+        excludes:
+          - Resources
+      - path: FARO/Resources
+        buildPhase: resources
     info:
       path: FARO/Info.plist
       properties:
