@@ -9,9 +9,15 @@ protocol SpeechOutputProviding: AnyObject {
 
 enum SpeechOutputError: Error, LocalizedError {
     case audioSessionUnavailable
+    case voiceUnavailable(String)
 
     var errorDescription: String? {
-        "FARO could not start spoken audio."
+        switch self {
+        case .audioSessionUnavailable:
+            "FARO no pudo iniciar el audio."
+        case let .voiceUnavailable(language):
+            "FARO no encontró una voz para \(language)."
+        }
     }
 }
 
@@ -19,12 +25,14 @@ struct SpeechOutputConfiguration: Equatable, Sendable {
     static let accessibleDefault = SpeechOutputConfiguration(
         rate: 0.3,
         preUtteranceDelay: 0.12,
-        phraseDelay: 0.24
+        phraseDelay: 0.24,
+        languageCode: FAROLanguage.outputLocaleIdentifier
     )
 
     let rate: Float
     let preUtteranceDelay: TimeInterval
     let phraseDelay: TimeInterval
+    let languageCode: String
 }
 
 enum SpeechPhrasePacer {
@@ -32,7 +40,11 @@ enum SpeechPhrasePacer {
         "and",
         "but",
         "while",
-        "with"
+        "with",
+        "y",
+        "pero",
+        "mientras",
+        "con"
     ])
 
     static func phrases(from text: String) -> [String] {
@@ -118,8 +130,17 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
             throw SpeechOutputError.audioSessionUnavailable
         }
 
+        guard let voice = AVSpeechSynthesisVoice(
+            language: configuration.languageCode
+        ) else {
+            throw SpeechOutputError.voiceUnavailable(
+                configuration.languageCode
+            )
+        }
+
         for (index, phrase) in phrases.enumerated() {
             let utterance = AVSpeechUtterance(string: phrase)
+            utterance.voice = voice
             utterance.rate = configuration.rate
             utterance.preUtteranceDelay = index == 0
                 ? configuration.preUtteranceDelay

@@ -22,6 +22,18 @@ struct MockSceneDescriberTests {
     }
 
     @Test
+    func defaultDescriptionIsSpanish() async throws {
+        let describer = MockSceneDescriber(delayNanoseconds: 0)
+
+        let result = try await describer.describe(image)
+
+        #expect(
+            result.text
+                == "Hay una silla delante de ti y un poco hacia la izquierda."
+        )
+    }
+
+    @Test
     func exposesConfiguredFailure() async {
         let describer = MockSceneDescriber(
             behavior: .failure(.serviceUnavailable),

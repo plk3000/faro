@@ -12,7 +12,7 @@ struct MockSceneDescriber: SceneDescribing {
 
     init(
         behavior: Behavior = .success(
-            text: "A chair is ahead and slightly to your left.",
+            text: "Hay una silla delante de ti y un poco hacia la izquierda.",
             confidence: 0.9
         ),
         delayNanoseconds: UInt64 = 150_000_000

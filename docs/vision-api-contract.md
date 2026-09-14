@@ -41,15 +41,16 @@ Use `multipart/form-data` with these parts:
 ```json
 {
   "request_id": "018f3f51-7f78-7b72-b941-f2c20aca1742",
-  "locale": "en-US",
+  "locale": "es-MX",
   "detail": "brief",
-  "prompt": "Describe nearby objects, their relative position, and immediate obstacles."
+  "prompt": "Describe en español los objetos cercanos, su posición relativa y los obstáculos inmediatos."
 }
 ```
 
 - `request_id` is a client-generated UUID used for correlation and
   idempotency.
-- `locale` is a BCP 47 language tag.
+- `locale` is a BCP 47 language tag. The iOS prototype currently requests
+  Mexican Spanish (`es-MX`).
 - `detail` is `brief` or `detailed`; unknown values return `invalid_request`.
 - `prompt` is optional application context, not an instruction to identify
   people or infer sensitive traits.

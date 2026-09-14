@@ -6,13 +6,15 @@ struct FAROVisionClient: SceneDescribing {
     private let session: URLSession
     private let timeout: TimeInterval
     private let maximumAttempts: Int
+    private let localeIdentifier: String
 
     init(
         baseURL: URL,
         token: String,
         session: URLSession = .shared,
         timeout: TimeInterval = 20,
-        maximumAttempts: Int = 2
+        maximumAttempts: Int = 2,
+        localeIdentifier: String = FAROLanguage.outputLocaleIdentifier
     ) {
         precondition(maximumAttempts > 0)
         self.baseURL = baseURL
@@ -20,6 +22,7 @@ struct FAROVisionClient: SceneDescribing {
         self.session = session
         self.timeout = timeout
         self.maximumAttempts = maximumAttempts
+        self.localeIdentifier = localeIdentifier
     }
 
     func describe(_ image: CapturedImage) async throws -> SceneDescription {
@@ -127,9 +130,9 @@ struct FAROVisionClient: SceneDescribing {
     ) throws -> Data {
         let options = RequestOptions(
             requestID: requestID,
-            locale: Locale.current.identifier,
+            locale: localeIdentifier,
             detail: "brief",
-            prompt: "Describe nearby objects, their relative position, and immediate obstacles."
+            prompt: "Describe en español los objetos cercanos, su posición relativa y los obstáculos inmediatos."
         )
         let optionsData = try JSONEncoder().encode(options)
 

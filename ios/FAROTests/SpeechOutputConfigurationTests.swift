@@ -10,24 +10,25 @@ struct SpeechOutputConfigurationTests {
         #expect(configuration.rate < AVSpeechUtteranceDefaultSpeechRate)
         #expect(configuration.preUtteranceDelay > 0)
         #expect(configuration.phraseDelay >= 0.2)
+        #expect(configuration.languageCode == "es-MX")
     }
 
     @Test
     func insertsAPauseBeforeConjunctionPhrases() {
         let phrases = SpeechPhrasePacer.phrases(
-            from: "A chair is ahead and slightly to your left."
+            from: "Hay una silla delante de ti y un poco hacia la izquierda."
         )
 
         #expect(
             phrases == [
-                "A chair is ahead",
-                "and slightly to your left."
+                "Hay una silla delante de ti",
+                "y un poco hacia la izquierda."
             ]
         )
         #expect(
             SpeechPhrasePacer.voiceOverText(
-                from: "A chair is ahead and slightly to your left."
-            ) == "A chair is ahead. And slightly to your left"
+                from: "Hay una silla delante de ti y un poco hacia la izquierda."
+            ) == "Hay una silla delante de ti. Y un poco hacia la izquierda"
         )
     }
 }
