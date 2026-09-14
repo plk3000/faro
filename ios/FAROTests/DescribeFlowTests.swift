@@ -4,10 +4,18 @@ import Testing
 
 @MainActor
 final class RecordingSpeechOutput: SpeechOutputProviding {
-    private(set) var spoken: [String] = []
+    struct Entry: Equatable {
+        let text: String
+        let language: SupportedLanguage
+    }
 
-    func speak(_ text: String) throws {
-        spoken.append(text)
+    private(set) var spoken: [Entry] = []
+
+    func speak(
+        _ text: String,
+        language: SupportedLanguage
+    ) throws {
+        spoken.append(Entry(text: text, language: language))
     }
 
     func stop() {}
@@ -36,10 +44,51 @@ struct DescribeFlowTests {
             speechOutput: speech
         )
 
-        await model.describe()
+        await model.describe(language: .englishUS)
 
-        #expect(model.latestDescription == "A kitchen counter is ahead.")
+        #expect(model.latestDescription?.text == "A kitchen counter is ahead.")
+        #expect(model.latestDescription?.language == .englishUS)
         #expect(model.storedImages.isEmpty)
-        #expect(speech.spoken == ["A kitchen counter is ahead."])
+        #expect(
+            speech.spoken == [
+                .init(
+                    text: "A kitchen counter is ahead.",
+                    language: .englishUS
+                )
+            ]
+        )
+    }
+
+    @Test
+    func changingLanguageAffectsTheNextDescriptionWithoutRelaunch() async {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
+        let speech = RecordingSpeechOutput()
+        let model = CaptureViewModel(
+            imageSource: FixtureImageSource(
+                resourceNames: ["kitchen-a", "kitchen-b"]
+            ),
+            imageStore: ImageStore(directoryURL: directory),
+            sceneDescriber: MockSceneDescriber(delayNanoseconds: 0),
+            speechOutput: speech
+        )
+
+        await model.describe(language: .englishUS)
+        await model.describe(language: .spanishMexico)
+
+        #expect(speech.spoken.count == 2)
+        #expect(speech.spoken[0].language == .englishUS)
+        #expect(
+            speech.spoken[0].text
+                == SupportedLanguage.englishUS.mockDescription
+        )
+        #expect(speech.spoken[1].language == .spanishMexico)
+        #expect(
+            speech.spoken[1].text
+                == SupportedLanguage.spanishMexico.mockDescription
+        )
     }
 }

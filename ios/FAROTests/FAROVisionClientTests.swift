@@ -4,8 +4,10 @@ import Testing
 
 @Suite(.serialized)
 struct FAROVisionClientTests {
-    @Test
-    func sendsMultipartRequestAndDecodesDescription() async throws {
+    @Test(arguments: SupportedLanguage.allCases)
+    func sendsRequestedLanguageAndDecodesDescription(
+        language: SupportedLanguage
+    ) async throws {
         let session = makeSession { request in
             #expect(request.httpMethod == "POST")
             #expect(
@@ -16,12 +18,19 @@ struct FAROVisionClientTests {
                 request.value(forHTTPHeaderField: "Content-Type")?
                     .hasPrefix("multipart/form-data; boundary=") == true
             )
-
+            #expect(
+                request.value(forHTTPHeaderField: "Accept-Language")
+                    == language.rawValue
+            )
+            let options = try requestOptions(from: request)
+            #expect(options.locale == language.rawValue)
+            #expect(options.prompt == language.apiPrompt)
             let requestID = try requestID(from: request)
             let response = """
             {
               "request_id": "\(requestID.uuidString)",
-              "description": "A chair is directly ahead.",
+              "description": "\(language.mockDescription)",
+              "language": "\(language.rawValue)",
               "confidence": 0.91,
               "model": "test/model",
               "processing_ms": 25
@@ -44,9 +53,13 @@ struct FAROVisionClientTests {
             maximumAttempts: 1
         )
 
-        let description = try await client.describe(sampleImage)
+        let description = try await client.describe(
+            sampleImage,
+            language: language
+        )
 
-        #expect(description.text == "A chair is directly ahead.")
+        #expect(description.text == language.mockDescription)
+        #expect(description.language == language)
         #expect(description.confidence == 0.91)
         #expect(description.processingMilliseconds == 25)
     }
@@ -76,6 +89,7 @@ struct FAROVisionClientTests {
             {
               "request_id": "\(requestID.uuidString)",
               "description": "A clear path is ahead.",
+              "language": "en-US",
               "confidence": null,
               "model": "test/model",
               "processing_ms": 12
@@ -98,7 +112,10 @@ struct FAROVisionClientTests {
             maximumAttempts: 2
         )
 
-        let description = try await client.describe(sampleImage)
+        let description = try await client.describe(
+            sampleImage,
+            language: .englishUS
+        )
 
         #expect(description.text == "A clear path is ahead.")
         #expect(attempts.value == 2)
@@ -129,11 +146,56 @@ struct FAROVisionClientTests {
         )
 
         do {
-            _ = try await client.describe(sampleImage)
+            _ = try await client.describe(
+                sampleImage,
+                language: .englishUS
+            )
             Issue.record("Expected unauthorized")
         } catch {
             #expect(error as? FAROVisionClientError == .unauthorized)
             #expect(attempts.value == 1)
+        }
+    }
+
+    @Test
+    func rejectsResponseInAnUnexpectedLanguage() async {
+        let session = makeSession { request in
+            let requestID = try requestID(from: request)
+            let response = """
+            {
+              "request_id": "\(requestID.uuidString)",
+              "description": "Hay una silla delante.",
+              "language": "es-MX",
+              "confidence": 0.8,
+              "model": "test/model",
+              "processing_ms": 20
+            }
+            """
+            return (
+                HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!,
+                Data(response.utf8)
+            )
+        }
+        let client = FAROVisionClient(
+            baseURL: URL(string: "https://vision.example")!,
+            token: "test-token",
+            session: session,
+            maximumAttempts: 1
+        )
+
+        do {
+            _ = try await client.describe(
+                sampleImage,
+                language: .englishUS
+            )
+            Issue.record("Expected invalidResponse")
+        } catch {
+            #expect(error as? FAROVisionClientError == .invalidResponse)
         }
     }
 
@@ -160,6 +222,67 @@ struct FAROVisionClientTests {
         }
         return uuid
     }
+
+    private func requestOptions(
+        from request: URLRequest
+    ) throws -> RequestOptionsProbe {
+        let body = try requestBody(from: request)
+        let marker = Data(
+            (
+                "Content-Disposition: form-data; name=\"options\"\r\n"
+                    + "Content-Type: application/json\r\n\r\n"
+            ).utf8
+        )
+        guard let headerRange = body.range(of: marker),
+              let endRange = body.range(
+                of: Data("\r\n--".utf8),
+                options: [],
+                in: headerRange.upperBound..<body.endIndex
+              ) else {
+            throw FAROVisionClientError.invalidResponse
+        }
+        return try JSONDecoder().decode(
+            RequestOptionsProbe.self,
+            from: body.subdata(
+                in: headerRange.upperBound..<endRange.lowerBound
+            )
+        )
+    }
+
+    private func requestBody(from request: URLRequest) throws -> Data {
+        if let body = request.httpBody {
+            return body
+        }
+        guard let stream = request.httpBodyStream else {
+            throw FAROVisionClientError.invalidResponse
+        }
+
+        stream.open()
+        defer { stream.close() }
+
+        var body = Data()
+        var buffer = [UInt8](repeating: 0, count: 4_096)
+        while true {
+            let count = stream.read(
+                &buffer,
+                maxLength: buffer.count
+            )
+            if count < 0 {
+                throw stream.streamError
+                    ?? FAROVisionClientError.invalidResponse
+            }
+            guard count > 0 else {
+                break
+            }
+            body.append(contentsOf: buffer.prefix(count))
+        }
+        return body
+    }
+}
+
+private struct RequestOptionsProbe: Decodable {
+    let locale: String
+    let prompt: String
 }
 
 private final class URLProtocolStub: URLProtocol, @unchecked Sendable {

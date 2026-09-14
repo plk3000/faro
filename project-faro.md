@@ -125,6 +125,14 @@ Keep commands minimal:
 - “remember this as…”
 - “what is ahead?”
 
+### Prototype languages
+
+The iPhone prototype supports English (United States) and Spanish (Mexico).
+The user may follow the iPhone language or select either language explicitly.
+That preference applies consistently to visible UI, accessibility labels,
+scene-description requests, spoken output, and later voice commands. Personal
+place labels remain exactly as entered and are not translated automatically.
+
 Possible proximity feedback (passive-buzzer cadence/pitch):
 
 - over 2 m: silent;

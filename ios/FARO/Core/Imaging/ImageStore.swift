@@ -10,26 +10,35 @@ struct StoredImage: Identifiable, Equatable, Sendable {
     var id: String { filename }
 }
 
-enum ImageStoreError: Error, Equatable, LocalizedError {
+enum ImageStoreError:
+    Error,
+    Equatable,
+    LocalizedError,
+    AppMessageProviding
+{
     case cannotCreateDirectory
     case invalidImage
     case cannotCreateJPEG
     case cannotWriteImage
     case cannotListImages
 
-    var errorDescription: String? {
+    var appMessage: AppMessage {
         switch self {
         case .cannotCreateDirectory:
-            "FARO could not create its image-storage folder."
+            AppMessage(.errorStoreDirectory)
         case .invalidImage:
-            "The captured image is invalid."
+            AppMessage(.errorStoreInvalidImage)
         case .cannotCreateJPEG:
-            "FARO could not convert the capture to JPEG."
+            AppMessage(.errorStoreJPEG)
         case .cannotWriteImage:
-            "FARO could not save the captured image."
+            AppMessage(.errorStoreWrite)
         case .cannotListImages:
-            "FARO could not read the saved image list."
+            AppMessage(.errorStoreList)
         }
+    }
+
+    var errorDescription: String? {
+        appMessage.localized(in: .englishUS)
     }
 }
 

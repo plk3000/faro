@@ -2,31 +2,45 @@ import Foundation
 
 struct SceneDescription: Codable, Equatable, Sendable {
     let text: String
+    let language: SupportedLanguage
     let confidence: Double?
     let model: String
     let processingMilliseconds: Int
 }
 
 protocol SceneDescribing: Sendable {
-    func describe(_ image: CapturedImage) async throws -> SceneDescription
+    func describe(
+        _ image: CapturedImage,
+        language: SupportedLanguage
+    ) async throws -> SceneDescription
 }
 
-enum SceneDescriptionError: Error, Equatable, LocalizedError, Sendable {
+enum SceneDescriptionError:
+    Error,
+    Equatable,
+    LocalizedError,
+    AppMessageProviding,
+    Sendable
+{
     case invalidResponse
     case serviceUnavailable
     case timedOut
     case unauthorized
 
-    var errorDescription: String? {
+    var appMessage: AppMessage {
         switch self {
         case .invalidResponse:
-            "The vision service returned an invalid response."
+            AppMessage(.errorVisionInvalidResponse)
         case .serviceUnavailable:
-            "Scene description is temporarily unavailable."
+            AppMessage(.errorVisionUnavailable)
         case .timedOut:
-            "Scene description took too long."
+            AppMessage(.errorVisionTimeout)
         case .unauthorized:
-            "The vision service rejected the app credentials."
+            AppMessage(.errorVisionUnauthorized)
         }
+    }
+
+    var errorDescription: String? {
+        appMessage.localized(in: .englishUS)
     }
 }

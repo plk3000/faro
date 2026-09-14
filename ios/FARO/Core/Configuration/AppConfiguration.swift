@@ -54,19 +54,28 @@ struct AppConfiguration: Equatable, Sendable {
     }
 }
 
-enum AppConfigurationError: Error, Equatable, LocalizedError {
+enum AppConfigurationError:
+    Error,
+    Equatable,
+    LocalizedError,
+    AppMessageProviding
+{
     case invalidVisionMode(String)
     case invalidVisionBaseURL
     case missingVisionToken
 
-    var errorDescription: String? {
+    var appMessage: AppMessage {
         switch self {
         case let .invalidVisionMode(value):
-            "Unknown FARO vision mode: \(value)."
+            AppMessage(.errorInvalidVisionMode, argument: value)
         case .invalidVisionBaseURL:
-            "Live vision mode requires an HTTPS base URL."
+            AppMessage(.errorInvalidVisionURL)
         case .missingVisionToken:
-            "Live vision mode requires a service token."
+            AppMessage(.errorMissingVisionToken)
         }
+    }
+
+    var errorDescription: String? {
+        appMessage.localized(in: .englishUS)
     }
 }

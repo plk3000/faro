@@ -28,15 +28,18 @@ enum SceneDescriberFactory {
 }
 
 private struct FailingSceneDescriber: SceneDescribing {
-    let message: String
+    let appMessage: AppMessage
 
     init(error: any Error) {
-        message = (error as? LocalizedError)?.errorDescription
-            ?? "FARO vision configuration is invalid."
+        appMessage = (error as? any AppMessageProviding)?.appMessage
+            ?? AppMessage(.errorVisionConfiguration)
     }
 
-    func describe(_ image: CapturedImage) async throws -> SceneDescription {
-        throw SceneDescriberConfigurationError(message: message)
+    func describe(
+        _ image: CapturedImage,
+        language: SupportedLanguage
+    ) async throws -> SceneDescription {
+        throw SceneDescriberConfigurationError(appMessage: appMessage)
     }
 }
 
@@ -45,7 +48,11 @@ private struct SceneDescriberConfigurationError:
     LocalizedError,
     Sendable
 {
-    let message: String
+    let appMessage: AppMessage
 
-    var errorDescription: String? { message }
+    var errorDescription: String? {
+        appMessage.localized(in: .englishUS)
+    }
 }
+
+extension SceneDescriberConfigurationError: AppMessageProviding {}

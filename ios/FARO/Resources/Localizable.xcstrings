@@ -1,0 +1,348 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "action.capture" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capture image" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturar imagen" } }
+      }
+    },
+    "action.capturing" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capturing..." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturando..." } }
+      }
+    },
+    "action.describe" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Describe scene" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Describir escena" } }
+      }
+    },
+    "action.describing" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Describing..." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Describiendo..." } }
+      }
+    },
+    "error.audioUnavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not start spoken audio." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo iniciar el audio hablado." } }
+      }
+    },
+    "error.cameraConfiguration" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The camera could not be configured." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo configurar la cámara." } }
+      }
+    },
+    "error.cameraPermission" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Camera access is not permitted." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No se permitió el acceso a la cámara." } }
+      }
+    },
+    "error.cameraUnavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The camera is unavailable." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "La cámara no está disponible." } }
+      }
+    },
+    "error.captureFailed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The camera could not capture an image." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "La cámara no pudo capturar una imagen." } }
+      }
+    },
+    "error.captureInProgress" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "An image capture is already in progress." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Ya hay una captura de imagen en curso." } }
+      }
+    },
+    "error.fixtureNotFound" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The fixture image %@ could not be found." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No se encontró la imagen de prueba %@." } }
+      }
+    },
+    "error.genericAction" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not complete that action." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo completar esa acción." } }
+      }
+    },
+    "error.invalidImageData" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The captured image could not be read." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo leer la imagen capturada." } }
+      }
+    },
+    "error.invalidVisionMode" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown FARO vision mode: %@." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Modo de visión de FARO desconocido: %@." } }
+      }
+    },
+    "error.invalidVisionURL" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Live vision mode requires an HTTPS base URL." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "El modo de visión en vivo requiere una URL base HTTPS." } }
+      }
+    },
+    "error.missingVisionToken" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Live vision mode requires a service token." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "El modo de visión en vivo requiere un token de servicio." } }
+      }
+    },
+    "error.storeDirectory" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not create its image-storage folder." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo crear la carpeta para guardar imágenes." } }
+      }
+    },
+    "error.storeInvalidImage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The captured image is invalid." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "La imagen capturada no es válida." } }
+      }
+    },
+    "error.storeJPEG" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not convert the capture to JPEG." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo convertir la captura a JPEG." } }
+      }
+    },
+    "error.storeList" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not read the saved image list." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo leer la lista de imágenes guardadas." } }
+      }
+    },
+    "error.storeWrite" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not save the captured image." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo guardar la imagen capturada." } }
+      }
+    },
+    "error.visionConfiguration" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO vision configuration is invalid." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "La configuración de visión de FARO no es válida." } }
+      }
+    },
+    "error.visionInvalidResponse" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The vision service returned an invalid response." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "El servicio de visión devolvió una respuesta no válida." } }
+      }
+    },
+    "error.visionNetwork" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not reach the vision service." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo comunicarse con el servicio de visión." } }
+      }
+    },
+    "error.visionRateLimited" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The vision service is busy. Try again shortly." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "El servicio de visión está ocupado. Inténtalo de nuevo en un momento." } }
+      }
+    },
+    "error.visionRejected" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The vision service rejected the image." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "El servicio de visión rechazó la imagen." } }
+      }
+    },
+    "error.visionTimeout" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scene description took too long." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "La descripción de la escena tardó demasiado." } }
+      }
+    },
+    "error.visionUnauthorized" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The vision service rejected the app credentials." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "El servicio de visión rechazó las credenciales de la app." } }
+      }
+    },
+    "error.visionUnavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scene description is temporarily unavailable." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "La descripción de escenas no está disponible temporalmente." } }
+      }
+    },
+    "error.voiceUnavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not find a voice for %@." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no encontró una voz para %@." } }
+      }
+    },
+    "hint.capture" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Captures and saves one image from the rear camera" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Captura y guarda una imagen con la cámara trasera" } }
+      }
+    },
+    "hint.describe" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Captures an image and speaks a brief description" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Captura una imagen y dice una descripción breve" } }
+      }
+    },
+    "language.englishUS" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "English (US)" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Inglés (EE. UU.)" } }
+      }
+    },
+    "language.followSystem" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Follow iPhone" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Usar idioma del iPhone" } }
+      }
+    },
+    "language.selector" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Language" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Idioma" } }
+      }
+    },
+    "language.spanishMexico" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Spanish (Mexico)" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Español (México)" } }
+      }
+    },
+    "mode.currentInactive" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Current mode: Inactive" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Modo actual: Inactivo" } }
+      }
+    },
+    "mode.inactive" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Inactive" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Inactivo" } }
+      }
+    },
+    "mode.label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mode" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Modo" } }
+      }
+    },
+    "preview.latest" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Latest captured image" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Última imagen capturada" } }
+      }
+    },
+    "preview.rear" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rear camera preview" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Vista previa de la cámara trasera" } }
+      }
+    },
+    "preview.simulatorLabel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Camera fixture preview. Capture an image to continue." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Vista previa de prueba. Captura una imagen para continuar." } }
+      }
+    },
+    "preview.simulatorTitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Simulator camera fixture" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Imagen de prueba del simulador" } }
+      }
+    },
+    "saved.captureAccessibility" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capture saved %@" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Captura guardada %@" } }
+      }
+    },
+    "saved.empty.description" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Captured images will appear here." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Las imágenes capturadas aparecerán aquí." } }
+      }
+    },
+    "saved.empty.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No saved captures" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No hay capturas guardadas" } }
+      }
+    },
+    "saved.hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shows the images saved on this device" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Muestra las imágenes guardadas en este dispositivo" } }
+      }
+    },
+    "saved.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved captures" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturas guardadas" } }
+      }
+    },
+    "saved.titleCount" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved captures (%@)" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturas guardadas (%@)" } }
+      }
+    },
+    "scene.descriptionLabel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scene description: %@" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Descripción de la escena: %@" } }
+      }
+    },
+    "status.accessibility" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Status: %@" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Estado: %@" } }
+      }
+    },
+    "status.capturingImage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capturing image" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturando imagen" } }
+      }
+    },
+    "status.capturingScene" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capturing a scene to describe" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturando una escena para describirla" } }
+      }
+    },
+    "status.describingScene" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Describing scene" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Describiendo la escena" } }
+      }
+    },
+    "status.descriptionReady" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Description ready" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Descripción lista" } }
+      }
+    },
+    "status.imageCapturedSaved" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Image captured and saved" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Imagen capturada y guardada" } }
+      }
+    },
+    "status.ready" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Ready to capture" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Listo para capturar" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

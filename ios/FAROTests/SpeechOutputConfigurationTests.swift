@@ -10,25 +10,49 @@ struct SpeechOutputConfigurationTests {
         #expect(configuration.rate < AVSpeechUtteranceDefaultSpeechRate)
         #expect(configuration.preUtteranceDelay > 0)
         #expect(configuration.phraseDelay >= 0.2)
-        #expect(configuration.languageCode == "es-MX")
+    }
+
+    @Test(arguments: [
+        (
+            SupportedLanguage.englishUS,
+            "A chair is ahead and slightly to your left.",
+            ["A chair is ahead", "and slightly to your left."]
+        ),
+        (
+            SupportedLanguage.spanishMexico,
+            "Hay una silla delante de ti y un poco hacia la izquierda.",
+            ["Hay una silla delante de ti", "y un poco hacia la izquierda."]
+        )
+    ])
+    func insertsLanguageSpecificPhrasePauses(
+        language: SupportedLanguage,
+        text: String,
+        expected: [String]
+    ) {
+        let phrases = SpeechPhrasePacer.phrases(
+            from: text,
+            language: language
+        )
+
+        #expect(phrases == expected)
     }
 
     @Test
-    func insertsAPauseBeforeConjunctionPhrases() {
-        let phrases = SpeechPhrasePacer.phrases(
-            from: "Hay una silla delante de ti y un poco hacia la izquierda."
-        )
-
-        #expect(
-            phrases == [
-                "Hay una silla delante de ti",
-                "y un poco hacia la izquierda."
-            ]
-        )
+    func voiceOverTextUsesSpanishPacing() {
         #expect(
             SpeechPhrasePacer.voiceOverText(
-                from: "Hay una silla delante de ti y un poco hacia la izquierda."
+                from: "Hay una silla delante de ti y un poco hacia la izquierda.",
+                language: .spanishMexico
             ) == "Hay una silla delante de ti. Y un poco hacia la izquierda"
+        )
+    }
+
+    @Test(arguments: SupportedLanguage.allCases)
+    func missingVoiceErrorIsLocalized(language: SupportedLanguage) {
+        let error = SpeechOutputError.voiceUnavailable("test")
+
+        #expect(
+            !error.appMessage.localized(in: language).isEmpty
         )
     }
 }

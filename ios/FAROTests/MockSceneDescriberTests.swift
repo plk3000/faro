@@ -15,22 +15,29 @@ struct MockSceneDescriberTests {
             delayNanoseconds: 0
         )
 
-        let result = try await describer.describe(image)
+        let result = try await describer.describe(
+            image,
+            language: .englishUS
+        )
 
         #expect(result.text == "A doorway is ahead.")
+        #expect(result.language == .englishUS)
         #expect(result.confidence == 0.8)
     }
 
-    @Test
-    func defaultDescriptionIsSpanish() async throws {
+    @Test(arguments: SupportedLanguage.allCases)
+    func defaultDescriptionMatchesRequestedLanguage(
+        language: SupportedLanguage
+    ) async throws {
         let describer = MockSceneDescriber(delayNanoseconds: 0)
 
-        let result = try await describer.describe(image)
-
-        #expect(
-            result.text
-                == "Hay una silla delante de ti y un poco hacia la izquierda."
+        let result = try await describer.describe(
+            image,
+            language: language
         )
+
+        #expect(result.text == language.mockDescription)
+        #expect(result.language == language)
     }
 
     @Test
@@ -41,7 +48,10 @@ struct MockSceneDescriberTests {
         )
 
         do {
-            _ = try await describer.describe(image)
+            _ = try await describer.describe(
+                image,
+                language: .englishUS
+            )
             Issue.record("Expected serviceUnavailable")
         } catch {
             #expect(error as? SceneDescriptionError == .serviceUnavailable)
@@ -56,7 +66,10 @@ struct MockSceneDescriberTests {
         )
 
         do {
-            _ = try await describer.describe(image)
+            _ = try await describer.describe(
+                image,
+                language: .spanishMexico
+            )
             Issue.record("Expected timedOut")
         } catch {
             #expect(error as? SceneDescriptionError == .timedOut)

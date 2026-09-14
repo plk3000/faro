@@ -3,26 +3,45 @@ import UIKit
 
 @MainActor
 protocol CaptureFeedbackProviding: AnyObject {
-    func announceSuccess()
-    func announceFailure(_ message: String)
+    func announceSuccess(language: SupportedLanguage)
+    func announceFailure(
+        _ message: String,
+        language: SupportedLanguage
+    )
 }
 
 @MainActor
 final class CaptureFeedback: CaptureFeedbackProviding {
-    func announceSuccess() {
+    func announceSuccess(language: SupportedLanguage) {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         AudioServicesPlaySystemSound(1108)
-        UIAccessibility.post(
-            notification: .announcement,
-            argument: "Image captured and saved"
+        announce(
+            language.text(.statusImageCapturedSaved),
+            language: language
         )
     }
 
-    func announceFailure(_ message: String) {
+    func announceFailure(
+        _ message: String,
+        language: SupportedLanguage
+    ) {
         UINotificationFeedbackGenerator().notificationOccurred(.error)
+        announce(message, language: language)
+    }
+
+    private func announce(
+        _ message: String,
+        language: SupportedLanguage
+    ) {
+        let announcement = NSAttributedString(
+            string: message,
+            attributes: [
+                .accessibilitySpeechLanguage: language.rawValue
+            ]
+        )
         UIAccessibility.post(
             notification: .announcement,
-            argument: message
+            argument: announcement
         )
     }
 }

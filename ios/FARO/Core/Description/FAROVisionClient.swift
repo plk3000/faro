@@ -6,15 +6,13 @@ struct FAROVisionClient: SceneDescribing {
     private let session: URLSession
     private let timeout: TimeInterval
     private let maximumAttempts: Int
-    private let localeIdentifier: String
 
     init(
         baseURL: URL,
         token: String,
         session: URLSession = .shared,
         timeout: TimeInterval = 20,
-        maximumAttempts: Int = 2,
-        localeIdentifier: String = FAROLanguage.outputLocaleIdentifier
+        maximumAttempts: Int = 2
     ) {
         precondition(maximumAttempts > 0)
         self.baseURL = baseURL
@@ -22,10 +20,12 @@ struct FAROVisionClient: SceneDescribing {
         self.session = session
         self.timeout = timeout
         self.maximumAttempts = maximumAttempts
-        self.localeIdentifier = localeIdentifier
     }
 
-    func describe(_ image: CapturedImage) async throws -> SceneDescription {
+    func describe(
+        _ image: CapturedImage,
+        language: SupportedLanguage
+    ) async throws -> SceneDescription {
         let requestID = UUID()
         var lastError: (any Error)?
 
@@ -35,7 +35,8 @@ struct FAROVisionClient: SceneDescribing {
             do {
                 return try await performRequest(
                     image: image,
-                    requestID: requestID
+                    requestID: requestID,
+                    language: language
                 )
             } catch is CancellationError {
                 throw CancellationError()
@@ -60,7 +61,8 @@ struct FAROVisionClient: SceneDescribing {
 
     private func performRequest(
         image: CapturedImage,
-        requestID: UUID
+        requestID: UUID,
+        language: SupportedLanguage
     ) async throws -> SceneDescription {
         let boundary = "FARO-\(UUID().uuidString)"
         var request = URLRequest(
@@ -82,10 +84,15 @@ struct FAROVisionClient: SceneDescribing {
             requestID.uuidString,
             forHTTPHeaderField: "X-Request-ID"
         )
+        request.setValue(
+            language.rawValue,
+            forHTTPHeaderField: "Accept-Language"
+        )
         request.httpBody = try multipartBody(
             image: image,
             requestID: requestID,
-            boundary: boundary
+            boundary: boundary,
+            language: language
         )
 
         let (data, response) = try await session.data(for: request)
@@ -111,12 +118,14 @@ struct FAROVisionClient: SceneDescribing {
         }
 
         guard payload.requestID == requestID,
+              payload.language == language,
               !payload.description.isEmpty else {
             throw FAROVisionClientError.invalidResponse
         }
 
         return SceneDescription(
             text: payload.description,
+            language: payload.language,
             confidence: payload.confidence,
             model: payload.model,
             processingMilliseconds: payload.processingMilliseconds
@@ -126,13 +135,14 @@ struct FAROVisionClient: SceneDescribing {
     private func multipartBody(
         image: CapturedImage,
         requestID: UUID,
-        boundary: String
+        boundary: String,
+        language: SupportedLanguage
     ) throws -> Data {
         let options = RequestOptions(
             requestID: requestID,
-            locale: localeIdentifier,
+            locale: language.rawValue,
             detail: "brief",
-            prompt: "Describe en español los objetos cercanos, su posición relativa y los obstáculos inmediatos."
+            prompt: language.apiPrompt
         )
         let optionsData = try JSONEncoder().encode(options)
 
@@ -180,7 +190,12 @@ struct FAROVisionClient: SceneDescribing {
     }
 }
 
-enum FAROVisionClientError: Error, Equatable, LocalizedError {
+enum FAROVisionClientError:
+    Error,
+    Equatable,
+    LocalizedError,
+    AppMessageProviding
+{
     case invalidResponse
     case network(URLError.Code)
     case rateLimited
@@ -199,23 +214,27 @@ enum FAROVisionClientError: Error, Equatable, LocalizedError {
         }
     }
 
-    var errorDescription: String? {
+    var appMessage: AppMessage {
         switch self {
         case .invalidResponse:
-            "The vision service returned an invalid response."
+            AppMessage(.errorVisionInvalidResponse)
         case .network:
-            "FARO could not reach the vision service."
+            AppMessage(.errorVisionNetwork)
         case .rateLimited:
-            "The vision service is busy. Try again shortly."
+            AppMessage(.errorVisionRateLimited)
         case .rejectedRequest:
-            "The vision service rejected the image."
+            AppMessage(.errorVisionRejected)
         case .server, .serviceUnavailable:
-            "Scene description is temporarily unavailable."
+            AppMessage(.errorVisionUnavailable)
         case .timedOut:
-            "Scene description took too long."
+            AppMessage(.errorVisionTimeout)
         case .unauthorized:
-            "The vision service rejected the app credentials."
+            AppMessage(.errorVisionUnauthorized)
         }
+    }
+
+    var errorDescription: String? {
+        appMessage.localized(in: .englishUS)
     }
 }
 
@@ -236,6 +255,7 @@ private struct RequestOptions: Encodable {
 private struct SuccessPayload: Decodable {
     let requestID: UUID
     let description: String
+    let language: SupportedLanguage
     let confidence: Double?
     let model: String
     let processingMilliseconds: Int
@@ -243,6 +263,7 @@ private struct SuccessPayload: Decodable {
     enum CodingKeys: String, CodingKey {
         case requestID = "request_id"
         case description
+        case language
         case confidence
         case model
         case processingMilliseconds = "processing_ms"

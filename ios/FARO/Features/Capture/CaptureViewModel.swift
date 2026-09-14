@@ -13,12 +13,12 @@ final class CaptureViewModel {
     private let speechOutput: any SpeechOutputProviding
 
     private(set) var latestImageData: Data?
-    private(set) var latestDescription: String?
+    private(set) var latestDescription: SceneDescription?
     private(set) var storedImages: [StoredImage] = []
     private(set) var isCapturing = false
     private(set) var isDescribing = false
-    private(set) var statusMessage = "Ready to capture"
-    private(set) var errorMessage: String?
+    private(set) var statusMessage = AppMessage(.statusReady)
+    private(set) var errorMessage: AppMessage?
 
     var cameraSession: AVCaptureSession? {
         cameraSource?.session
@@ -52,26 +52,26 @@ final class CaptureViewModel {
         self.speechOutput = speechOutput ?? SpeechOutput()
     }
 
-    func prepare() async {
+    func prepare(language: SupportedLanguage) async {
         do {
             if let cameraSource {
                 try await cameraSource.prepare()
             }
             storedImages = try await imageStore.list()
-            statusMessage = "Ready to capture"
+            statusMessage = AppMessage(.statusReady)
             errorMessage = nil
         } catch {
-            report(error)
+            report(error, language: language)
         }
     }
 
-    func capture() async {
+    func capture(language: SupportedLanguage) async {
         guard !isCapturing, !isDescribing else {
             return
         }
 
         isCapturing = true
-        statusMessage = "Capturing image"
+        statusMessage = AppMessage(.statusCapturingImage)
         errorMessage = nil
         defer { isCapturing = false }
 
@@ -80,20 +80,20 @@ final class CaptureViewModel {
             let storedImage = try await imageStore.save(image)
             latestImageData = try await imageStore.load(storedImage)
             storedImages = try await imageStore.list()
-            statusMessage = "Image captured and saved"
-            feedback.announceSuccess()
+            statusMessage = AppMessage(.statusImageCapturedSaved)
+            feedback.announceSuccess(language: language)
         } catch {
-            report(error)
+            report(error, language: language)
         }
     }
 
-    func describe() async {
+    func describe(language: SupportedLanguage) async {
         guard !isDescribing, !isCapturing else {
             return
         }
 
         isDescribing = true
-        statusMessage = "Capturing a scene to describe"
+        statusMessage = AppMessage(.statusCapturingScene)
         errorMessage = nil
         latestDescription = nil
         defer { isDescribing = false }
@@ -101,31 +101,61 @@ final class CaptureViewModel {
         do {
             let image = try await imageSource.capture()
             latestImageData = image.data
-            statusMessage = "Describing scene"
+            statusMessage = AppMessage(.statusDescribingScene)
 
-            let description = try await sceneDescriber.describe(image)
-            latestDescription = description.text
-            statusMessage = "Description ready"
-            try speechOutput.speak(description.text)
+            let description = try await sceneDescriber.describe(
+                image,
+                language: language
+            )
+            latestDescription = description
+            statusMessage = AppMessage(.statusDescriptionReady)
+            try speechOutput.speak(
+                description.text,
+                language: description.language
+            )
         } catch {
-            report(error, speak: true)
+            report(error, language: language, speak: true)
         }
     }
 
-    private func report(_ error: any Error, speak: Bool = false) {
-        let message = (error as? LocalizedError)?.errorDescription
-            ?? "FARO could not complete that action."
+    func statusText(language: SupportedLanguage) -> String {
+        statusMessage.localized(in: language)
+    }
+
+    func errorText(language: SupportedLanguage) -> String? {
+        errorMessage?.localized(in: language)
+    }
+
+    private func report(
+        _ error: any Error,
+        language: SupportedLanguage,
+        speak: Bool = false
+    ) {
+        let message = AppErrorMessage.message(
+            for: error,
+            language: language
+        )
         statusMessage = message
         errorMessage = message
+        let localizedMessage = message.localized(in: language)
 
         if speak {
             do {
-                try speechOutput.speak(message)
+                try speechOutput.speak(
+                    localizedMessage,
+                    language: language
+                )
             } catch {
-                feedback.announceFailure(message)
+                feedback.announceFailure(
+                    localizedMessage,
+                    language: language
+                )
             }
         } else {
-            feedback.announceFailure(message)
+            feedback.announceFailure(
+                localizedMessage,
+                language: language
+            )
         }
     }
 }

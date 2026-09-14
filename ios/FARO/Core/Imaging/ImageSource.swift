@@ -4,7 +4,12 @@ protocol ImageSource: Sendable {
     func capture() async throws -> CapturedImage
 }
 
-enum ImageSourceError: Error, Equatable, LocalizedError {
+enum ImageSourceError:
+    Error,
+    Equatable,
+    LocalizedError,
+    AppMessageProviding
+{
     case cameraUnavailable
     case permissionDenied
     case configurationFailed
@@ -13,32 +18,36 @@ enum ImageSourceError: Error, Equatable, LocalizedError {
     case fixtureNotFound(String)
     case invalidImageData
 
-    var errorDescription: String? {
+    var appMessage: AppMessage {
         switch self {
         case .cameraUnavailable:
-            "The camera is unavailable."
+            AppMessage(.errorCameraUnavailable)
         case .permissionDenied:
-            "Camera access is not permitted."
+            AppMessage(.errorCameraPermission)
         case .configurationFailed:
-            "The camera could not be configured."
+            AppMessage(.errorCameraConfiguration)
         case .captureInProgress:
-            "An image capture is already in progress."
+            AppMessage(.errorCaptureInProgress)
         case .captureFailed:
-            "The camera could not capture an image."
+            AppMessage(.errorCaptureFailed)
         case let .fixtureNotFound(name):
-            "The fixture image \(name) could not be found."
+            AppMessage(.errorFixtureNotFound, argument: name)
         case .invalidImageData:
-            "The captured image could not be read."
+            AppMessage(.errorInvalidImageData)
         }
     }
 
-    enum ImageSourceFactory {
-        static func makeDefault() -> any ImageSource {
-    #if targetEnvironment(simulator)
-            FixtureImageSource()
-    #else
-            CameraImageSource()
-    #endif
-        }
+    var errorDescription: String? {
+        appMessage.localized(in: .englishUS)
+    }
+}
+
+enum ImageSourceFactory {
+    static func makeDefault() -> any ImageSource {
+#if targetEnvironment(simulator)
+        FixtureImageSource()
+#else
+        CameraImageSource()
+#endif
     }
 }

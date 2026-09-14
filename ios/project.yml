@@ -2,6 +2,10 @@ name: FARO
 
 options:
   bundleIdPrefix: com.jdsolissmith
+  developmentLanguage: en
+  knownRegions:
+    - en
+    - es-MX
   deploymentTarget:
     iOS: "26.0"
   generateEmptyDirectories: true

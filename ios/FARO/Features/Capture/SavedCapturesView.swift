@@ -3,14 +3,17 @@ import UIKit
 
 struct SavedCapturesView: View {
     let images: [StoredImage]
+    let language: SupportedLanguage
 
     var body: some View {
         Group {
             if images.isEmpty {
                 ContentUnavailableView(
-                    "No saved captures",
+                    language.text(.savedEmptyTitle),
                     systemImage: "photo",
-                    description: Text("Captured images will appear here.")
+                    description: Text(
+                        language.text(.savedEmptyDescription)
+                    )
                 )
             } else {
                 List(images) { image in
@@ -18,8 +21,12 @@ struct SavedCapturesView: View {
                         thumbnail(for: image)
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(image.createdAt, format: .dateTime)
-                                .font(.headline)
+                            Text(
+                                image.createdAt.formatted(
+                                    .dateTime.locale(language.locale)
+                                )
+                            )
+                            .font(.headline)
                             Text(image.filename)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -28,12 +35,18 @@ struct SavedCapturesView: View {
                     }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(
-                        "Capture saved \(image.createdAt.formatted())"
+                        language.text(
+                            .savedCaptureAccessibility,
+                            argument: image.createdAt.formatted(
+                                .dateTime.locale(language.locale)
+                            )
+                        )
                     )
                 }
             }
         }
-        .navigationTitle("Saved captures")
+        .navigationTitle(language.text(.savedTitle))
+        .environment(\.locale, language.locale)
     }
 
     @ViewBuilder

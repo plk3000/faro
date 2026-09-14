@@ -2,24 +2,38 @@ import SwiftUI
 import UIKit
 
 struct ContentView: View {
+    @AppStorage(LanguagePreference.storageKey)
+    private var languagePreferenceRaw = LanguagePreference.followSystem.rawValue
+
     @State private var captureModel = CaptureViewModel()
+
+    private var languagePreference: LanguagePreference {
+        LanguagePreference(rawValue: languagePreferenceRaw) ?? .followSystem
+    }
+
+    private var language: SupportedLanguage {
+        languagePreference.resolve()
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    languagePicker
                     modeCard
                     preview
 
                     Button {
                         Task {
-                            await captureModel.describe()
+                            await captureModel.describe(language: language)
                         }
                     } label: {
                         Label(
-                            captureModel.isDescribing
-                                ? "Describing..."
-                                : "Describe scene",
+                            language.text(
+                                captureModel.isDescribing
+                                    ? .actionDescribing
+                                    : .actionDescribe
+                            ),
                             systemImage: "text.bubble"
                         )
                         .font(.title3.bold())
@@ -28,23 +42,25 @@ struct ContentView: View {
                     .buttonStyle(.borderedProminent)
                     .disabled(isBusy)
                     .accessibilityLabel(
-                        captureModel.isDescribing
-                            ? "Describing scene"
-                            : "Describe scene"
+                        language.text(
+                            captureModel.isDescribing
+                                ? .actionDescribing
+                                : .actionDescribe
+                        )
                     )
-                    .accessibilityHint(
-                        "Captures an image and speaks a brief description"
-                    )
+                    .accessibilityHint(language.text(.hintDescribe))
 
                     Button {
                         Task {
-                            await captureModel.capture()
+                            await captureModel.capture(language: language)
                         }
                     } label: {
                         Label(
-                            captureModel.isCapturing
-                                ? "Capturing..."
-                                : "Capture image",
+                            language.text(
+                                captureModel.isCapturing
+                                    ? .actionCapturing
+                                    : .actionCapture
+                            ),
                             systemImage: "camera.shutter.button"
                         )
                         .font(.title3.bold())
@@ -54,18 +70,18 @@ struct ContentView: View {
                     .tint(.secondary)
                     .disabled(isBusy)
                     .accessibilityLabel(
-                        captureModel.isCapturing
-                            ? "Capturing image"
-                            : "Capture image"
+                        language.text(
+                            captureModel.isCapturing
+                                ? .actionCapturing
+                                : .actionCapture
+                        )
                     )
-                    .accessibilityHint(
-                        "Captures and saves one image from the rear camera"
-                    )
+                    .accessibilityHint(language.text(.hintCapture))
 
                     status
 
                     if let description = captureModel.latestDescription {
-                        Text(description)
+                        Text(description.text)
                             .font(.title3)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -74,62 +90,92 @@ struct ContentView: View {
                                 in: RoundedRectangle(cornerRadius: 16)
                             )
                             .accessibilityLabel(
-                                "Scene description: \(description)"
+                                descriptionAccessibilityLabel(description)
                             )
                     }
 
                     NavigationLink {
-                        SavedCapturesView(images: captureModel.storedImages)
+                        SavedCapturesView(
+                            images: captureModel.storedImages,
+                            language: language
+                        )
                     } label: {
                         Label(
-                            "Saved captures (\(captureModel.storedImages.count))",
+                            language.text(
+                                .savedTitleCount,
+                                argument: String(
+                                    captureModel.storedImages.count
+                                )
+                            ),
                             systemImage: "photo.on.rectangle"
                         )
                         .font(.headline)
                         .frame(maxWidth: .infinity, minHeight: 56)
                     }
                     .buttonStyle(.bordered)
-                    .accessibilityHint("Shows the images saved on this device")
+                    .accessibilityHint(language.text(.savedHint))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
             }
             .navigationTitle("FARO")
             .task {
-                await captureModel.prepare()
+                await captureModel.prepare(language: language)
             }
         }
+        .environment(\.locale, language.locale)
     }
 
     private var isBusy: Bool {
         captureModel.isCapturing || captureModel.isDescribing
     }
 
+    private var languagePicker: some View {
+        HStack {
+            Label(
+                language.text(.languageSelector),
+                systemImage: "globe"
+            )
+            Spacer()
+            Picker(
+                language.text(.languageSelector),
+                selection: $languagePreferenceRaw
+            ) {
+                ForEach(LanguagePreference.allCases) { preference in
+                    Text(language.text(preference.displayKey))
+                        .tag(preference.rawValue)
+                }
+            }
+            .pickerStyle(.menu)
+        }
+        .padding()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .accessibilityElement(children: .contain)
+    }
+
     private var preview: some View {
         Group {
             if let session = captureModel.cameraSession {
                 CameraPreview(session: session)
-                    .accessibilityLabel("Rear camera preview")
+                    .accessibilityLabel(language.text(.previewRear))
             } else if let data = captureModel.latestImageData,
                       let image = UIImage(data: data) {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .accessibilityLabel("Latest captured image")
+                    .accessibilityLabel(language.text(.previewLatest))
             } else {
                 ZStack {
                     Color.black
                     VStack(spacing: 8) {
                         Image(systemName: "camera.viewfinder")
                             .font(.largeTitle)
-                        Text("Simulator camera fixture")
+                        Text(language.text(.previewSimulatorTitle))
                             .font(.headline)
                     }
                     .foregroundStyle(.white)
                 }
-                .accessibilityLabel(
-                    "Camera fixture preview. Capture an image to continue."
-                )
+                .accessibilityLabel(language.text(.previewSimulatorLabel))
             }
         }
         .frame(maxWidth: .infinity)
@@ -139,7 +185,8 @@ struct ContentView: View {
     }
 
     private var status: some View {
-        HStack(alignment: .top, spacing: 10) {
+        let statusText = captureModel.statusText(language: language)
+        return HStack(alignment: .top, spacing: 10) {
             Image(
                 systemName: captureModel.errorMessage == nil
                     ? "checkmark.circle"
@@ -150,11 +197,16 @@ struct ContentView: View {
                     ? Color.secondary
                     : Color.red
             )
-            Text(captureModel.statusMessage)
+            Text(statusText)
                 .font(.body)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Status: \(captureModel.statusMessage)")
+        .accessibilityLabel(
+            language.text(
+                .statusAccessibility,
+                argument: statusText
+            )
+        )
     }
 
     private var modeCard: some View {
@@ -164,10 +216,10 @@ struct ContentView: View {
                 .font(.title)
 
             VStack(alignment: .leading) {
-                Text("Mode")
+                Text(language.text(.modeLabel))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("Inactive")
+                Text(language.text(.modeInactive))
                     .font(.headline)
             }
         }
@@ -175,7 +227,24 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Current mode: Inactive")
+        .accessibilityLabel(language.text(.modeCurrentInactive))
+    }
+
+    private func descriptionAccessibilityLabel(
+        _ description: SceneDescription
+    ) -> Text {
+        let label = description.language.text(
+            .sceneDescriptionLabel,
+            argument: description.text
+        )
+        let attributedLabel = NSAttributedString(
+            string: label,
+            attributes: [
+                .accessibilitySpeechLanguage:
+                    description.language.rawValue
+            ]
+        )
+        return Text(AttributedString(attributedLabel))
     }
 }
 

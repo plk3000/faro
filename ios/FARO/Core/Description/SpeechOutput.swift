@@ -3,21 +3,32 @@ import UIKit
 
 @MainActor
 protocol SpeechOutputProviding: AnyObject {
-    func speak(_ text: String) throws
+    func speak(
+        _ text: String,
+        language: SupportedLanguage
+    ) throws
     func stop()
 }
 
-enum SpeechOutputError: Error, LocalizedError {
+enum SpeechOutputError:
+    Error,
+    LocalizedError,
+    AppMessageProviding
+{
     case audioSessionUnavailable
     case voiceUnavailable(String)
 
-    var errorDescription: String? {
+    var appMessage: AppMessage {
         switch self {
         case .audioSessionUnavailable:
-            "FARO no pudo iniciar el audio."
+            AppMessage(.errorAudioUnavailable)
         case let .voiceUnavailable(language):
-            "FARO no encontró una voz para \(language)."
+            AppMessage(.errorVoiceUnavailable, argument: language)
         }
+    }
+
+    var errorDescription: String? {
+        appMessage.localized(in: .englishUS)
     }
 }
 
@@ -25,29 +36,27 @@ struct SpeechOutputConfiguration: Equatable, Sendable {
     static let accessibleDefault = SpeechOutputConfiguration(
         rate: 0.3,
         preUtteranceDelay: 0.12,
-        phraseDelay: 0.24,
-        languageCode: FAROLanguage.outputLocaleIdentifier
+        phraseDelay: 0.24
     )
 
     let rate: Float
     let preUtteranceDelay: TimeInterval
     let phraseDelay: TimeInterval
-    let languageCode: String
 }
 
 enum SpeechPhrasePacer {
-    private static let breakWords = Set([
-        "and",
-        "but",
-        "while",
-        "with",
-        "y",
-        "pero",
-        "mientras",
-        "con"
-    ])
+    static func phrases(
+        from text: String,
+        language: SupportedLanguage
+    ) -> [String] {
+        let breakWords: Set<String>
+        switch language {
+        case .englishUS:
+            breakWords = ["and", "but", "while", "with"]
+        case .spanishMexico:
+            breakWords = ["y", "pero", "mientras", "con"]
+        }
 
-    static func phrases(from text: String) -> [String] {
         let words = text.split(whereSeparator: \.isWhitespace).map(String.init)
         guard !words.isEmpty else {
             return []
@@ -78,8 +87,11 @@ enum SpeechPhrasePacer {
         return phrases
     }
 
-    static func voiceOverText(from text: String) -> String {
-        phrases(from: text)
+    static func voiceOverText(
+        from text: String,
+        language: SupportedLanguage
+    ) -> String {
+        phrases(from: text, language: language)
             .map {
                 $0.trimmingCharacters(in: .whitespacesAndNewlines)
                     .trimmingCharacters(in: .punctuationCharacters)
@@ -103,17 +115,32 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
         self.configuration = configuration
     }
 
-    func speak(_ text: String) throws {
+    func speak(
+        _ text: String,
+        language: SupportedLanguage
+    ) throws {
         stop()
-        let phrases = SpeechPhrasePacer.phrases(from: text)
+        let phrases = SpeechPhrasePacer.phrases(
+            from: text,
+            language: language
+        )
         guard !phrases.isEmpty else {
             return
         }
 
         if UIAccessibility.isVoiceOverRunning {
+            let announcement = NSAttributedString(
+                string: SpeechPhrasePacer.voiceOverText(
+                    from: text,
+                    language: language
+                ),
+                attributes: [
+                    .accessibilitySpeechLanguage: language.rawValue
+                ]
+            )
             UIAccessibility.post(
                 notification: .announcement,
-                argument: SpeechPhrasePacer.voiceOverText(from: text)
+                argument: announcement
             )
             return
         }
@@ -131,10 +158,10 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
         }
 
         guard let voice = AVSpeechSynthesisVoice(
-            language: configuration.languageCode
+            language: language.rawValue
         ) else {
             throw SpeechOutputError.voiceUnavailable(
-                configuration.languageCode
+                language.rawValue
             )
         }
 

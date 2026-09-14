@@ -6,7 +6,7 @@
 |---|---|
 | Phase 0 — Foundation | Complete |
 | Phase 1 — Image capture | Verified on physical device |
-| Phase 2 — Scene description | Implemented; awaiting physical-device validation |
+| Phase 2 — Scene description | Bilingual implementation committed; awaiting physical-device validation |
 | Phase 3 — Place memory | Not started |
 | Phase 4 — Operating modes | Not started |
 | Phase 5 — Voice commands | Not started |
@@ -30,6 +30,15 @@ The concept doc's safety invariant (`sonar -> ESP32 -> passive buzzer` must neve
 phone) means the iOS app is deliberately **not** on the critical warning path. iOS work here is
 narration, memory, and mode control only.
 
+## Phase gates and commits
+
+- Each phase is implemented as its own commit. Validation fixes may be separate
+  follow-up commits, but they remain part of the same phase.
+- Do not start a new phase until the previous phase has passed simulator tests,
+  compiled for a physical iPhone, and been validated on the physical device.
+- Update the Progress table when a phase begins, reaches device validation, or
+  is accepted.
+
 ## Locked decisions
 
 | Decision | Choice | Rationale |
@@ -41,6 +50,7 @@ narration, memory, and mode control only.
 | Deployment target | iOS 26 | Matches installed SDK; modern Swift Vision API |
 | Repo layout | App under `ios/` | Keeps root for docs and the future API project |
 | First interaction | Accessible buttons, voice added later | Gives a testable capture path before speech complexity |
+| Languages | Follow iPhone, English (US), and Español (México), established in Phase 2 | Prevents language assumptions from spreading into place, mode, voice, BLE, and metrics features |
 | Roadmap file | `IOS-TASKS.md` in repo root | Requested deliverable |
 
 ## Target repository layout
@@ -54,7 +64,7 @@ FARO/
 │   └── ble-contract.md          # GATT contract for the ESP32 repo
 ├── ios/
 │   ├── project.yml              # XcodeGen source of truth
-│   ├── FARO/                    # app sources
+│   ├── FARO/                    # app sources and String Catalogs
 │   └── FAROTests/               # unit tests
 └── .github/copilot-instructions.md
 ```
@@ -99,6 +109,18 @@ Resolve the simulator name with `xcrun simctl list devices available` before har
   not. Keep verification simulator-based where possible.
 - **Home imagery is sensitive.** The API contract should state retention expectations, and uploads
   should be an explicit user action rather than continuous streaming.
+- **Language is explicit data.** Every generated description carries its BCP 47
+  language tag. Speech selects its voice from that tag rather than assuming the
+  current UI language.
+- **One preference controls the prototype.** The selected language applies to
+  UI, accessibility text, scene output, spoken feedback, and future voice
+  commands. `Follow iPhone` resolves to English or Mexican Spanish.
+- **Place labels are user data.** Preserve names exactly as entered; do not
+  translate a saved place label when the app language changes.
+- **No hard-coded user-facing strings.** Visible text, accessibility labels and
+  hints, errors, and privacy permission descriptions belong in String Catalogs.
+- **Bilingual validation is a phase gate.** Every phase after Phase 2 must pass
+  relevant tests in both English and Spanish before the next phase begins.
 
 ## Tasks
 
@@ -165,82 +187,132 @@ cancellation, retry policy, and a spoken failure message.
 switch between mock and live describer.
 *Done when:* no secret or hostname is committed and both modes are selectable.
 
+**T15 · language-domain** — Replace the single global output locale with
+`SupportedLanguage` (`en-US`, `es-MX`) and `LanguagePreference` (`followSystem`,
+English, Spanish). Add the resolved language tag to `SceneDescription`.
+*Done when:* locale resolution is unit tested, unsupported system languages use
+an explicit fallback, and generated text always identifies its language.
+
+**T16 · language-settings** — Add a VoiceOver-accessible language selector,
+persist it with `@AppStorage`, and inject the resolved language into UI and
+services.
+*Done when:* changing language updates the UI and the next description request
+and spoken response without relaunching the app.
+
+**T17 · string-catalogs** — Add `Localizable.xcstrings` and
+`InfoPlist.xcstrings`; migrate current visible strings, accessibility labels and
+hints, errors, status messages, and privacy permission descriptions into
+English and Mexican Spanish.
+*Done when:* the current capture and description surfaces contain no
+user-facing hard-coded language and both localizations render correctly.
+
+**T18 · bilingual-description** — Make mock descriptions and API prompts
+language-specific, send the resolved BCP 47 locale to the service, require the
+response to echo its language, and select the matching speech voice. Keep
+phrase pacing punctuation-based or language-aware without mixing language
+profiles.
+*Done when:* English text uses an English voice, Spanish text uses an `es-MX`
+voice, a missing voice produces a clear error, and both mocks pass tests.
+
+**T19 · bilingual-validation** — Add parameterized English/Spanish tests and
+run the Phase 2 physical-device matrix: UI switching, mock output, speech
+clarity, interruption, VoiceOver behavior, and Phase 1 regression.
+*Done when:* both languages pass on the physical iPhone. Phase 3 must not begin
+before this task is accepted.
+
 ### Phase 3 — Place memory
 
-**T15 · swiftdata-models** — `Place` (id, label, createdAt) and `PlaceSnapshot` (id, imageFilename,
+**T20 · swiftdata-models** — `Place` (id, label, createdAt) and `PlaceSnapshot` (id, imageFilename,
 embedding blob, capturedAt, coordinate, heading) with the relationship modelled.
 *Done when:* models persist and reload in tests.
 
-**T16 · embedder-protocol** — `ImageEmbedder` protocol plus `VisionFeaturePrintEmbedder`, storing
+**T21 · embedder-protocol** — `ImageEmbedder` protocol plus `VisionFeaturePrintEmbedder`, storing
 vectors as `Data`.
 *Done when:* tests show same-room fixtures score closer than different-room fixtures.
 
-**T17 · remember-place** — Enrollment flow: enter a label, capture several guided views, store
+**T22 · remember-place** — Enrollment flow: enter a label, capture several guided views, store
 snapshots with embeddings.
-*Done when:* a place with multiple snapshots is saved and listed.
+*Done when:* a place with multiple snapshots is saved and listed in both app
+languages without translating its user-provided label.
 
-**T18 · location-capture** — CoreLocation permission and attaching coordinate plus heading to each
+**T23 · location-capture** — CoreLocation permission and attaching coordinate plus heading to each
 snapshot, tolerating poor indoor accuracy.
 *Done when:* snapshots carry location data when available and save fine when not.
 
-**T19 · place-matcher** — Nearest-neighbour matching over stored embeddings with k-NN voting, a
+**T24 · place-matcher** — Nearest-neighbour matching over stored embeddings with k-NN voting, a
 confidence threshold, and an explicit uncertain result.
 *Done when:* tests cover confident match, wrong-room rejection, and below-threshold uncertainty.
 
-**T20 · where-am-i** — Wire "where am I": capture → embed → match → speak the label or uncertainty.
-*Done when:* flow answers correctly from fixtures and speaks the result.
+**T25 · where-am-i** — Wire “where am I?” / “¿dónde estoy?”: capture → embed
+→ match → speak the label or a localized uncertainty message.
+*Done when:* flow answers correctly from fixtures and speaks the result in the
+selected language.
 
-**T21 · gps-gating** — Use coarse location to filter or weight candidates, acknowledging GPS cannot
+**T26 · gps-gating** — Use coarse location to filter or weight candidates, acknowledging GPS cannot
 separate rooms within one house.
 *Done when:* matching restricts candidates by site without breaking indoor matching.
 
-**T22 · place-management** — Accessible UI to list, rename, add views to, and delete places.
-*Done when:* all operations work under VoiceOver.
+**T27 · place-management** — Localized, accessible UI to list, rename, add
+views to, and delete places.
+*Done when:* all operations work under VoiceOver in English and Spanish.
 
 ### Phase 4 — Operating modes
 
-**T23 · mode-state** — Inactive/Navigating state machine booting into Inactive, with distinct
-confirmation tones on transition and a clearly exposed current mode.
-*Done when:* mode is announced and visible, and always starts Inactive.
+**T28 · mode-state** — Inactive/Navigating state machine booting into
+Inactive, with distinct confirmation tones, localized mode names and
+announcements, and a clearly exposed current mode.
+*Done when:* mode is announced and visible in both languages, and always starts
+Inactive.
 
-**T24 · mode-gating** — Gate navigation-oriented behaviour and proximity feedback behind Navigating;
+**T29 · mode-gating** — Gate navigation-oriented behaviour and proximity feedback behind Navigating;
 guarantee silence in Inactive.
 *Done when:* tests prove no proximity output occurs while Inactive.
 
 ### Phase 5 — Voice commands
 
-**T25 · speech-recognition** — On-device `SFSpeechRecognizer` with permission handling, push-to-talk
-to avoid always-listening complexity.
-*Done when:* spoken audio transcribes on device.
+**T30 · speech-recognition** — On-device `SFSpeechRecognizer` using the
+selected locale, with permission handling and push-to-talk to avoid
+always-listening complexity.
+*Done when:* English and Spanish spoken audio transcribe on device.
 
-**T26 · command-parser** — Parse the four commands — describe, where am I, remember this as X, what
-is ahead — with tolerant matching and label extraction.
-*Done when:* tests cover phrasing variants and unrecognized input.
+**T31 · command-parser** — Parse the four commands in both languages:
+`describe` / `describe`, `where am I?` / `¿dónde estoy?`, `remember this as X`
+/ `recuerda este lugar como X`, and `what is ahead?` / `¿qué hay delante?`,
+with tolerant matching and label extraction.
+*Done when:* parameterized tests cover English and Spanish phrasing variants,
+label extraction, and unrecognized input.
 
-**T27 · voice-wiring** — Route parsed commands into the existing flows.
-*Done when:* each command triggers its flow by voice alone.
+**T32 · voice-wiring** — Route parsed commands into the existing flows while
+preserving the selected language through generated and spoken results.
+*Done when:* each command triggers its flow by voice alone in English and
+Spanish.
 
 ### Phase 6 — ESP32 boundary
 
-**T28 · ble-contract** — Write `docs/ble-contract.md`: service and characteristic UUIDs, distance and
+**T33 · ble-contract** — Write `docs/ble-contract.md`: service and characteristic UUIDs, distance and
 warning-state payloads, mode arming, and reconnection expectations, stating that the ESP32 alert path
 stays autonomous.
 *Done when:* the separate firmware repo can implement against it without further questions.
 
-**T29 · ble-central** — CoreBluetooth central that scans, connects, and subscribes, with a mock
-peripheral so it is testable without hardware, surfacing distance in a debug view.
-*Done when:* mock peripheral drives the debug view and disconnects degrade gracefully.
+**T34 · ble-central** — CoreBluetooth central that scans, connects, and
+subscribes, with a mock peripheral so it is testable without hardware,
+surfacing distance and connection status in a localized debug view.
+*Done when:* mock peripheral drives the debug view in both languages and
+disconnects degrade gracefully.
 
 ### Phase 7 — Evaluation
 
-**T30 · metrics-harness** — Log and export recognition accuracy across angles and lighting, false
-confident identifications, and end-to-end latency.
+**T35 · metrics-harness** — Log and export recognition accuracy across angles
+and lighting, false confident identifications, end-to-end latency, and selected
+language.
 *Done when:* a run produces an exportable results summary.
 
-**T31 · field-test** — Tune thresholds and proximity bands with the actual user and record findings.
-*Done when:* thresholds are updated from real observations, not defaults.
+**T36 · field-test** — Tune thresholds, language behavior, narration pacing,
+and proximity bands with the actual user and record findings.
+*Done when:* thresholds and language defaults are updated from real
+observations, not assumptions.
 
-**T32 · clip-fallback** *(conditional)* — Only if T30 shows poor recall: add a CLIP Core ML embedder
+**T37 · clip-fallback** *(conditional)* — Only if T35 shows poor recall: add a CLIP Core ML embedder
 behind `ImageEmbedder` and re-embed stored JPEGs in the background.
 *Done when:* both embedders are comparable on the same fixture set.
 
@@ -250,8 +322,11 @@ behind `ImageEmbedder` and re-embed stored JPEGs in the background.
   on a physical device.
 - One forward sonar misses thin, soft, angled, high/low obstacles, stairs, and drop-offs. iOS
   messaging must not imply full hazard coverage.
-- FeaturePrint degrades with large viewpoint and lighting changes; multi-view enrollment (T17) and
-  measurement (T30) are the planned mitigations, with T32 as the escape hatch.
+- FeaturePrint degrades with large viewpoint and lighting changes; multi-view enrollment (T22) and
+  measurement (T35) are the planned mitigations, with T37 as the escape hatch.
 - The vision API does not exist yet, so Phase 2 stays fully functional on the mock until T13.
+- Bilingual support is intentionally completed now: retrofitting after place,
+  mode, voice, BLE, and metrics work would multiply localization and regression
+  work across every later surface.
 - `project-faro.md` and `.github/copilot-instructions.md` should be updated whenever behaviour,
   architecture, or scope changes.
