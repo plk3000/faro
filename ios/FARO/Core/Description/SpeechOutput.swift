@@ -15,9 +15,26 @@ enum SpeechOutputError: Error, LocalizedError {
     }
 }
 
+struct SpeechOutputConfiguration: Equatable, Sendable {
+    static let accessibleDefault = SpeechOutputConfiguration(
+        rate: 0.4,
+        preUtteranceDelay: 0.08
+    )
+
+    let rate: Float
+    let preUtteranceDelay: TimeInterval
+}
+
 @MainActor
 final class SpeechOutput: NSObject, SpeechOutputProviding {
     private let synthesizer = AVSpeechSynthesizer()
+    private let configuration: SpeechOutputConfiguration
+
+    init(
+        configuration: SpeechOutputConfiguration = .accessibleDefault
+    ) {
+        self.configuration = configuration
+    }
 
     func speak(_ text: String) throws {
         stop()
@@ -43,7 +60,8 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
         }
 
         let utterance = AVSpeechUtterance(string: text)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        utterance.rate = configuration.rate
+        utterance.preUtteranceDelay = configuration.preUtteranceDelay
         synthesizer.speak(utterance)
     }
 
