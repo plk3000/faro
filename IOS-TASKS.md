@@ -6,7 +6,7 @@
 |---|---|
 | Phase 0 — Foundation | Complete |
 | Phase 1 — Image capture | Verified on physical device |
-| Phase 2 — Scene description | Bilingual implementation committed; awaiting physical-device validation |
+| Phase 2 — Scene description | Verified on physical device |
 | Phase 3 — Place memory | Not started |
 | Phase 4 — Operating modes | Not started |
 | Phase 5 — Voice commands | Not started |

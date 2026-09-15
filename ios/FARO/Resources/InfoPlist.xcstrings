@@ -1,34 +1,113 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "NSBluetoothAlwaysUsageDescription" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO connects to its optional ESP32 obstacle module." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO se conecta a su módulo opcional de obstáculos ESP32." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "FARO"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "FARO"
+          }
+        }
+      }
+    },
+    "NSBluetoothAlwaysUsageDescription" : {
+      "comment" : "Privacy - Bluetooth Always Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO connects to its optional ESP32 obstacle module."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO se conecta a su módulo opcional de obstáculos ESP32."
+          }
+        }
       }
     },
     "NSCameraUsageDescription" : {
+      "comment" : "Privacy - Camera Usage Description",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO uses the camera to describe nearby scenes and remember places you choose." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO usa la cámara para describir escenas cercanas y recordar los lugares que elijas." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO uses the camera to describe nearby scenes and remember places you choose."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO usa la cámara para describir escenas cercanas y recordar los lugares que elijas."
+          }
+        }
       }
     },
     "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "Privacy - Location When In Use Usage Description",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO uses coarse location to improve recognition of places you save." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO usa la ubicación aproximada para mejorar el reconocimiento de los lugares que guardas." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO uses coarse location to improve recognition of places you save."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO usa la ubicación aproximada para mejorar el reconocimiento de los lugares que guardas."
+          }
+        }
       }
     },
     "NSMicrophoneUsageDescription" : {
+      "comment" : "Privacy - Microphone Usage Description",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO uses the microphone while you hold the voice-command button." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO usa el micrófono mientras mantienes presionado el botón de comando de voz." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO uses the microphone while you hold the voice-command button."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO usa el micrófono mientras mantienes presionado el botón de comando de voz."
+          }
+        }
       }
     },
     "NSSpeechRecognitionUsageDescription" : {
+      "comment" : "Privacy - Speech Recognition Usage Description",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO transcribes commands such as describe and where am I." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO transcribe comandos como describe y dónde estoy." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO transcribes commands such as describe and where am I."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO transcribe comandos como describe y dónde estoy."
+          }
+        }
       }
     }
   },
