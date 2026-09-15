@@ -2,291 +2,819 @@
   "sourceLanguage" : "en",
   "strings" : {
     "action.addViews" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add views" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Agregar vistas" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add views"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agregar vistas"
+          }
+        }
       }
     },
     "action.cancel" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Cancelar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        }
       }
     },
     "action.capturePlaceView" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capture this view" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturar esta vista" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capture this view"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturar esta vista"
+          }
+        }
       }
     },
     "action.checkingPlace" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Checking..." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Comprobando..." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking..."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprobando..."
+          }
+        }
       }
     },
     "action.close" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Close" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Cerrar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
+          }
+        }
       }
     },
     "action.done" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Listo" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
+          }
+        }
       }
     },
     "action.ok" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Aceptar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        }
       }
     },
     "action.rememberPlace" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remember a place" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Recordar un lugar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remember a place"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordar un lugar"
+          }
+        }
       }
     },
     "action.rename" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Renombrar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renombrar"
+          }
+        }
       }
     },
     "action.save" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Guardar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar"
+          }
+        }
       }
     },
     "action.whereAmI" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Where am I?" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "¿Dónde estoy?" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where am I?"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Dónde estoy?"
+          }
+        }
       }
     },
     "error.embeddingIncompatible" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "The saved place uses an incompatible image model." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "El lugar guardado usa un modelo de imagen incompatible." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The saved place uses an incompatible image model."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El lugar guardado usa un modelo de imagen incompatible."
+          }
+        }
       }
     },
     "error.embeddingInvalid" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "A saved place image could not be analyzed." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo analizar una imagen guardada del lugar." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A saved place image could not be analyzed."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo analizar una imagen guardada del lugar."
+          }
+        }
       }
     },
     "error.noRememberedPlaces" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "No places have been remembered yet." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Todavía no hay lugares recordados." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No places have been remembered yet."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía no hay lugares recordados."
+          }
+        }
       }
     },
     "error.placeDelete" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not delete the place completely." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo eliminar el lugar por completo." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO could not delete the place completely."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO no pudo eliminar el lugar por completo."
+          }
+        }
       }
     },
     "error.placeMissingLabel" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a name for this place." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Escribe un nombre para este lugar." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a name for this place."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe un nombre para este lugar."
+          }
+        }
       }
     },
     "error.placeSave" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not save this place view." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo guardar esta vista del lugar." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO could not save this place view."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO no pudo guardar esta vista del lugar."
+          }
+        }
       }
     },
     "error.placeUpdate" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not update the place." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo actualizar el lugar." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO could not update the place."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO no pudo actualizar el lugar."
+          }
+        }
       }
     },
     "hint.capturePlaceView" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saves this camera angle for place recognition" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Guarda este ángulo de cámara para reconocer el lugar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves this camera angle for place recognition"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda este ángulo de cámara para reconocer el lugar"
+          }
+        }
       }
     },
     "hint.rememberedPlaces" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Lists and manages saved places" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Muestra y administra los lugares guardados" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lists and manages saved places"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muestra y administra los lugares guardados"
+          }
+        }
       }
     },
     "hint.rememberPlace" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Starts capturing several views of a named place" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Comienza a capturar varias vistas de un lugar con nombre" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts capturing several views of a named place"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comienza a capturar varias vistas de un lugar con nombre"
+          }
+        }
       }
     },
     "hint.whereAmI" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Captures an image and compares it with remembered places" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Captura una imagen y la compara con los lugares recordados" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captures an image and compares it with remembered places"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captura una imagen y la compara con los lugares recordados"
+          }
+        }
       }
     },
     "place.addViews.title" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add views" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Agregar vistas" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add views"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agregar vistas"
+          }
+        }
       }
     },
     "place.instruction.enough" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "You have enough views. More views can improve recognition." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Ya tienes suficientes vistas. Más vistas pueden mejorar el reconocimiento." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have enough views. More views can improve recognition."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya tienes suficientes vistas. Más vistas pueden mejorar el reconocimiento."
+          }
+        }
       }
     },
     "place.instruction.first" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Face the center of the place and capture the first view." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Apunta hacia el centro del lugar y captura la primera vista." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Face the center of the place and capture the first view."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apunta hacia el centro del lugar y captura la primera vista."
+          }
+        }
       }
     },
     "place.instruction.left" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Turn slightly left and capture another view." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Gira un poco a la izquierda y captura otra vista." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn slightly left and capture another view."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gira un poco a la izquierda y captura otra vista."
+          }
+        }
       }
     },
     "place.instruction.lighting" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capture one final view with different lighting if possible." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Si es posible, captura una última vista con iluminación diferente." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capture one final view with different lighting if possible."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si es posible, captura una última vista con iluminación diferente."
+          }
+        }
       }
     },
     "place.instruction.reverse" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Move to another part of the place and face back." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Muévete a otra parte del lugar y apunta hacia atrás." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to another part of the place and face back."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muévete a otra parte del lugar y apunta hacia atrás."
+          }
+        }
       }
     },
     "place.instruction.right" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Turn slightly right and capture another view." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Gira un poco a la derecha y captura otra vista." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn slightly right and capture another view."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gira un poco a la derecha y captura otra vista."
+          }
+        }
       }
     },
     "place.matched" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "You are in %@." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Estás en %@." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are in %@."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estás en %@."
+          }
+        }
       }
     },
     "place.name.label" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Place name" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Nombre del lugar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place name"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre del lugar"
+          }
+        }
       }
     },
     "place.name.placeholder" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "For example, kitchen" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Por ejemplo, cocina" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For example, kitchen"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por ejemplo, cocina"
+          }
+        }
       }
     },
     "place.remember.title" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remember a place" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Recordar un lugar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remember a place"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordar un lugar"
+          }
+        }
       }
     },
     "place.rename.title" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename place" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Renombrar lugar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename place"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renombrar lugar"
+          }
+        }
       }
     },
     "place.resultAccessibility" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Place result: %@" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Resultado del lugar: %@" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place result: %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resultado del lugar: %@"
+          }
+        }
       }
     },
     "place.uncertain" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "I'm not sure where you are." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No tengo certeza de dónde estás." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I'm not sure where you are."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No tengo certeza de dónde estás."
+          }
+        }
       }
     },
     "place.updateFailed.title" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Place update failed" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo actualizar el lugar" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place update failed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo actualizar el lugar"
+          }
+        }
       }
     },
     "place.views.count" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ saved views" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "%@ vistas guardadas" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ saved views"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ vistas guardadas"
+          }
+        }
       }
     },
     "place.views.progress" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ of %2$@ suggested views" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ de %2$@ vistas sugeridas" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of %2$@ suggested views"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ de %2$@ vistas sugeridas"
+          }
+        }
       }
     },
     "place.views.section" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Views" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Vistas" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Views"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vistas"
+          }
+        }
       }
     },
     "places.empty.description" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use Remember a place to save several camera views." } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Usa Recordar un lugar para guardar varias vistas de la cámara." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use Remember a place to save several camera views."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa Recordar un lugar para guardar varias vistas de la cámara."
+          }
+        }
       }
     },
     "places.empty.title" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "No remembered places" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No hay lugares recordados" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No remembered places"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay lugares recordados"
+          }
+        }
       }
     },
     "places.title" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remembered places" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Lugares recordados" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remembered places"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lugares recordados"
+          }
+        }
       }
     },
     "places.titleCount" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remembered places (%@)" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Lugares recordados (%@)" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remembered places (%@)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lugares recordados (%@)"
+          }
+        }
       }
     },
     "status.capturingPlaceView" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capturing a view of %@" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturando una vista de %@" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturing a view of %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturando una vista de %@"
+          }
+        }
       }
     },
     "status.checkingLocation" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Checking your location" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Comprobando tu ubicación" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking your location"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprobando tu ubicación"
+          }
+        }
       }
     },
     "status.placeRecognitionComplete" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Place recognition complete" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Reconocimiento del lugar completado" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place recognition complete"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconocimiento del lugar completado"
+          }
+        }
       }
     },
     "status.savedPlaceView" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved view %1$@ for %2$@" } },
-        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Vista %1$@ de %2$@ guardada" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved view %1$@ for %2$@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vista %1$@ de %2$@ guardada"
+          }
+        }
       }
     }
   },

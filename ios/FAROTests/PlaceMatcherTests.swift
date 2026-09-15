@@ -8,13 +8,12 @@ struct PlaceMatcherTests {
     private let bedroomID = UUID()
 
     @Test
-    func returnsConfidentNearestNeighborVote() throws {
+    func returnsConfidentNearestPlace() throws {
         let matcher = PlaceMatcher(
             embedder: embedder,
             policy: PlaceMatchingPolicy(
                 maximumDistance: 1,
-                minimumSeparation: 0.2,
-                neighborCount: 3
+                minimumSeparation: 0.2
             )
         )
         let candidates = [
@@ -50,8 +49,7 @@ struct PlaceMatcherTests {
             embedder: embedder,
             policy: PlaceMatchingPolicy(
                 maximumDistance: 0.25,
-                minimumSeparation: 0.1,
-                neighborCount: 3
+                minimumSeparation: 0.1
             )
         )
 
@@ -76,8 +74,7 @@ struct PlaceMatcherTests {
             embedder: embedder,
             policy: PlaceMatchingPolicy(
                 maximumDistance: 2,
-                minimumSeparation: 0.2,
-                neighborCount: 2
+                minimumSeparation: 0.2
             )
         )
 
@@ -102,13 +99,46 @@ struct PlaceMatcherTests {
     }
 
     @Test
+    func usesDistanceToResolveAOneViewVoteTie() throws {
+        let matcher = PlaceMatcher(
+            embedder: embedder,
+            policy: PlaceMatchingPolicy(
+                maximumDistance: 2,
+                minimumSeparation: 0.2
+            )
+        )
+
+        let result = try matcher.match(
+            query: embedding(0.1),
+            candidates: [
+                candidate(
+                    id: kitchenID,
+                    label: "Kitchen",
+                    values: [0]
+                ),
+                candidate(
+                    id: bedroomID,
+                    label: "Bedroom",
+                    values: [1.5]
+                )
+            ],
+            queryLocation: nil
+        )
+
+        guard case let .matched(match) = result else {
+            Issue.record("Expected the clearly closer place")
+            return
+        }
+        #expect(match.placeID == kitchenID)
+    }
+
+    @Test
     func gpsFiltersCandidatesBySiteNotRoom() throws {
         let matcher = PlaceMatcher(
             embedder: embedder,
             policy: PlaceMatchingPolicy(
                 maximumDistance: 2,
-                minimumSeparation: 0.2,
-                neighborCount: 3
+                minimumSeparation: 0.2
             ),
             gpsFilter: GPSCandidateFilter(siteRadiusMeters: 500)
         )
@@ -157,8 +187,7 @@ struct PlaceMatcherTests {
             embedder: embedder,
             policy: PlaceMatchingPolicy(
                 maximumDistance: 2,
-                minimumSeparation: 0.2,
-                neighborCount: 3
+                minimumSeparation: 0.2
             ),
             gpsFilter: GPSCandidateFilter(
                 siteRadiusMeters: 500,

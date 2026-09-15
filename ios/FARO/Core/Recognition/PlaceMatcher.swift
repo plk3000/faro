@@ -27,20 +27,17 @@ enum PlaceMatchResult: Equatable, Sendable {
 struct PlaceMatchingPolicy: Equatable, Sendable {
     let maximumDistance: Double
     let minimumSeparation: Double
-    let neighborCount: Int
 
     static func defaultPolicy(for modelIdentifier: String) -> Self {
         if modelIdentifier == PixelGridEmbedder.identifier {
             return Self(
                 maximumDistance: 3,
-                minimumSeparation: 0.35,
-                neighborCount: 3
+                minimumSeparation: 0.35
             )
         }
         return Self(
             maximumDistance: 10,
-            minimumSeparation: 0.75,
-            neighborCount: 3
+            minimumSeparation: 0.75
         )
     }
 }
@@ -149,38 +146,9 @@ struct PlaceMatcher: Sendable {
             }
         }
 
-        let nearest = Array(
-            neighbors
-                .sorted { $0.distance < $1.distance }
-                .prefix(max(1, policy.neighborCount))
-        )
-        guard !nearest.isEmpty else {
-            return .uncertain
-        }
-
-        let groups = Dictionary(grouping: nearest, by: \.placeID)
-        let ranking = groups.map { placeID, values in
-            (
-                placeID: placeID,
-                label: values[0].label,
-                votes: values.count,
-                mean: values.map(\.distance).reduce(0, +)
-                    / Double(values.count),
-                nearest: values.map(\.distance).min() ?? .infinity
-            )
-        }
-        .sorted {
-            if $0.votes != $1.votes {
-                return $0.votes > $1.votes
-            }
-            return $0.mean < $1.mean
-        }
-
-        guard let winner = ranking.first else {
-            return .uncertain
-        }
-        if ranking.count > 1,
-           ranking[1].votes == winner.votes {
+        guard let winner = neighbors.min(
+            by: { $0.distance < $1.distance }
+        ) else {
             return .uncertain
         }
 
@@ -189,20 +157,20 @@ struct PlaceMatcher: Sendable {
             .map(\.distance)
             .min()
         if let competingDistance,
-           competingDistance - winner.nearest
+           competingDistance - winner.distance
                 < policy.minimumSeparation {
             return .uncertain
         }
 
         let confidence = max(
             0,
-            min(1, 1 - winner.nearest / policy.maximumDistance)
+            min(1, 1 - winner.distance / policy.maximumDistance)
         )
         return .matched(
             PlaceMatch(
                 placeID: winner.placeID,
                 label: winner.label,
-                distance: winner.nearest,
+                distance: winner.distance,
                 confidence: confidence
             )
         )

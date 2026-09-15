@@ -239,8 +239,9 @@ languages without translating its user-provided label.
 snapshot, tolerating poor indoor accuracy.
 *Done when:* snapshots carry location data when available and save fine when not.
 
-**T24 · place-matcher** — Nearest-neighbour matching over stored embeddings with k-NN voting, a
-confidence threshold, and an explicit uncertain result.
+**T24 · place-matcher** — Nearest-neighbour matching over stored embeddings with
+an absolute distance threshold, cross-place separation requirement, and an
+explicit uncertain result.
 *Done when:* tests cover confident match, wrong-room rejection, and below-threshold uncertainty.
 
 **T25 · where-am-i** — Wire “where am I?” / “¿dónde estoy?”: capture → embed
