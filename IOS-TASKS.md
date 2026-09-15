@@ -100,9 +100,11 @@ Resolve the simulator name with `xcrun simctl list devices available` before har
   Without this, most of the app can only be exercised on a physical device.
 - **Recognition must survive network loss.** Descriptions come from a remote API, but place matching
   stays on-device so "where am I?" keeps answering when the API is unreachable.
-- **Embeddings are model-specific.** Vectors from different models are not comparable, so original
-  JPEGs are retained permanently. Swapping to CLIP later becomes a background re-embed rather than
-  re-photographing every room with a blind user.
+- **Embeddings are model-specific.** Representations from different models or
+  serialization formats are not comparable, so original JPEGs are retained
+  permanently. FARO automatically re-embeds retained views when the production
+  representation changes instead of asking a blind user to photograph every
+  room again.
 - **Uncertainty beats a confident guess.** False confident identification is an explicit metric in
   the concept doc; the matcher must have a threshold and an "I'm not sure" path from the start.
 - **Free provisioning expires.** Device builds need reprovisioning roughly weekly; simulator runs do
@@ -226,8 +228,9 @@ before this task is accepted.
 embedding blob, capturedAt, coordinate, heading) with the relationship modelled.
 *Done when:* models persist and reload in tests.
 
-**T21 · embedder-protocol** — `ImageEmbedder` protocol plus `VisionFeaturePrintEmbedder`, storing
-vectors as `Data`.
+**T21 · embedder-protocol** — `ImageEmbedder` protocol plus
+`VisionFeaturePrintEmbedder`, persisting the complete Codable FeaturePrint
+observation and comparing it with Vision's official distance API.
 *Done when:* tests show same-room fixtures score closer than different-room fixtures.
 
 **T22 · remember-place** — Enrollment flow: enter a label, capture several guided views, store
@@ -240,8 +243,9 @@ snapshot, tolerating poor indoor accuracy.
 *Done when:* snapshots carry location data when available and save fine when not.
 
 **T24 · place-matcher** — Nearest-neighbour matching over stored embeddings with
-an absolute distance threshold, cross-place separation requirement, and an
-explicit uncertain result.
+model-specific absolute distance and cross-place separation thresholds, plus an
+explicit uncertain result. A changed embedding representation automatically
+reprocesses retained JPEGs before matching.
 *Done when:* tests cover confident match, wrong-room rejection, and below-threshold uncertainty.
 
 **T25 · where-am-i** — Wire “where am I?” / “¿dónde estoy?”: capture → embed

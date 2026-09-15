@@ -69,6 +69,7 @@ struct PlaceWorkflowTests {
 
         await model.recognizePlace(
             in: place.map { [$0] } ?? [],
+            modelContext: resources.context,
             language: language
         )
 
@@ -187,6 +188,7 @@ struct PlaceWorkflowTests {
 
         await model.recognizePlace(
             in: [corruptedPlace, validPlace],
+            modelContext: resources.context,
             language: .englishUS
         )
 
@@ -202,6 +204,7 @@ struct PlaceWorkflowTests {
                 at: resources.directory
             )
         }
+
         let model = CaptureViewModel(
             imageSource: FixtureImageSource(
                 resourceNames: ["kitchen-a"]
@@ -248,6 +251,58 @@ struct PlaceWorkflowTests {
         )
     }
 
+    @Test
+    func reembedsLegacySnapshotsFromTheirSavedJPEGs() async throws {
+        let resources = try makeResources()
+        defer {
+            try? FileManager.default.removeItem(
+                at: resources.directory
+            )
+        }
+        let imageStore = ImageStore(directoryURL: resources.directory)
+        let source = FixtureImageSource(
+            resourceNames: ["kitchen-a", "kitchen-a"]
+        )
+        let enrollmentImage = try await source.capture()
+        let storedImage = try await imageStore.save(enrollmentImage)
+        let place = Place(label: "Kitchen")
+        place.snapshots.append(
+            PlaceSnapshot(
+                imageFilename: storedImage.filename,
+                embeddingData: Data(repeating: 0, count: 4),
+                embeddingModel: "legacy-embedding",
+                embeddingComponentType:
+                    ImageEmbedding.ComponentType.float32.rawValue,
+                embeddingComponentCount: 1
+            )
+        )
+        resources.context.insert(place)
+        try resources.context.save()
+
+        let model = CaptureViewModel(
+            imageSource: source,
+            imageStore: imageStore,
+            speechOutput: RecordingSpeechOutput(),
+            imageEmbedder: PixelGridEmbedder(),
+            locationProvider: FixedLocationProvider()
+        )
+
+        await model.recognizePlace(
+            in: [place],
+            modelContext: resources.context,
+            language: .englishUS
+        )
+
+        let migratedSnapshot = try #require(place.snapshots.first)
+        #expect(
+            migratedSnapshot.embeddingModel
+                == PixelGridEmbedder.identifier
+        )
+        #expect(migratedSnapshot.embeddingComponentCount == 256)
+        #expect(migratedSnapshot.embeddingData.count == 1_024)
+        #expect(model.latestPlaceResult?.text == "You are in Kitchen.")
+    }
+
     @Test(arguments: SupportedLanguage.allCases)
     func reportsNoSavedPlacesInTheSelectedLanguage(
         language: SupportedLanguage
@@ -266,7 +321,11 @@ struct PlaceWorkflowTests {
             locationProvider: FixedLocationProvider()
         )
 
-        await model.recognizePlace(in: [], language: language)
+        await model.recognizePlace(
+            in: [],
+            modelContext: resources.context,
+            language: language
+        )
 
         let expected = PlaceWorkflowError.noRememberedPlaces
             .appMessage

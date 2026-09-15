@@ -100,6 +100,13 @@ final class PlaceSnapshot {
         )
     }
 
+    func replaceEmbedding(with embedding: ImageEmbedding) {
+        embeddingData = embedding.payload
+        embeddingModel = embedding.modelIdentifier
+        embeddingComponentType = embedding.componentType.rawValue
+        embeddingComponentCount = embedding.componentCount
+    }
+
     var locationSnapshot: LocationSnapshot? {
         guard let latitude,
               let longitude,

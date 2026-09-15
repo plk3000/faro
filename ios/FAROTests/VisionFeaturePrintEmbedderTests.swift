@@ -3,6 +3,32 @@ import Testing
 @testable import FARO
 
 struct VisionFeaturePrintEmbedderTests {
+    @Test
+    func usesVersionedCodableObservationIdentifier() {
+        #expect(
+            VisionFeaturePrintEmbedder.identifier
+                == "apple-vision-feature-print-revision-2-codable-v1"
+        )
+    }
+
+    @Test
+    func rejectsRawVectorsTaggedAsCodableObservations() {
+        let embedder = VisionFeaturePrintEmbedder()
+        let rawVector = ImageEmbedding(
+            modelIdentifier: embedder.modelIdentifier,
+            payload: Data(repeating: 0, count: 4),
+            componentType: .float32,
+            componentCount: 1
+        )
+
+        #expect(throws: ImageEmbeddingError.invalidPayload) {
+            _ = try embedder.distance(
+                between: rawVector,
+                and: rawVector
+            )
+        }
+    }
+
 #if !targetEnvironment(simulator)
     @Test
     func similarViewsAreCloserThanDifferentRooms() async throws {

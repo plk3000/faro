@@ -43,8 +43,8 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
   - Context and narration: camera, phone sensors, and BLE telemetry -> iPhone recognition/narration -> speech.
 - Immediate warnings must never wait for the iPhone, BLE, or an AI model. BLE telemetry may enrich spoken context but is not the safety path.
 - Place learning captures several views, creates image embeddings, and stores them under a user-provided label. Recognition embeds the current frame, performs nearest-neighbour retrieval against saved examples, and names a place only above a confidence threshold; otherwise it reports uncertainty.
-- Place data uses SwiftData `Place` and `PlaceSnapshot` models. Keep original JPEGs alongside model-tagged embedding payloads so a future embedding change can reprocess saved views.
-- Use Vision FeaturePrint on physical devices. The deterministic `PixelGridEmbedder` is simulator-only test infrastructure and must not be treated as the production recognition model.
+- Place data uses SwiftData `Place` and `PlaceSnapshot` models. Keep original JPEGs alongside model-tagged embedding payloads and automatically re-embed retained views when the production representation identifier changes.
+- Use the complete Codable Vision FeaturePrint observation and Vision's official distance API on physical devices. The deterministic `PixelGridEmbedder` and its Euclidean distance are simulator-only test infrastructure and must not be treated as the production recognition model.
 - Use recent coarse GPS only to filter candidates by site. Recognition must continue without location access, and GPS must never be presented as room-level evidence.
 
 ## Behavioral invariants

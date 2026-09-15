@@ -253,6 +253,7 @@ final class CaptureViewModel {
 
     func recognizePlace(
         in places: [Place],
+        modelContext: ModelContext,
         language: SupportedLanguage
     ) async {
         guard !isBusy else {
@@ -274,6 +275,12 @@ final class CaptureViewModel {
         defer { isRecognizing = false }
 
         do {
+            try await migratePlaceEmbeddingsIfNeeded(
+                in: places,
+                modelContext: modelContext
+            )
+            statusMessage = AppMessage(.statusCheckingLocation)
+
             let image = try await imageSource.capture()
             latestImageData = image.data
             let query = try await imageEmbedder.embed(image)
@@ -416,6 +423,65 @@ final class CaptureViewModel {
         return candidates
     }
 
+    private func migratePlaceEmbeddingsIfNeeded(
+        in places: [Place],
+        modelContext: ModelContext
+    ) async throws {
+        let outdatedSnapshots = places
+            .flatMap(\.snapshots)
+            .filter {
+                $0.embeddingModel != imageEmbedder.modelIdentifier
+            }
+        guard !outdatedSnapshots.isEmpty else {
+            return
+        }
+
+        statusMessage = AppMessage(.statusUpdatingPlaceEmbeddings)
+        var updatedCount = 0
+        var failureCount = 0
+
+        for snapshot in outdatedSnapshots {
+            do {
+                let data = try await imageStore.load(
+                    filename: snapshot.imageFilename
+                )
+                let image = CapturedImage(
+                    data: data,
+                    format: .jpeg,
+                    capturedAt: snapshot.capturedAt
+                )
+                let embedding = try await imageEmbedder.embed(image)
+                snapshot.replaceEmbedding(with: embedding)
+                updatedCount += 1
+            } catch {
+                failureCount += 1
+            }
+        }
+
+        if updatedCount > 0 {
+            do {
+                try modelContext.save()
+            } catch {
+                modelContext.rollback()
+                throw PlaceWorkflowError.migrationFailed
+            }
+        }
+
+        if failureCount > 0 {
+            Self.logger.error(
+                "Failed to update \(failureCount) place embeddings"
+            )
+        }
+        let hasCurrentEmbedding = places
+            .flatMap(\.snapshots)
+            .contains {
+                $0.embeddingModel == imageEmbedder.modelIdentifier
+            }
+        if !hasCurrentEmbedding {
+            throw PlaceWorkflowError.migrationFailed
+        }
+    }
+
     private func report(
         _ error: any Error,
         language: SupportedLanguage,
@@ -461,6 +527,7 @@ enum PlaceWorkflowError:
     case updateFailed
     case deleteFailed
     case noRememberedPlaces
+    case migrationFailed
 
     var appMessage: AppMessage {
         switch self {
@@ -474,6 +541,8 @@ enum PlaceWorkflowError:
             AppMessage(.errorPlaceDelete)
         case .noRememberedPlaces:
             AppMessage(.errorNoRememberedPlaces)
+        case .migrationFailed:
+            AppMessage(.errorPlaceMigration)
         }
     }
 

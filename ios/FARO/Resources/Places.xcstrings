@@ -273,6 +273,22 @@
         }
       }
     },
+    "error.placeMigration" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO could not update the saved place images."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO no pudo actualizar las imágenes guardadas de los lugares."
+          }
+        }
+      }
+    },
     "error.placeSave" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -813,6 +829,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vista %1$@ de %2$@ guardada"
+          }
+        }
+      }
+    },
+    "status.updatingPlaceEmbeddings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updating saved place images"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizando las imágenes guardadas de los lugares"
           }
         }
       }

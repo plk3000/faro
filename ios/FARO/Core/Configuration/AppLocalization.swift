@@ -79,6 +79,7 @@ enum AppStringKey: String, CaseIterable, Sendable {
     case statusPlaceRecognitionComplete = "status.placeRecognitionComplete"
     case statusCapturingPlaceView = "status.capturingPlaceView"
     case statusSavedPlaceView = "status.savedPlaceView"
+    case statusUpdatingPlaceEmbeddings = "status.updatingPlaceEmbeddings"
     case errorGenericAction = "error.genericAction"
     case errorCameraUnavailable = "error.cameraUnavailable"
     case errorCameraPermission = "error.cameraPermission"
@@ -112,6 +113,7 @@ enum AppStringKey: String, CaseIterable, Sendable {
     case errorPlaceUpdate = "error.placeUpdate"
     case errorPlaceDelete = "error.placeDelete"
     case errorNoRememberedPlaces = "error.noRememberedPlaces"
+    case errorPlaceMigration = "error.placeMigration"
 
     var tableName: String? {
         switch self {
@@ -156,13 +158,15 @@ enum AppStringKey: String, CaseIterable, Sendable {
              .statusPlaceRecognitionComplete,
              .statusCapturingPlaceView,
              .statusSavedPlaceView,
+             .statusUpdatingPlaceEmbeddings,
              .errorEmbeddingIncompatible,
              .errorEmbeddingInvalid,
              .errorPlaceMissingLabel,
              .errorPlaceSave,
              .errorPlaceUpdate,
              .errorPlaceDelete,
-             .errorNoRememberedPlaces:
+             .errorNoRememberedPlaces,
+             .errorPlaceMigration:
             "Places"
         default:
             nil

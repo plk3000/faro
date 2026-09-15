@@ -3,7 +3,10 @@ import Foundation
 import Vision
 
 struct VisionFeaturePrintEmbedder: ImageEmbedder {
-    let modelIdentifier = "apple-vision-feature-print-revision-2"
+    static let identifier =
+        "apple-vision-feature-print-revision-2-codable-v1"
+
+    let modelIdentifier = Self.identifier
 
     func embed(_ image: CapturedImage) async throws -> ImageEmbedding {
         let handler = ImageRequestHandler(image.data)
@@ -21,7 +24,7 @@ struct VisionFeaturePrintEmbedder: ImageEmbedder {
         let observation = try await handler.perform(request)
         return ImageEmbedding(
             modelIdentifier: modelIdentifier,
-            payload: observation.data,
+            payload: try JSONEncoder().encode(observation),
             componentType: observation.elementType == .float
                 ? .float32
                 : .float64,
@@ -33,6 +36,28 @@ struct VisionFeaturePrintEmbedder: ImageEmbedder {
         between first: ImageEmbedding,
         and second: ImageEmbedding
     ) throws -> Double {
-        try first.distance(to: second, expectedModel: modelIdentifier)
+        guard first.modelIdentifier == modelIdentifier,
+              second.modelIdentifier == modelIdentifier,
+              first.componentType == second.componentType,
+              first.componentCount == second.componentCount else {
+            throw ImageEmbeddingError.incompatibleModels
+        }
+
+        do {
+            let decoder = JSONDecoder()
+            let firstObservation = try decoder.decode(
+                FeaturePrintObservation.self,
+                from: first.payload
+            )
+            let secondObservation = try decoder.decode(
+                FeaturePrintObservation.self,
+                from: second.payload
+            )
+            return try firstObservation.distance(to: secondObservation)
+        } catch let error as ImageEmbeddingError {
+            throw error
+        } catch {
+            throw ImageEmbeddingError.invalidPayload
+        }
     }
 }

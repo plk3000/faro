@@ -108,8 +108,13 @@ actor ImageStore {
     }
 
     func load(_ storedImage: StoredImage) throws -> Data {
+        try load(filename: storedImage.filename)
+    }
+
+    func load(filename: String) throws -> Data {
+        let url = directoryURL.appendingPathComponent(filename)
         do {
-            return try Data(contentsOf: storedImage.url)
+            return try Data(contentsOf: url)
         } catch {
             throw ImageStoreError.invalidImage
         }

@@ -8,6 +8,26 @@ struct PlaceMatcherTests {
     private let bedroomID = UUID()
 
     @Test
+    func defaultPoliciesMatchEachEmbeddingDistanceScale() {
+        #expect(
+            PlaceMatchingPolicy.defaultPolicy(
+                for: PixelGridEmbedder.identifier
+            ) == PlaceMatchingPolicy(
+                maximumDistance: 3,
+                minimumSeparation: 0.35
+            )
+        )
+        #expect(
+            PlaceMatchingPolicy.defaultPolicy(
+                for: VisionFeaturePrintEmbedder.identifier
+            ) == PlaceMatchingPolicy(
+                maximumDistance: 0.5,
+                minimumSeparation: 0.05
+            )
+        )
+    }
+
+    @Test
     func returnsConfidentNearestPlace() throws {
         let matcher = PlaceMatcher(
             embedder: embedder,

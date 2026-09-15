@@ -35,9 +35,15 @@ struct PlaceMatchingPolicy: Equatable, Sendable {
                 minimumSeparation: 0.35
             )
         }
+        if modelIdentifier == VisionFeaturePrintEmbedder.identifier {
+            return Self(
+                maximumDistance: 0.5,
+                minimumSeparation: 0.05
+            )
+        }
         return Self(
-            maximumDistance: 10,
-            minimumSeparation: 0.75
+            maximumDistance: 0.5,
+            minimumSeparation: 0.05
         )
     }
 }

@@ -3,6 +3,8 @@ import SwiftUI
 import UIKit
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
+
     @Query(sort: \Place.createdAt, order: .reverse)
     private var places: [Place]
 
@@ -98,6 +100,7 @@ struct ContentView: View {
             Task {
                 await captureModel.recognizePlace(
                     in: places,
+                    modelContext: modelContext,
                     language: language
                 )
             }
