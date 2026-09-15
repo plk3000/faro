@@ -57,5 +57,31 @@ struct LanguageSupportTests {
                 argument: "Hay una silla delante."
             ) == "Descripción de la escena: Hay una silla delante."
         )
+        #expect(
+            SupportedLanguage.englishUS.text(.actionWhereAmI)
+                == "Where am I?"
+        )
+        #expect(
+            SupportedLanguage.spanishMexico.text(.actionWhereAmI)
+                == "¿Dónde estoy?"
+        )
+        #expect(
+            SupportedLanguage.spanishMexico.text(
+                .statusSavedPlaceView,
+                arguments: ["2", "Cocina"]
+            ) == "Vista 2 de Cocina guardada"
+        )
+    }
+
+    @Test(arguments: SupportedLanguage.allCases)
+    func everyApplicationKeyExistsInTheSelectedCatalog(
+        language: SupportedLanguage
+    ) {
+        for key in AppStringKey.allCases {
+            #expect(
+                language.text(key) != key.rawValue,
+                "Missing \(language.rawValue) value for \(key.rawValue)"
+            )
+        }
     }
 }

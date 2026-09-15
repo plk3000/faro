@@ -1,0 +1,294 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "action.addViews" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add views" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Agregar vistas" } }
+      }
+    },
+    "action.cancel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Cancelar" } }
+      }
+    },
+    "action.capturePlaceView" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capture this view" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturar esta vista" } }
+      }
+    },
+    "action.checkingPlace" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Checking..." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Comprobando..." } }
+      }
+    },
+    "action.close" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Close" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Cerrar" } }
+      }
+    },
+    "action.done" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Listo" } }
+      }
+    },
+    "action.ok" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Aceptar" } }
+      }
+    },
+    "action.rememberPlace" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remember a place" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Recordar un lugar" } }
+      }
+    },
+    "action.rename" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Renombrar" } }
+      }
+    },
+    "action.save" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Guardar" } }
+      }
+    },
+    "action.whereAmI" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Where am I?" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "¿Dónde estoy?" } }
+      }
+    },
+    "error.embeddingIncompatible" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The saved place uses an incompatible image model." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "El lugar guardado usa un modelo de imagen incompatible." } }
+      }
+    },
+    "error.embeddingInvalid" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A saved place image could not be analyzed." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo analizar una imagen guardada del lugar." } }
+      }
+    },
+    "error.noRememberedPlaces" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No places have been remembered yet." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Todavía no hay lugares recordados." } }
+      }
+    },
+    "error.placeDelete" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not delete the place completely." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo eliminar el lugar por completo." } }
+      }
+    },
+    "error.placeMissingLabel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a name for this place." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Escribe un nombre para este lugar." } }
+      }
+    },
+    "error.placeSave" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not save this place view." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo guardar esta vista del lugar." } }
+      }
+    },
+    "error.placeUpdate" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "FARO could not update the place." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "FARO no pudo actualizar el lugar." } }
+      }
+    },
+    "hint.capturePlaceView" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saves this camera angle for place recognition" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Guarda este ángulo de cámara para reconocer el lugar" } }
+      }
+    },
+    "hint.rememberedPlaces" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Lists and manages saved places" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Muestra y administra los lugares guardados" } }
+      }
+    },
+    "hint.rememberPlace" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Starts capturing several views of a named place" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Comienza a capturar varias vistas de un lugar con nombre" } }
+      }
+    },
+    "hint.whereAmI" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Captures an image and compares it with remembered places" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Captura una imagen y la compara con los lugares recordados" } }
+      }
+    },
+    "place.addViews.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add views" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Agregar vistas" } }
+      }
+    },
+    "place.instruction.enough" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You have enough views. More views can improve recognition." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Ya tienes suficientes vistas. Más vistas pueden mejorar el reconocimiento." } }
+      }
+    },
+    "place.instruction.first" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Face the center of the place and capture the first view." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Apunta hacia el centro del lugar y captura la primera vista." } }
+      }
+    },
+    "place.instruction.left" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Turn slightly left and capture another view." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Gira un poco a la izquierda y captura otra vista." } }
+      }
+    },
+    "place.instruction.lighting" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capture one final view with different lighting if possible." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Si es posible, captura una última vista con iluminación diferente." } }
+      }
+    },
+    "place.instruction.reverse" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Move to another part of the place and face back." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Muévete a otra parte del lugar y apunta hacia atrás." } }
+      }
+    },
+    "place.instruction.right" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Turn slightly right and capture another view." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Gira un poco a la derecha y captura otra vista." } }
+      }
+    },
+    "place.matched" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You are in %@." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Estás en %@." } }
+      }
+    },
+    "place.name.label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Place name" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Nombre del lugar" } }
+      }
+    },
+    "place.name.placeholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "For example, kitchen" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Por ejemplo, cocina" } }
+      }
+    },
+    "place.remember.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remember a place" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Recordar un lugar" } }
+      }
+    },
+    "place.rename.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename place" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Renombrar lugar" } }
+      }
+    },
+    "place.resultAccessibility" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Place result: %@" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Resultado del lugar: %@" } }
+      }
+    },
+    "place.uncertain" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "I'm not sure where you are." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No tengo certeza de dónde estás." } }
+      }
+    },
+    "place.updateFailed.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Place update failed" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo actualizar el lugar" } }
+      }
+    },
+    "place.views.count" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ saved views" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "%@ vistas guardadas" } }
+      }
+    },
+    "place.views.progress" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ of %2$@ suggested views" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ de %2$@ vistas sugeridas" } }
+      }
+    },
+    "place.views.section" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Views" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Vistas" } }
+      }
+    },
+    "places.empty.description" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use Remember a place to save several camera views." } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Usa Recordar un lugar para guardar varias vistas de la cámara." } }
+      }
+    },
+    "places.empty.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No remembered places" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "No hay lugares recordados" } }
+      }
+    },
+    "places.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remembered places" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Lugares recordados" } }
+      }
+    },
+    "places.titleCount" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remembered places (%@)" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Lugares recordados (%@)" } }
+      }
+    },
+    "status.capturingPlaceView" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capturing a view of %@" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Capturando una vista de %@" } }
+      }
+    },
+    "status.checkingLocation" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Checking your location" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Comprobando tu ubicación" } }
+      }
+    },
+    "status.placeRecognitionComplete" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Place recognition complete" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Reconocimiento del lugar completado" } }
+      }
+    },
+    "status.savedPlaceView" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved view %1$@ for %2$@" } },
+        "es-MX" : { "stringUnit" : { "state" : "translated", "value" : "Vista %1$@ de %2$@ guardada" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

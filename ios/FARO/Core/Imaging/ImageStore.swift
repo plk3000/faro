@@ -115,6 +115,17 @@ actor ImageStore {
         }
     }
 
+    func delete(filename: String) throws {
+        let url = directoryURL.appendingPathComponent(filename)
+        do {
+            if fileManager.fileExists(atPath: url.path) {
+                try fileManager.removeItem(at: url)
+            }
+        } catch {
+            throw ImageStoreError.cannotWriteImage
+        }
+    }
+
     private func createDirectoryIfNeeded() throws {
         do {
             try fileManager.createDirectory(

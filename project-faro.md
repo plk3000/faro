@@ -67,7 +67,17 @@ When the user says “remember this as the kitchen,” FARO captures several vie
 
 Later, the current camera frame is converted into an embedding and compared with saved examples using nearest-neighbour retrieval. The system names the place only when confidence is high; otherwise it reports that the location is uncertain.
 
-Visual matching may eventually be fused with GPS, compass, accelerometer/gyroscope, known Wi-Fi networks, or BLE beacons.
+The iOS prototype stores places and their snapshots with SwiftData. Physical
+devices use Apple's Vision FeaturePrint embeddings; the simulator uses a
+deterministic pixel-grid embedding only so the complete workflow remains
+testable without camera or Vision hardware support. Original JPEGs are retained
+so saved places can be re-embedded if the model changes.
+
+Coarse, recent iPhone location fixes gate candidates by site but never attempt
+to distinguish rooms within one house. Visual matching remains authoritative,
+works without location permission, and reports uncertainty instead of guessing.
+Compass, accelerometer/gyroscope, known Wi-Fi networks, or BLE beacons may be
+evaluated later.
 
 ## FHL prototype architecture
 

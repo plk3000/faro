@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct FAROApp: App {
@@ -6,5 +7,6 @@ struct FAROApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [Place.self, PlaceSnapshot.self])
     }
 }
