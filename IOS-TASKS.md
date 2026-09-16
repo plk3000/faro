@@ -9,7 +9,7 @@
 | Phase 2 — Scene description | Verified on physical device |
 | Phase 3 — Place memory | Verified on physical device |
 | Phase 4 — Operating modes | Verified on physical device |
-| Phase 5 — Voice commands | Second validation fix implemented; awaiting physical-device retest |
+| Phase 5 — Voice commands | Verified on physical device |
 | Phase 6 — ESP32 boundary | Not started |
 | Phase 7 — Evaluation | Not started |
 
