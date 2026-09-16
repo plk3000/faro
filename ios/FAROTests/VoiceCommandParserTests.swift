@@ -44,6 +44,26 @@ struct VoiceCommandParserTests {
             "Recuerda este lugar como Cocina de José, por favor.",
             SupportedLanguage.spanishMexico,
             VoiceCommand.rememberPlace(label: "Cocina de José")
+        ),
+        (
+            "Hey FARO, start navigation.",
+            SupportedLanguage.englishUS,
+            VoiceCommand.startNavigating
+        ),
+        (
+            "Hola FARO, inicia navegación.",
+            SupportedLanguage.spanishMexico,
+            VoiceCommand.startNavigating
+        ),
+        (
+            "FARO, stop navigating.",
+            SupportedLanguage.englishUS,
+            VoiceCommand.stopNavigating
+        ),
+        (
+            "FARO, detén navegación.",
+            SupportedLanguage.spanishMexico,
+            VoiceCommand.stopNavigating
         )
     ])
     func parsesBilingualPhrasing(
@@ -78,6 +98,6 @@ struct VoiceCommandParserTests {
     func contextualPhrasesCoverEveryCommand(
         language: SupportedLanguage
     ) {
-        #expect(language.voiceCommandContextualStrings.count == 4)
+        #expect(language.voiceCommandContextualStrings.count == 6)
     }
 }

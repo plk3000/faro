@@ -22,6 +22,8 @@ final class RecordingSpeechOutput: SpeechOutputProviding {
     func stop() {
         stopCount += 1
     }
+
+    func waitUntilFinished() async {}
 }
 
 @MainActor

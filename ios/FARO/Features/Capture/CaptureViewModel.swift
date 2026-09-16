@@ -352,6 +352,10 @@ final class CaptureViewModel {
         speechOutput.stop()
     }
 
+    func waitForSpeechOutputToFinish() async {
+        await speechOutput.waitUntilFinished()
+    }
+
     func rename(
         _ place: Place,
         to label: String,

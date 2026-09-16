@@ -9,6 +9,7 @@ protocol SpeechRecognizing: AnyObject {
         language: SupportedLanguage,
         onTranscript: @escaping @MainActor (String) -> Void
     ) async throws
+    func waitForSpeechEndpoint() async throws
     func stop() async throws -> String
     func cancel()
 }
@@ -84,8 +85,8 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
             throw SpeechRecognitionError.alreadyListening
         }
 
-        try await authorizeSpeechRecognition()
-        try await authorizeMicrophone()
+        try await VoiceAuthorization.requireSpeechRecognition()
+        try await VoiceAuthorization.requireMicrophone()
 
         guard let recognizer = SFSpeechRecognizer(
             locale: language.locale
@@ -137,6 +138,7 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
                 ]
             )
             audioRecorder = recorder
+            recorder.isMeteringEnabled = true
             guard recorder.prepareToRecord(), recorder.record() else {
                 throw SpeechRecognitionError.audioInputUnavailable
             }
@@ -151,6 +153,30 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
             cancel()
             throw SpeechRecognitionError.audioInputUnavailable
         }
+    }
+
+    func waitForSpeechEndpoint() async throws {
+        guard isListening, let recorder = audioRecorder else {
+            throw SpeechRecognitionError.noSpeechDetected
+        }
+
+        var detector = SpeechEndpointDetector()
+        while isListening {
+            try await Task.sleep(
+                for: .seconds(detector.configuration.pollInterval)
+            )
+            try Task.checkCancellation()
+            guard recorder === audioRecorder else {
+                throw CancellationError()
+            }
+            recorder.updateMeters()
+            if detector.observe(
+                averagePower: recorder.averagePower(forChannel: 0)
+            ) {
+                return
+            }
+        }
+        throw CancellationError()
     }
 
     func stop() async throws -> String {
@@ -243,34 +269,6 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
         resetRecognitionState()
         removeRecordingWhenReleased(by: task)
         continuation?.resume(throwing: CancellationError())
-    }
-
-    private func authorizeSpeechRecognition() async throws {
-        let current = SFSpeechRecognizer.authorizationStatus()
-        let status: SFSpeechRecognizerAuthorizationStatus
-        if current == .notDetermined {
-            status = await withCheckedContinuation { continuation in
-                SFSpeechRecognizer.requestAuthorization {
-                    continuation.resume(returning: $0)
-                }
-            }
-        } else {
-            status = current
-        }
-        guard status == .authorized else {
-            throw SpeechRecognitionError.speechPermissionDenied
-        }
-    }
-
-    private func authorizeMicrophone() async throws {
-        let granted = await withCheckedContinuation { continuation in
-            AVAudioApplication.requestRecordPermission {
-                continuation.resume(returning: $0)
-            }
-        }
-        guard granted else {
-            throw SpeechRecognitionError.microphonePermissionDenied
-        }
     }
 
     private func deactivateRecordingAudioSession() {

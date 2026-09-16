@@ -49,6 +49,20 @@ private final class RecordingVoiceSession:
         events.values.append("voice.finish.\(language.rawValue)")
         return command
     }
+
+    func finishListeningAfterSpeechEndpoint(
+        language: SupportedLanguage,
+        onSpeechEndpoint: @MainActor () -> Void
+    ) async -> VoiceCommand? {
+        events.values.append(
+            "voice.endpoint.\(language.rawValue)"
+        )
+        onSpeechEndpoint()
+        events.values.append(
+            "voice.finish-automatically.\(language.rawValue)"
+        )
+        return command
+    }
 }
 
 @MainActor
@@ -140,5 +154,30 @@ struct VoiceInputCoordinatorTests {
         )
 
         #expect(command == nil)
+    }
+
+    @Test
+    func automaticEndpointFinishesBeforeCameraCaptureResumes() async {
+        let events = EventLog()
+        let coordinator = VoiceInputCoordinator(
+            camera: RecordingVoiceCamera(events: events),
+            voiceSession: RecordingVoiceSession(events: events)
+        )
+
+        let command = await coordinator.finishAutomatically(
+            language: .spanishMexico
+        ) {
+            events.values.append("hands-free.processing")
+        }
+
+        #expect(command == .describeScene)
+        #expect(
+            events.values == [
+                "voice.endpoint.es-MX",
+                "hands-free.processing",
+                "voice.finish-automatically.es-MX",
+                "camera.resume.es-MX"
+            ]
+        )
     }
 }

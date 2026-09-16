@@ -1316,13 +1316,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "That command was not recognized. Try describe, where am I, remember this as, or what is ahead."
+            "value" : "That command was not recognized. Try describe, where am I, remember this as, what is ahead, start navigation, or stop navigation."
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se reconoció ese comando. Prueba describe, dónde estoy, recuerda este lugar como o qué hay delante."
+            "value" : "No se reconoció ese comando. Prueba describe, dónde estoy, recuerda este lugar como, qué hay delante, inicia navegación o detén navegación."
           }
         }
       }
@@ -1340,6 +1340,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detiene la grabación y ejecuta el comando reconocido"
+          }
+        }
+      }
+    },
+    "hint.handsFree" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keeps the microphone active while FARO is in the foreground. Say Hey FARO or Hola FARO, wait for the tone, then speak a command."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantiene activo el micrófono mientras FARO está en primer plano. Di Hey FARO u Hola FARO, espera el tono y luego di un comando."
           }
         }
       }
@@ -1446,6 +1462,118 @@
         }
       }
     },
+    "status.handsFree.executing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running hands-free command"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutando el comando de manos libres"
+          }
+        }
+      }
+    },
+    "status.handsFree.listening" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening for Hey FARO or Hola FARO"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escuchando Hey FARO u Hola FARO"
+          }
+        }
+      }
+    },
+    "status.handsFree.off" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hands-Free is off"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manos libres está desactivado"
+          }
+        }
+      }
+    },
+    "status.handsFree.preparing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparing hands-free listening"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando la escucha de manos libres"
+          }
+        }
+      }
+    },
+    "status.handsFree.processing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recognizing hands-free command"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconociendo el comando de manos libres"
+          }
+        }
+      }
+    },
+    "status.handsFree.recording" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening for your command"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escuchando tu comando"
+          }
+        }
+      }
+    },
+    "status.handsFree.wakeDetected" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wake phrase heard"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frase de activación detectada"
+          }
+        }
+      }
+    },
     "voice.command.describe" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1476,6 +1604,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recordar lugar"
+          }
+        }
+      }
+    },
+    "voice.command.startNavigating" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start navigation"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar navegación"
+          }
+        }
+      }
+    },
+    "voice.command.stopNavigating" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop navigation"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener navegación"
           }
         }
       }
@@ -1514,19 +1674,51 @@
         }
       }
     },
+    "handsFree.instructions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable once. While FARO is open in the foreground, say Hey FARO or Hola FARO, wait for the tone, then speak a command."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa una vez. Mientras FARO esté abierto en primer plano, di Hey FARO u Hola FARO, espera el tono y después di un comando."
+          }
+        }
+      }
+    },
+    "handsFree.toggle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hands-Free"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manos libres"
+          }
+        }
+      }
+    },
     "voice.instructions" : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap once, say a command, then tap again. Try: describe; where am I; remember this as Kitchen; what is ahead."
+            "value" : "Tap once, say a command, then tap again. Try: describe; where am I; remember this as Kitchen; what is ahead; start navigation; stop navigation."
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toca una vez, di un comando y vuelve a tocar. Prueba: describe; dónde estoy; recuerda este lugar como Cocina; qué hay delante."
+            "value" : "Toca una vez, di un comando y vuelve a tocar. Prueba: describe; dónde estoy; recuerda este lugar como Cocina; qué hay delante; inicia navegación; detén navegación."
           }
         }
       }

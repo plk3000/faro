@@ -9,6 +9,7 @@ private final class StubSpeechRecognizer: SpeechRecognizing {
     var stopError: (any Error)?
     private(set) var startedLanguages: [SupportedLanguage] = []
     private(set) var cancelCount = 0
+    private(set) var endpointWaitCount = 0
 
     func start(
         language: SupportedLanguage,
@@ -21,6 +22,10 @@ private final class StubSpeechRecognizer: SpeechRecognizing {
         if !partialTranscript.isEmpty {
             onTranscript(partialTranscript)
         }
+    }
+
+    func waitForSpeechEndpoint() async throws {
+        endpointWaitCount += 1
     }
 
     func stop() async throws -> String {
@@ -140,5 +145,27 @@ struct VoiceCommandViewModelTests {
         #expect(command == nil)
         #expect(model.errorText(language: language) == expected)
         #expect(feedback.events.last?.message == expected)
+    }
+
+    @Test(arguments: SupportedLanguage.allCases)
+    func automaticRecordingWaitsForSpeechEndpoint(
+        language: SupportedLanguage
+    ) async {
+        let recognizer = StubSpeechRecognizer()
+        recognizer.finalTranscript = language == .englishUS
+            ? "describe"
+            : "describe"
+        let model = VoiceCommandViewModel(
+            recognizer: recognizer,
+            feedback: RecordingVoiceCommandFeedback()
+        )
+
+        await model.beginListening(language: language)
+        let command = await model.finishListeningAfterSpeechEndpoint(
+            language: language
+        )
+
+        #expect(command == .describeScene)
+        #expect(recognizer.endpointWaitCount == 1)
     }
 }

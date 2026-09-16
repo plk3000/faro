@@ -5,6 +5,8 @@ enum VoiceCommand: Equatable, Sendable {
     case whereAmI
     case rememberPlace(label: String)
     case whatIsAhead
+    case startNavigating
+    case stopNavigating
 
     var displayKey: AppStringKey {
         switch self {
@@ -16,6 +18,10 @@ enum VoiceCommand: Equatable, Sendable {
             .voiceCommandRememberPlace
         case .whatIsAhead:
             .voiceCommandWhatIsAhead
+        case .startNavigating:
+            .voiceCommandStartNavigating
+        case .stopNavigating:
+            .voiceCommandStopNavigating
         }
     }
 
@@ -23,7 +29,10 @@ enum VoiceCommand: Equatable, Sendable {
         switch self {
         case .whereAmI, .whatIsAhead:
             true
-        case .describeScene, .rememberPlace:
+        case .describeScene,
+             .rememberPlace,
+             .startNavigating,
+             .stopNavigating:
             false
         }
     }
@@ -60,14 +69,18 @@ extension SupportedLanguage {
                 "describe",
                 "where am I",
                 "remember this as",
-                "what is ahead"
+                "what is ahead",
+                "start navigation",
+                "stop navigation"
             ]
         case .spanishMexico:
             [
                 "describe",
                 "dónde estoy",
                 "recuerda este lugar como",
-                "qué hay delante"
+                "qué hay delante",
+                "inicia navegación",
+                "detén navegación"
             ]
         }
     }

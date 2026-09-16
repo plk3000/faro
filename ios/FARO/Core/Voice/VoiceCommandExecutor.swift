@@ -50,6 +50,21 @@ struct VoiceCommandExecutor {
             try requireNavigating()
             await captureModel.describe(language: language)
             return .completed
+
+        case .startNavigating:
+            modeController.transition(
+                to: .navigating,
+                language: language
+            )
+            return .completed
+
+        case .stopNavigating:
+            captureModel.stopNavigationOutput()
+            modeController.transition(
+                to: .inactive,
+                language: language
+            )
+            return .completed
         }
     }
 

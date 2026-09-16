@@ -8,6 +8,7 @@ protocol SpeechOutputProviding: AnyObject {
         language: SupportedLanguage
     ) throws
     func stop()
+    func waitUntilFinished() async
 }
 
 enum SpeechOutputError:
@@ -108,6 +109,7 @@ enum SpeechPhrasePacer {
 final class SpeechOutput: NSObject, SpeechOutputProviding {
     private let synthesizer = AVSpeechSynthesizer()
     private let configuration: SpeechOutputConfiguration
+    private var voiceOverOutputEndDate: Date?
 
     init(
         configuration: SpeechOutputConfiguration = .accessibleDefault
@@ -129,6 +131,12 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
         }
 
         if UIAccessibility.isVoiceOverRunning {
+            let wordCount = text.split(
+                whereSeparator: \.isWhitespace
+            ).count
+            voiceOverOutputEndDate = Date().addingTimeInterval(
+                max(1, Double(wordCount) * 0.55)
+            )
             let announcement = NSAttributedString(
                 string: SpeechPhrasePacer.voiceOverText(
                     from: text,
@@ -144,6 +152,7 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
             )
             return
         }
+        voiceOverOutputEndDate = nil
 
         do {
             let session = AVAudioSession.sharedInstance()
@@ -178,8 +187,28 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
     }
 
     func stop() {
+        voiceOverOutputEndDate = nil
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
+    }
+
+    func waitUntilFinished() async {
+        while synthesizer.isSpeaking {
+            do {
+                try await Task.sleep(for: .milliseconds(100))
+            } catch {
+                return
+            }
+        }
+        while let endDate = voiceOverOutputEndDate,
+              endDate > Date() {
+            do {
+                try await Task.sleep(for: .milliseconds(100))
+            } catch {
+                return
+            }
+        }
+        voiceOverOutputEndDate = nil
     }
 }

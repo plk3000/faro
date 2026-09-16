@@ -153,6 +153,14 @@ plays a ready tone and listens on-device for “Hey FARO” or “Hola FARO.” 
 phrase opens one bounded command window that ends automatically on silence or a
 timeout, then the listener re-arms.
 
+The foreground wake listener uses iOS 26 `SpeechAnalyzer` with a streaming
+`SpeechTranscriber`; `SpeechDetector` supplies on-device voice-activity gating.
+FARO resolves an equivalent supported locale at runtime and installs required
+speech assets locally. If the analyzer or selected locale is unavailable, FARO
+reports the limitation and leaves the explicit Start/Finish
+`SFSpeechRecognizer` path available instead of sending ambient audio to a
+service.
+
 FARO does not claim a custom wake phrase while suspended or terminated. It
 stops wake listening whenever it leaves the foreground, never sends ambient
 audio to a service, and suppresses detection while speaking so it cannot

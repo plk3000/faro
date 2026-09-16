@@ -1,16 +1,14 @@
 import Foundation
 
 struct VoiceCommandParser: Sendable {
-    private struct Token {
-        let original: String
-        let normalized: String
-    }
-
     func parse(
         _ transcript: String,
         language: SupportedLanguage
     ) -> VoiceCommand? {
-        var tokens = tokenize(transcript, language: language)
+        var tokens = VoiceTextNormalizer.tokens(
+            from: transcript,
+            language: language
+        )
         tokens = removeLeadingFillers(from: tokens, language: language)
         tokens = removeTrailingFillers(from: tokens, language: language)
         guard !tokens.isEmpty else {
@@ -25,6 +23,18 @@ struct VoiceCommandParser: Sendable {
         }
 
         let normalized = tokens.map(\.normalized)
+        if matches(
+            normalized,
+            patterns: stopNavigatingPatterns(for: language)
+        ) {
+            return .stopNavigating
+        }
+        if matches(
+            normalized,
+            patterns: startNavigatingPatterns(for: language)
+        ) {
+            return .startNavigating
+        }
         if matches(
             normalized,
             patterns: aheadPatterns(for: language)
@@ -47,7 +57,7 @@ struct VoiceCommandParser: Sendable {
     }
 
     private func rememberCommand(
-        from tokens: [Token],
+        from tokens: [VoiceToken],
         language: SupportedLanguage
     ) -> VoiceCommand? {
         let normalized = tokens.map(\.normalized)
@@ -65,44 +75,10 @@ struct VoiceCommandParser: Sendable {
         return nil
     }
 
-    private func tokenize(
-        _ transcript: String,
-        language: SupportedLanguage
-    ) -> [Token] {
-        transcript
-            .split(whereSeparator: \.isWhitespace)
-            .compactMap { substring in
-                let original = String(substring).trimmingCharacters(
-                    in: .punctuationCharacters.union(.symbols)
-                )
-                guard !original.isEmpty else {
-                    return nil
-                }
-                let folded = original.folding(
-                    options: [.caseInsensitive, .diacriticInsensitive],
-                    locale: language.locale
-                )
-                let scalars = folded.unicodeScalars.filter {
-                    !CharacterSet.punctuationCharacters.contains($0)
-                        && !CharacterSet.symbols.contains($0)
-                }
-                let normalized = String(
-                    String.UnicodeScalarView(scalars)
-                ).lowercased(with: language.locale)
-                guard !normalized.isEmpty else {
-                    return nil
-                }
-                return Token(
-                    original: original,
-                    normalized: normalized
-                )
-            }
-    }
-
     private func removeLeadingFillers(
-        from tokens: [Token],
+        from tokens: [VoiceToken],
         language: SupportedLanguage
-    ) -> [Token] {
+    ) -> [VoiceToken] {
         var result = tokens
         var removed = true
         while removed {
@@ -119,9 +95,9 @@ struct VoiceCommandParser: Sendable {
     }
 
     private func removeTrailingFillers(
-        from tokens: [Token],
+        from tokens: [VoiceToken],
         language: SupportedLanguage
-    ) -> [Token] {
+    ) -> [VoiceToken] {
         var result = tokens
         var removed = true
         while removed {
@@ -152,6 +128,7 @@ struct VoiceCommandParser: Sendable {
         case .englishUS:
             [
                 ["hey", "faro"],
+                ["hola", "faro"],
                 ["faro"],
                 ["please"],
                 ["can", "you"],
@@ -160,6 +137,9 @@ struct VoiceCommandParser: Sendable {
             ]
         case .spanishMexico:
             [
+                ["hola", "faro"],
+                ["hey", "faro"],
+                ["ey", "faro"],
                 ["oye", "faro"],
                 ["faro"],
                 ["por", "favor"],
@@ -252,6 +232,46 @@ struct VoiceCommandParser: Sendable {
                 ["recuerda", "este", "lugar", "como"],
                 ["recuerda", "esta", "ubicacion", "como"],
                 ["recuerda", "esto", "como"]
+            ]
+        }
+    }
+
+    private func startNavigatingPatterns(
+        for language: SupportedLanguage
+    ) -> [[String]] {
+        switch language {
+        case .englishUS:
+            [
+                ["start", "navigation"],
+                ["start", "navigating"],
+                ["begin", "navigation"]
+            ]
+        case .spanishMexico:
+            [
+                ["inicia", "navegacion"],
+                ["iniciar", "navegacion"],
+                ["empieza", "a", "navegar"],
+                ["comienza", "la", "navegacion"]
+            ]
+        }
+    }
+
+    private func stopNavigatingPatterns(
+        for language: SupportedLanguage
+    ) -> [[String]] {
+        switch language {
+        case .englishUS:
+            [
+                ["stop", "navigation"],
+                ["stop", "navigating"],
+                ["end", "navigation"]
+            ]
+        case .spanishMexico:
+            [
+                ["deten", "navegacion"],
+                ["detener", "navegacion"],
+                ["para", "la", "navegacion"],
+                ["deja", "de", "navegar"]
             ]
         }
     }

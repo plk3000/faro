@@ -9,7 +9,7 @@
 | Phase 2 — Scene description | Verified on physical device |
 | Phase 3 — Place memory | Verified on physical device |
 | Phase 4 — Operating modes | Verified on physical device |
-| Phase 5 — Voice commands | Core flow verified; hands-free extension planned |
+| Phase 5 — Voice commands | Hands-free implemented; physical validation pending |
 | Phase 6 — ESP32 boundary | Not started |
 | Phase 7 — Evaluation | Not started |
 
@@ -314,6 +314,9 @@ operating mode.
 ready tone confirms wake listening without a screen tap; disabling Hands-Free
 stops microphone use.
 
+*Implementation status:* Complete in code and simulator tests; physical
+acceptance remains part of T38.
+
 **T34 · wake-engine-spike** — Define a `WakePhraseDetecting` boundary and
 compare viable fully on-device engines for “Hey FARO” and “Hola FARO,” including
 iOS 26 Speech APIs, a native custom sound model, and a dedicated keyword engine.
@@ -322,6 +325,13 @@ licensing, and support for both phrases. Do not send ambient audio to a service
 or retain it as user content.
 *Done when:* the selected engine and fallback are recorded with physical-device
 evidence, and fixture audio can drive the protocol in tests.
+
+*Implementation status:* `SpeechAnalyzer` with a streaming `SpeechTranscriber`
+is selected for phrase recognition, with `SpeechDetector` providing on-device
+voice-activity gating. FARO checks runtime/locale support and installs the
+required local assets. If unavailable, it reports a localized error and keeps
+the verified bounded `SFSpeechRecognizer` Start/Finish path as the fallback.
+Latency, energy, and false-activation measurements remain part of T38.
 
 **T35 · wake-phrase-listener** — Implement the selected detector while
 Hands-Free is armed. Debounce duplicate detections, ignore FARO's own tones and
@@ -333,6 +343,9 @@ Navigating by voice.
 room noise, ordinary conversation does not trigger, FARO never triggers itself,
 and backgrounding the app stops listening.
 
+*Implementation status:* Complete in code and simulator tests; acoustic and
+background lifecycle behavior awaits T38.
+
 **T36 · automatic-command-window** — After a wake phrase, play a distinct
 acknowledgement tone, capture the next utterance, and finish automatically on
 silence or a bounded timeout. Transcribe on-device, route through the existing
@@ -340,6 +353,9 @@ parser/executor, then re-arm the wake listener after success or a localized
 error. Keep the audio handoff serialized and never restart the camera session.
 *Done when:* after opening FARO, all existing English and Spanish commands can
 complete repeatedly without Start or Finish taps.
+
+*Implementation status:* Complete in code and simulator tests; silence levels
+and repeated camera/microphone handoffs await T38.
 
 **T37 · voice-mode-control** — Add bilingual `start navigation` / `inicia
 navegación` and `stop navigation` / `detén navegación` commands. Route them
@@ -350,6 +366,9 @@ speech immediately.
 → stop navigation workflow requires no touch and preserves every mode-gating
 test.
 
+*Implementation status:* Complete in code and simulator tests; end-to-end
+hands-free acceptance awaits T38.
+
 **T38 · hands-free-validation** — Run the physical-device matrix: Siri audio
 handoff, both wake phrases and languages, first-run permissions, repeated
 wake/command cycles, camera regression, Bluetooth audio routes, interruptions,
@@ -359,6 +378,8 @@ activation while FARO is suspended or terminated remains explicitly out of
 scope.
 *Done when:* the hands-free flow is accepted on the physical iPhone and its
 measured limitations are documented before Phase 6 begins.
+
+*Status:* Pending physical-device validation.
 
 ### Phase 6 — ESP32 boundary
 

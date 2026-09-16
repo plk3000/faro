@@ -79,10 +79,14 @@ struct VoiceCommandExecutorTests {
         #expect(place.label == "Cocina de José")
         #expect(place.snapshots.count == 1)
 
-        modeController.transition(
-            to: .navigating,
+        _ = try await executor.execute(
+            .startNavigating,
+            places: [place],
+            modelContext: resources.context,
             language: language
         )
+        #expect(modeController.currentMode == .navigating)
+
         _ = try await executor.execute(
             .whereAmI,
             places: [place],
@@ -106,6 +110,14 @@ struct VoiceCommandExecutorTests {
         )
         #expect(captureModel.latestDescription?.language == language)
         #expect(speech.spoken.last?.language == language)
+
+        _ = try await executor.execute(
+            .stopNavigating,
+            places: [place],
+            modelContext: resources.context,
+            language: language
+        )
+        #expect(modeController.currentMode == .inactive)
     }
 
     @Test(arguments: [

@@ -14,12 +14,15 @@ FARO is an iOS-first assistive prototype. The iPhone app currently supports:
 - mock and HTTP-backed scene descriptions;
 - on-device visual place enrollment and recognition;
 - explicit Inactive and Navigating operating modes;
-- four bilingual voice commands using Start and Finish controls.
+- six bilingual voice commands using manual or hands-free capture.
 
 The physically verified voice flow keeps the video-only camera session running,
 records one short command to a temporary local file, releases the microphone,
 and then performs on-device transcription. The Phase 5 hands-free extension is
-planned but not implemented yet. See T33-T38 in `IOS-TASKS.md`.
+implemented and awaiting physical-device validation: after a persisted opt-in,
+Siri can foreground FARO, and FARO listens on-device for "Hey FARO" or "Hola
+FARO" before opening one automatic command window. See T33-T38 in
+`IOS-TASKS.md`.
 
 The ESP32 firmware is intentionally maintained in a separate repository. This
 repository will only define and implement the iOS side of the BLE boundary.
@@ -121,6 +124,11 @@ those surfaces requires a physical-device run.
 5. Run the `FARO` scheme.
 6. Grant camera, location, microphone, and speech-recognition permissions when
    the relevant feature is tested.
+
+For the hands-free flow, enable **Hands-Free** once and allow any requested
+speech-asset download. Close or background FARO, say "Siri, open FARO," wait
+for the ready tone, say "Hey FARO" or "Hola FARO," wait for the acknowledgement
+tone, and then say one command. Confirm that backgrounding FARO stops listening.
 
 The generated project has an empty `DEVELOPMENT_TEAM`. Selecting a team in
 Xcode changes only the ignored generated project, so you may need to select it
@@ -224,10 +232,15 @@ FARO/
 - `VoiceCommandExecutor` routes commands into existing capture and place flows.
 - `OnDeviceSpeechRecognizer` records a bounded temporary file and transcribes
   it after releasing the microphone.
+- `OnDeviceWakePhraseDetector` streams foreground microphone buffers through
+  iOS 26 `SpeechAnalyzer`, `SpeechTranscriber`, and `SpeechDetector`.
+- `HandsFreeVoiceViewModel` owns persisted opt-in activation, Siri audio-handoff
+  retries, wake feedback, and listening state.
 - `VoiceInputCoordinator` serializes command capture and still-photo access.
 - "Where am I?" and "What is ahead?" require Navigating mode.
-- Manual Start and Finish controls remain the validated fallback while
-  hands-free tasks T33-T38 are developed.
+- "Start navigation" and "Stop navigation" provide bilingual voice mode
+  control.
+- Manual Start and Finish controls remain the physically validated fallback.
 
 ## Camera and audio invariants
 
@@ -244,8 +257,9 @@ these rules:
    input.
 7. Test repeated camera and microphone transitions on a physical iPhone.
 
-The planned hands-free detector must obey the same rules. It must also stop
-when FARO leaves the foreground and ignore FARO's own tones and spoken output.
+The hands-free detector follows the same rules. It releases the microphone
+before the bounded file recorder starts, remains disarmed while FARO speaks,
+and stops when FARO leaves the foreground.
 
 ## Localization and accessibility
 
@@ -284,8 +298,8 @@ than assuming the current system voice.
   mode; FARO does not stream camera frames to the service.
 - Saved place JPEGs and embeddings stay in the app container.
 - Voice-command recordings are temporary and deleted after transcription.
-- Future wake-phrase audio must remain on-device and must not be retained as
-  user content.
+- Wake-phrase audio remains inside the on-device Speech framework and is not
+  retained as user content.
 - Never log authorization tokens, image contents, or private place data.
 
 Deleting the app from a simulator or device clears its SwiftData store,

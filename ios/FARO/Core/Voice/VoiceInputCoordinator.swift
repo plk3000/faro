@@ -18,6 +18,11 @@ protocol VoiceCommandSessionControlling: AnyObject {
     func finishListening(
         language: SupportedLanguage
     ) async -> VoiceCommand?
+
+    func finishListeningAfterSpeechEndpoint(
+        language: SupportedLanguage,
+        onSpeechEndpoint: @MainActor () -> Void
+    ) async -> VoiceCommand?
 }
 
 extension VoiceCommandViewModel: VoiceCommandSessionControlling {}
@@ -50,6 +55,22 @@ struct VoiceInputCoordinator {
         let cameraReady = await camera.resumeCameraCaptureAfterVoiceInput(
             language: language
         )
+        return cameraReady ? command : nil
+    }
+
+    func finishAutomatically(
+        language: SupportedLanguage,
+        onSpeechEndpoint: @MainActor () -> Void = {}
+    ) async -> VoiceCommand? {
+        let command =
+            await voiceSession.finishListeningAfterSpeechEndpoint(
+                language: language,
+                onSpeechEndpoint: onSpeechEndpoint
+            )
+        let cameraReady =
+            await camera.resumeCameraCaptureAfterVoiceInput(
+                language: language
+            )
         return cameraReady ? command : nil
     }
 }

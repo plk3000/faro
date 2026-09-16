@@ -143,6 +143,29 @@ final class VoiceCommandViewModel {
         }
     }
 
+    func finishListeningAfterSpeechEndpoint(
+        language: SupportedLanguage,
+        onSpeechEndpoint: @MainActor () -> Void = {}
+    ) async -> VoiceCommand? {
+        guard isListening else {
+            return nil
+        }
+        do {
+            try await recognizer.waitForSpeechEndpoint()
+        } catch is CancellationError {
+            cancel()
+            return nil
+        } catch {
+            recognizer.cancel()
+            isListening = false
+            activeRequestID = nil
+            report(error, language: language)
+            return nil
+        }
+        onSpeechEndpoint()
+        return await finishListening(language: language)
+    }
+
     func reportExecutionError(
         _ error: any Error,
         language: SupportedLanguage

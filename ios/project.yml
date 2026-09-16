@@ -36,8 +36,8 @@ targets:
         UILaunchScreen: {}
         NSCameraUsageDescription: FARO uses the camera to describe nearby scenes and remember places you choose.
         NSLocationWhenInUseUsageDescription: FARO uses coarse location to improve recognition of places you save.
-        NSMicrophoneUsageDescription: FARO uses the microphone during a voice-command recording.
-        NSSpeechRecognitionUsageDescription: FARO transcribes commands such as describe and where am I.
+        NSMicrophoneUsageDescription: FARO uses the microphone for foreground wake phrases and voice-command recording.
+        NSSpeechRecognitionUsageDescription: FARO recognizes on-device wake phrases and transcribes commands such as describe and where am I.
         NSBluetoothAlwaysUsageDescription: FARO connects to its optional ESP32 obstacle module.
         FAROVisionMode: $(FARO_VISION_MODE)
         FAROVisionBaseURL: $(FARO_VISION_BASE_URL)
