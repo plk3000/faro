@@ -58,9 +58,12 @@ final class VoiceCommandViewModel {
         isPreparing || isListening || isProcessing
     }
 
-    func beginListening(language: SupportedLanguage) async {
+    @discardableResult
+    func beginListening(
+        language: SupportedLanguage
+    ) async -> Bool {
         guard !isActive else {
-            return
+            return false
         }
 
         isPreparing = true
@@ -79,16 +82,18 @@ final class VoiceCommandViewModel {
             }
             guard activeRequestID == requestID else {
                 recognizer.cancel()
-                return
+                return false
             }
             isListening = true
             statusMessage = AppMessage(.statusVoiceListening)
+            return true
         } catch {
             guard activeRequestID == requestID else {
-                return
+                return false
             }
             activeRequestID = nil
             report(error, language: language)
+            return false
         }
     }
 

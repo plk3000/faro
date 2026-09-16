@@ -16,10 +16,21 @@ final class CameraImageSource:
     private let continuationLock = NSLock()
 
     private var isConfigured = false
+    private var isPausedForVoiceInput = false
     private var captureContinuation:
         CheckedContinuation<CapturedImage, Error>?
 
     func prepare() async throws {
+        try await prepareCamera(resumingVoiceInput: false)
+    }
+
+    func resume() async throws {
+        try await prepareCamera(resumingVoiceInput: true)
+    }
+
+    private func prepareCamera(
+        resumingVoiceInput: Bool
+    ) async throws {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         switch status {
         case .authorized:
@@ -38,7 +49,10 @@ final class CameraImageSource:
             sessionQueue.async { [self] in
                 do {
                     try configureIfNeeded()
-                    if !session.isRunning {
+                    if resumingVoiceInput {
+                        isPausedForVoiceInput = false
+                    }
+                    if !isPausedForVoiceInput, !session.isRunning {
                         session.startRunning()
                     }
                     continuation.resume()
@@ -54,6 +68,12 @@ final class CameraImageSource:
 
         return try await withCheckedThrowingContinuation { continuation in
             sessionQueue.async { [self] in
+                guard !isPausedForVoiceInput, session.isRunning else {
+                    continuation.resume(
+                        throwing: ImageSourceError.captureFailed
+                    )
+                    return
+                }
                 let accepted = continuationLock.withLock {
                     guard captureContinuation == nil else {
                         return false
@@ -81,10 +101,14 @@ final class CameraImageSource:
         }
     }
 
-    func stop() {
-        sessionQueue.async { [session] in
-            if session.isRunning {
-                session.stopRunning()
+    func pause() async {
+        await withCheckedContinuation { continuation in
+            sessionQueue.async { [self] in
+                isPausedForVoiceInput = true
+                if session.isRunning {
+                    session.stopRunning()
+                }
+                continuation.resume()
             }
         }
     }
@@ -112,6 +136,7 @@ final class CameraImageSource:
         defer { session.commitConfiguration() }
 
         session.sessionPreset = .photo
+        session.automaticallyConfiguresApplicationAudioSession = false
         guard session.canAddInput(input),
               session.canAddOutput(photoOutput) else {
             throw ImageSourceError.configurationFailed

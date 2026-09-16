@@ -69,6 +69,11 @@ struct ContentView: View {
                 navigationTask?.cancel()
                 voiceCommandTask?.cancel()
                 voiceModel.cancel()
+                Task {
+                    await captureModel.resumeCameraAfterVoiceInput(
+                        language: language
+                    )
+                }
             }
         }
         .environment(\.locale, language.locale)
@@ -466,20 +471,9 @@ struct ContentView: View {
 
             Button {
                 if voiceModel.isListening {
-                    Task {
-                        if let command = await voiceModel.finishListening(
-                            language: language
-                        ) {
-                            executeVoiceCommand(command)
-                        }
-                    }
+                    finishVoiceCommand()
                 } else {
-                    captureModel.stopNavigationOutput()
-                    Task {
-                        await voiceModel.beginListening(
-                            language: language
-                        )
-                    }
+                    beginVoiceCommand()
                 }
             } label: {
                 Label(
@@ -513,6 +507,30 @@ struct ContentView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func beginVoiceCommand() {
+        captureModel.stopNavigationOutput()
+        Task {
+            await VoiceInputCoordinator(
+                camera: captureModel,
+                voiceSession: voiceModel
+            ).begin(
+                language: language
+            )
+        }
+    }
+
+    private func finishVoiceCommand() {
+        Task {
+            let command = await VoiceInputCoordinator(
+                camera: captureModel,
+                voiceSession: voiceModel
+            ).finish(language: language)
+            if let command {
+                executeVoiceCommand(command)
+            }
+        }
     }
 
     private func executeVoiceCommand(_ command: VoiceCommand) {

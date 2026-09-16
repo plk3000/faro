@@ -101,6 +101,26 @@ final class CaptureViewModel {
         locationProvider.start()
     }
 
+    func pauseCameraForVoiceInput() async {
+        await cameraSource?.pause()
+    }
+
+    @discardableResult
+    func resumeCameraAfterVoiceInput(
+        language: SupportedLanguage
+    ) async -> Bool {
+        guard let cameraSource else {
+            return true
+        }
+        do {
+            try await cameraSource.resume()
+            return true
+        } catch {
+            report(error, language: language)
+            return false
+        }
+    }
+
     func capture(language: SupportedLanguage) async {
         guard !isBusy else {
             return
