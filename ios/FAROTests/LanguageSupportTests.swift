@@ -71,6 +71,19 @@ struct LanguageSupportTests {
                 arguments: ["2", "Cocina"]
             ) == "Vista 2 de Cocina guardada"
         )
+        #expect(
+            SupportedLanguage.englishUS.text(.modeNavigating)
+                == "Navigating"
+        )
+        #expect(
+            SupportedLanguage.spanishMexico.text(.modeNavigating)
+                == "Navegando"
+        )
+        #expect(
+            SupportedLanguage.spanishMexico.text(
+                .actionStartNavigating
+            ) == "Iniciar navegación"
+        )
     }
 
     @Test(arguments: SupportedLanguage.allCases)

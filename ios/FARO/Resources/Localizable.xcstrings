@@ -69,6 +69,40 @@
         }
       }
     },
+    "action.startNavigating" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start navigating"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar navegación"
+          }
+        }
+      }
+    },
+    "action.stopNavigating" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop navigating"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener navegación"
+          }
+        }
+      }
+    },
     "error.audioUnavailable" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -545,6 +579,57 @@
         }
       }
     },
+    "hint.startNavigating" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enables navigation context and allows proximity feedback"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa el contexto de navegación y permite avisos de proximidad"
+          }
+        }
+      }
+    },
+    "hint.stopNavigating" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disables navigation context and keeps proximity feedback silent"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactiva el contexto de navegación y silencia los avisos de proximidad"
+          }
+        }
+      }
+    },
+    "hint.whereAmIRequiresNavigating" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Navigating mode to use place recognition"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa el modo Navegando para usar el reconocimiento de lugares"
+          }
+        }
+      }
+    },
     "language.englishUS" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -630,6 +715,23 @@
         }
       }
     },
+    "mode.currentNavigating" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current mode: Navigating"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo actual: Navegando"
+          }
+        }
+      }
+    },
     "mode.inactive" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -647,6 +749,23 @@
         }
       }
     },
+    "mode.inactiveEnabled" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inactive mode on"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo Inactivo activado"
+          }
+        }
+      }
+    },
     "mode.label" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -660,6 +779,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modo"
+          }
+        }
+      }
+    },
+    "mode.navigating" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Navigating"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Navegando"
+          }
+        }
+      }
+    },
+    "mode.navigatingEnabled" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Navigating mode on"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo Navegando activado"
           }
         }
       }

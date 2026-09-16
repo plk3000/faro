@@ -279,11 +279,14 @@ final class CaptureViewModel {
                 in: places,
                 modelContext: modelContext
             )
+            try Task.checkCancellation()
             statusMessage = AppMessage(.statusCheckingLocation)
 
             let image = try await imageSource.capture()
+            try Task.checkCancellation()
             latestImageData = image.data
             let query = try await imageEmbedder.embed(image)
+            try Task.checkCancellation()
             let candidates = try placeCandidates(from: places)
             let result = try placeMatcher.match(
                 query: query,
@@ -307,13 +310,21 @@ final class CaptureViewModel {
             )
             latestPlaceResult = output
             statusMessage = AppMessage(.statusPlaceRecognitionComplete)
+            try Task.checkCancellation()
             try speechOutput.speak(
                 output.text,
                 language: language
             )
+        } catch is CancellationError {
+            statusMessage = AppMessage(.statusReady)
+            errorMessage = nil
         } catch {
             report(error, language: language, speak: true)
         }
+    }
+
+    func stopNavigationOutput() {
+        speechOutput.stop()
     }
 
     func rename(
@@ -441,6 +452,7 @@ final class CaptureViewModel {
         var failureCount = 0
 
         for snapshot in outdatedSnapshots {
+            try Task.checkCancellation()
             do {
                 let data = try await imageStore.load(
                     filename: snapshot.imageFilename
@@ -451,8 +463,11 @@ final class CaptureViewModel {
                     capturedAt: snapshot.capturedAt
                 )
                 let embedding = try await imageEmbedder.embed(image)
+                try Task.checkCancellation()
                 snapshot.replaceEmbedding(with: embedding)
                 updatedCount += 1
+            } catch is CancellationError {
+                throw CancellationError()
             } catch {
                 failureCount += 1
             }

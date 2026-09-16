@@ -12,6 +12,8 @@ struct ContentView: View {
     private var languagePreferenceRaw = LanguagePreference.followSystem.rawValue
 
     @State private var captureModel = CaptureViewModel()
+    @State private var modeController = OperatingModeController()
+    @State private var navigationTask: Task<Void, Never>?
     @State private var showingEnrollment = false
 
     private var languagePreference: LanguagePreference {
@@ -96,13 +98,16 @@ struct ContentView: View {
 
     private var whereAmIButton: some View {
         Button {
-            captureModel.preparePlaceMemoryLocation()
-            Task {
-                await captureModel.recognizePlace(
-                    in: places,
-                    modelContext: modelContext,
-                    language: language
-                )
+            modeController.performNavigationOutput {
+                captureModel.preparePlaceMemoryLocation()
+                navigationTask?.cancel()
+                navigationTask = Task {
+                    await captureModel.recognizePlace(
+                        in: places,
+                        modelContext: modelContext,
+                        language: language
+                    )
+                }
             }
         } label: {
             Label(
@@ -118,8 +123,16 @@ struct ContentView: View {
         }
         .buttonStyle(.borderedProminent)
         .tint(.green)
-        .disabled(isBusy)
-        .accessibilityHint(language.text(.hintWhereAmI))
+        .disabled(
+            isBusy || !modeController.navigationOutputEnabled
+        )
+        .accessibilityHint(
+            language.text(
+                modeController.navigationOutputEnabled
+                    ? .hintWhereAmI
+                    : .hintWhereAmIRequiresNavigating
+            )
+        )
     }
 
     private var rememberPlaceButton: some View {
@@ -324,24 +337,72 @@ struct ContentView: View {
     }
 
     private var modeCard: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "pause.circle.fill")
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Image(
+                    systemName: modeController.currentMode == .navigating
+                        ? "figure.walk.circle.fill"
+                        : "pause.circle.fill"
+                )
+                .foregroundStyle(
+                    modeController.currentMode == .navigating
+                        ? Color.green
+                        : Color.secondary
+                )
                 .font(.title)
 
-            VStack(alignment: .leading) {
-                Text(language.text(.modeLabel))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(language.text(.modeInactive))
-                    .font(.headline)
+                VStack(alignment: .leading) {
+                    Text(language.text(.modeLabel))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(
+                        language.text(
+                            modeController.currentMode.displayKey
+                        )
+                    )
+                    .font(.title3.bold())
+                }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(
+                language.text(
+                    modeController.currentMode.currentModeKey
+                )
+            )
+
+            Button {
+                if modeController.currentMode == .navigating {
+                    navigationTask?.cancel()
+                    captureModel.stopNavigationOutput()
+                }
+                modeController.toggle(language: language)
+            } label: {
+                Label(
+                    language.text(
+                        modeController.currentMode.toggleActionKey
+                    ),
+                    systemImage: modeController.currentMode == .navigating
+                        ? "stop.circle.fill"
+                        : "play.circle.fill"
+                )
+                .font(.headline)
+                .frame(maxWidth: .infinity, minHeight: 56)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(
+                modeController.currentMode == .navigating
+                    ? .orange
+                    : .green
+            )
+            .accessibilityHint(
+                language.text(
+                    modeController.currentMode.toggleHintKey
+                )
+            )
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(language.text(.modeCurrentInactive))
     }
 
     private func descriptionAccessibilityLabel(

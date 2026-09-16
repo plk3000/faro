@@ -303,6 +303,27 @@ struct PlaceWorkflowTests {
         #expect(model.latestPlaceResult?.text == "You are in Kitchen.")
     }
 
+    @Test
+    func stoppingNavigationStopsSpokenOutput() async throws {
+        let resources = try makeResources()
+        defer {
+            try? FileManager.default.removeItem(
+                at: resources.directory
+            )
+        }
+        let speech = RecordingSpeechOutput()
+        let model = CaptureViewModel(
+            imageStore: ImageStore(directoryURL: resources.directory),
+            speechOutput: speech,
+            imageEmbedder: PixelGridEmbedder(),
+            locationProvider: FixedLocationProvider()
+        )
+
+        model.stopNavigationOutput()
+
+        #expect(speech.stopCount == 1)
+    }
+
     @Test(arguments: SupportedLanguage.allCases)
     func reportsNoSavedPlacesInTheSelectedLanguage(
         language: SupportedLanguage

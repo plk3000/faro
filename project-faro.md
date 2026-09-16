@@ -61,6 +61,11 @@ an app-visible state and a distinct confirmation tone when entering or leaving
 Navigating mode. A later hardware control may be added only after real-user
 validation.
 
+The iOS mode state is intentionally not persisted, so every fresh app launch
+returns to Inactive. “Where am I?” and future iPhone proximity output pass
+through the same navigation gate, and leaving Navigating cancels any active
+spoken navigation output.
+
 ## Place-recognition approach
 
 When the user says “remember this as the kitchen,” FARO captures several views, creates image embeddings, and stores them with the label `kitchen`.

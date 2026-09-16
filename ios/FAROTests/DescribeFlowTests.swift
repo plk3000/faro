@@ -10,6 +10,7 @@ final class RecordingSpeechOutput: SpeechOutputProviding {
     }
 
     private(set) var spoken: [Entry] = []
+    private(set) var stopCount = 0
 
     func speak(
         _ text: String,
@@ -18,7 +19,9 @@ final class RecordingSpeechOutput: SpeechOutputProviding {
         spoken.append(Entry(text: text, language: language))
     }
 
-    func stop() {}
+    func stop() {
+        stopCount += 1
+    }
 }
 
 @MainActor

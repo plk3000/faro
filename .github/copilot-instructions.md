@@ -53,6 +53,7 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
 - Boot into **Inactive**. In this mode, proximity tones and hazard notifications remain silent regardless of sonar readings, although the ESP32 may stay powered and connected.
 - **Navigating** arms the ESP32's local sonar-to-buzzer path and enables navigation-oriented iPhone context.
 - The iPhone app is the prototype's primary mode control. Keep the current mode unambiguous in the app and provide distinct confirmation tones when entering or leaving Navigating mode.
+- Do not persist the iOS operating mode. Route “Where am I?” and future iPhone proximity output through `OperatingModeController` so every fresh launch is Inactive and leaving Navigating cancels spoken navigation output.
 - Once Navigating mode is armed, local obstacle alerts must continue if Bluetooth, the app, or AI processing fails.
 - Use uncertainty rather than a confident guess when place-recognition confidence is insufficient. False confident identifications are a primary prototype metric.
 - Keep the prototype voice commands minimal and consistent with the concept: `describe`, `where am I?`, `remember this as...`, and `what is ahead?`.
