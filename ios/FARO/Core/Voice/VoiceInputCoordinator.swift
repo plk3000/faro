@@ -1,8 +1,8 @@
 @MainActor
 protocol VoiceInputCameraControlling: AnyObject {
-    func pauseCameraForVoiceInput() async
+    func suspendCameraCaptureForVoiceInput() async
 
-    func resumeCameraAfterVoiceInput(
+    func resumeCameraCaptureAfterVoiceInput(
         language: SupportedLanguage
     ) async -> Bool
 }
@@ -29,12 +29,12 @@ struct VoiceInputCoordinator {
 
     @discardableResult
     func begin(language: SupportedLanguage) async -> Bool {
-        await camera.pauseCameraForVoiceInput()
+        await camera.suspendCameraCaptureForVoiceInput()
         let started = await voiceSession.beginListening(
             language: language
         )
         if !started {
-            _ = await camera.resumeCameraAfterVoiceInput(
+            _ = await camera.resumeCameraCaptureAfterVoiceInput(
                 language: language
             )
         }
@@ -47,7 +47,7 @@ struct VoiceInputCoordinator {
         let command = await voiceSession.finishListening(
             language: language
         )
-        let cameraReady = await camera.resumeCameraAfterVoiceInput(
+        let cameraReady = await camera.resumeCameraCaptureAfterVoiceInput(
             language: language
         )
         return cameraReady ? command : nil

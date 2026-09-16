@@ -16,20 +16,20 @@ final class CameraImageSource:
     private let continuationLock = NSLock()
 
     private var isConfigured = false
-    private var isPausedForVoiceInput = false
+    private var isCaptureSuspendedForVoiceInput = false
     private var captureContinuation:
         CheckedContinuation<CapturedImage, Error>?
 
     func prepare() async throws {
-        try await prepareCamera(resumingVoiceInput: false)
+        try await prepareCamera(resumingCaptureAfterVoiceInput: false)
     }
 
-    func resume() async throws {
-        try await prepareCamera(resumingVoiceInput: true)
+    func resumeCaptureAfterVoiceInput() async throws {
+        try await prepareCamera(resumingCaptureAfterVoiceInput: true)
     }
 
     private func prepareCamera(
-        resumingVoiceInput: Bool
+        resumingCaptureAfterVoiceInput: Bool
     ) async throws {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         switch status {
@@ -49,10 +49,10 @@ final class CameraImageSource:
             sessionQueue.async { [self] in
                 do {
                     try configureIfNeeded()
-                    if resumingVoiceInput {
-                        isPausedForVoiceInput = false
+                    if resumingCaptureAfterVoiceInput {
+                        isCaptureSuspendedForVoiceInput = false
                     }
-                    if !isPausedForVoiceInput, !session.isRunning {
+                    if !session.isRunning {
                         session.startRunning()
                     }
                     continuation.resume()
@@ -68,7 +68,8 @@ final class CameraImageSource:
 
         return try await withCheckedThrowingContinuation { continuation in
             sessionQueue.async { [self] in
-                guard !isPausedForVoiceInput, session.isRunning else {
+                guard !isCaptureSuspendedForVoiceInput,
+                      session.isRunning else {
                     continuation.resume(
                         throwing: ImageSourceError.captureFailed
                     )
@@ -101,13 +102,10 @@ final class CameraImageSource:
         }
     }
 
-    func pause() async {
+    func suspendCaptureForVoiceInput() async {
         await withCheckedContinuation { continuation in
             sessionQueue.async { [self] in
-                isPausedForVoiceInput = true
-                if session.isRunning {
-                    session.stopRunning()
-                }
+                isCaptureSuspendedForVoiceInput = true
                 continuation.resume()
             }
         }

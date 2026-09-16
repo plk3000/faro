@@ -61,16 +61,20 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
         category: "SpeechRecognition"
     )
 
-    private let audioEngine = AVAudioEngine()
-    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var audioRecorder: AVAudioRecorder?
+    private var speechRecognizer: SFSpeechRecognizer?
+    private var recognitionRequest: SFSpeechURLRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var activeSessionID: UUID?
+    private var recordingURL: URL?
+    private var contextualStrings: [String] = []
     private var transcriptHandler: (@MainActor (String) -> Void)?
+    private var recognitionContinuation:
+        CheckedContinuation<String, Error>?
+    private var recognitionTimeoutTask: Task<Void, Never>?
     private var latestTranscript = ""
-    private var recognitionError: Error?
-    private var receivedFinalResult = false
-    private var hasInputTap = false
     private var isListening = false
+    private var ownsAudioSession = false
 
     func start(
         language: SupportedLanguage,
@@ -99,120 +103,146 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
         activeSessionID = sessionID
         transcriptHandler = onTranscript
         latestTranscript = ""
-        recognitionError = nil
-        receivedFinalResult = false
+        speechRecognizer = recognizer
+        contextualStrings = language.voiceCommandContextualStrings
 
-        let request = SFSpeechAudioBufferRecognitionRequest()
-        request.requiresOnDeviceRecognition = true
-        request.shouldReportPartialResults = true
-        request.taskHint = .confirmation
-        request.contextualStrings = language.voiceCommandContextualStrings
-        recognitionRequest = request
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(
+                "faro-voice-\(sessionID.uuidString).m4a"
+            )
+        recordingURL = url
 
         do {
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setCategory(
                 .record,
                 mode: .measurement,
-                options: [.duckOthers, .allowBluetoothHFP]
+                options: [.allowBluetoothHFP]
             )
             try audioSession.setActive(
                 true,
                 options: .notifyOthersOnDeactivation
             )
+            ownsAudioSession = true
 
-            let inputNode = audioEngine.inputNode
-            let format = inputNode.outputFormat(forBus: 0)
-            guard format.sampleRate > 0, format.channelCount > 0 else {
+            let recorder = try AVAudioRecorder(
+                url: url,
+                settings: [
+                    AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                    AVSampleRateKey: 16_000,
+                    AVNumberOfChannelsKey: 1,
+                    AVEncoderBitRateKey: 32_000,
+                    AVEncoderAudioQualityKey:
+                        AVAudioQuality.high.rawValue
+                ]
+            )
+            audioRecorder = recorder
+            guard recorder.prepareToRecord(), recorder.record() else {
                 throw SpeechRecognitionError.audioInputUnavailable
             }
-            inputNode.installTap(
-                onBus: 0,
-                bufferSize: 1_024,
-                format: format
-            ) { buffer, _ in
-                request.append(buffer)
-            }
-            hasInputTap = true
-
-            recognitionTask = recognizer.recognitionTask(
-                with: request
-            ) { [weak self] result, error in
-                Task { @MainActor [weak self] in
-                    guard let self,
-                          self.activeSessionID == sessionID else {
-                        return
-                    }
-                    if let result {
-                        let value = result.bestTranscription
-                            .formattedString
-                        self.latestTranscript = value
-                        self.receivedFinalResult = result.isFinal
-                        self.transcriptHandler?(value)
-                    }
-                    if let error {
-                        self.recognitionError = error
-                    }
-                }
-            }
-
-            audioEngine.prepare()
-            try audioEngine.start()
             isListening = true
         } catch let error as SpeechRecognitionError {
             cancel()
             throw error
         } catch {
+            Self.logger.error(
+                "Could not start voice recording: \(error)"
+            )
             cancel()
             throw SpeechRecognitionError.audioInputUnavailable
         }
     }
 
     func stop() async throws -> String {
-        guard isListening else {
+        guard isListening,
+              let recordingURL,
+              let speechRecognizer,
+              let sessionID = activeSessionID else {
             throw SpeechRecognitionError.noSpeechDetected
         }
 
         isListening = false
-        stopAudioInput()
-        defer { cleanup() }
+        audioRecorder?.stop()
+        audioRecorder = nil
+        deactivateRecordingAudioSession()
 
-        var unchangedIntervals = 0
-        var previousTranscript = latestTranscript
-        for _ in 0..<8 {
-            try await Task.sleep(for: .milliseconds(125))
-            try Task.checkCancellation()
-            if receivedFinalResult {
-                break
-            }
-            if latestTranscript == previousTranscript,
-               !latestTranscript.isEmpty {
-                unchangedIntervals += 1
-                if unchangedIntervals >= 4 {
-                    break
-                }
-            } else {
-                previousTranscript = latestTranscript
-                unchangedIntervals = 0
-            }
-        }
-
-        let result = latestTranscript.trimmingCharacters(
-            in: .whitespacesAndNewlines
+        let request = SFSpeechURLRecognitionRequest(
+            url: recordingURL
         )
-        guard !result.isEmpty else {
-            if recognitionError != nil {
-                throw SpeechRecognitionError.recognitionFailed
+        request.requiresOnDeviceRecognition = true
+        request.shouldReportPartialResults = true
+        request.taskHint = .confirmation
+        request.contextualStrings = contextualStrings
+        recognitionRequest = request
+
+        return try await withTaskCancellationHandler {
+            try Task.checkCancellation()
+            return try await withCheckedThrowingContinuation {
+                continuation in
+                recognitionContinuation = continuation
+                recognitionTask = speechRecognizer.recognitionTask(
+                    with: request
+                ) { [weak self] result, error in
+                    Task { @MainActor [weak self] in
+                        guard let self,
+                              self.activeSessionID == sessionID else {
+                            return
+                        }
+                        if let result {
+                            let value = result.bestTranscription
+                                .formattedString
+                            self.latestTranscript = value
+                            self.transcriptHandler?(value)
+                            if result.isFinal {
+                                self.completeRecognition(
+                                    transcript: value,
+                                    emptyTranscriptError: .noSpeechDetected
+                                )
+                                return
+                            }
+                        }
+                        if error != nil {
+                            self.completeRecognition(
+                                transcript: self.latestTranscript,
+                                emptyTranscriptError: .recognitionFailed
+                            )
+                        }
+                    }
+                }
+                recognitionTimeoutTask = Task { [weak self] in
+                    do {
+                        try await Task.sleep(for: .seconds(10))
+                    } catch {
+                        return
+                    }
+                    self?.failTimedOutRecognition()
+                }
+                if Task.isCancelled {
+                    cancel()
+                }
             }
-            throw SpeechRecognitionError.noSpeechDetected
+        } onCancel: {
+            Task { @MainActor [weak self] in
+                self?.cancel()
+            }
         }
-        return result
     }
 
     func cancel() {
         isListening = false
-        stopAudioInput()
-        cleanup()
+        audioRecorder?.stop()
+        audioRecorder = nil
+        deactivateRecordingAudioSession()
+
+        let continuation = recognitionContinuation
+        recognitionContinuation = nil
+        recognitionTimeoutTask?.cancel()
+        recognitionTimeoutTask = nil
+        let task = recognitionTask
+        task?.cancel()
+        resetRecognitionState()
+        removeRecordingWhenReleased(by: task)
+        continuation?.resume(throwing: CancellationError())
     }
 
     private func authorizeSpeechRecognition() async throws {
@@ -243,28 +273,11 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
         }
     }
 
-    private func stopAudioInput() {
-        if audioEngine.isRunning {
-            audioEngine.stop()
+    private func deactivateRecordingAudioSession() {
+        guard ownsAudioSession else {
+            return
         }
-        if hasInputTap {
-            audioEngine.inputNode.removeTap(onBus: 0)
-            hasInputTap = false
-        }
-        recognitionRequest?.endAudio()
-        recognitionTask?.finish()
-    }
-
-    private func cleanup() {
-        recognitionTask?.cancel()
-        recognitionTask = nil
-        recognitionRequest = nil
-        transcriptHandler = nil
-        activeSessionID = nil
-        latestTranscript = ""
-        recognitionError = nil
-        receivedFinalResult = false
-
+        ownsAudioSession = false
         do {
             try AVAudioSession.sharedInstance().setActive(
                 false,
@@ -272,8 +285,91 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
             )
         } catch {
             Self.logger.error(
-                "Could not deactivate speech audio session: \(error)"
+                "Could not deactivate recording audio session: \(error)"
             )
+        }
+    }
+
+    private func completeRecognition(
+        transcript: String,
+        emptyTranscriptError: SpeechRecognitionError
+    ) {
+        let value = transcript.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        let result: Result<String, Error> = value.isEmpty
+            ? .failure(emptyTranscriptError)
+            : .success(value)
+        finishRecognition(with: result)
+    }
+
+    private func failTimedOutRecognition() {
+        recognitionTask?.cancel()
+        finishRecognition(
+            with: .failure(SpeechRecognitionError.recognitionFailed)
+        )
+    }
+
+    private func finishRecognition(
+        with result: Result<String, Error>
+    ) {
+        guard let continuation = recognitionContinuation else {
+            return
+        }
+        recognitionContinuation = nil
+        recognitionTimeoutTask?.cancel()
+        recognitionTimeoutTask = nil
+        let task = recognitionTask
+        resetRecognitionState()
+        removeRecordingWhenReleased(by: task)
+        continuation.resume(with: result)
+    }
+
+    private func resetRecognitionState() {
+        activeSessionID = nil
+        recognitionTask = nil
+        recognitionRequest = nil
+        speechRecognizer = nil
+        contextualStrings = []
+        transcriptHandler = nil
+        latestTranscript = ""
+    }
+
+    private func removeRecordingWhenReleased(
+        by recognitionTask: SFSpeechRecognitionTask?
+    ) {
+        guard let recordingURL else {
+            return
+        }
+        self.recordingURL = nil
+
+        guard let recognitionTask else {
+            Self.removeRecording(at: recordingURL)
+            return
+        }
+
+        Task { @MainActor [recordingURL] in
+            for _ in 0..<40 {
+                guard recognitionTask.state != .completed else {
+                    break
+                }
+                try? await Task.sleep(for: .milliseconds(125))
+            }
+            Self.removeRecording(at: recordingURL)
+        }
+    }
+
+    private static func removeRecording(at recordingURL: URL) {
+        do {
+            try FileManager.default.removeItem(
+                at: recordingURL
+            )
+        } catch {
+            if (error as NSError).code != NSFileNoSuchFileError {
+                logger.error(
+                    "Could not remove voice recording: \(error)"
+                )
+            }
         }
     }
 }

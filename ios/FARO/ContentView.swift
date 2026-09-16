@@ -70,7 +70,7 @@ struct ContentView: View {
                 voiceCommandTask?.cancel()
                 voiceModel.cancel()
                 Task {
-                    await captureModel.resumeCameraAfterVoiceInput(
+                    await captureModel.resumeCameraCaptureAfterVoiceInput(
                         language: language
                     )
                 }

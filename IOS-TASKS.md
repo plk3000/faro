@@ -9,7 +9,7 @@
 | Phase 2 — Scene description | Verified on physical device |
 | Phase 3 — Place memory | Verified on physical device |
 | Phase 4 — Operating modes | Verified on physical device |
-| Phase 5 — Voice commands | Validation fix implemented; awaiting physical-device retest |
+| Phase 5 — Voice commands | Second validation fix implemented; awaiting physical-device retest |
 | Phase 6 — ESP32 boundary | Not started |
 | Phase 7 — Evaluation | Not started |
 
@@ -278,9 +278,12 @@ cancel spoken navigation output when navigation stops.
 
 **T30 · speech-recognition** — On-device `SFSpeechRecognizer` using the
 selected locale, with permission handling and an explicit start/finish
-recording control to avoid always-listening complexity. The live camera session
-is fully paused before microphone capture and restored after speech audio is
-released so the two AVFoundation pipelines never compete for hardware.
+recording control to avoid always-listening complexity. Still-photo requests
+are suspended during voice recording, but the video-only camera session stays
+running to avoid an iOS 26 / iPhone 17 capture-session restart assertion. The
+camera does not configure the shared audio session. FARO records each bounded
+command to a temporary local file, releases the microphone, and then passes
+that file to an on-device `SFSpeechURLRecognitionRequest`.
 *Done when:* English and Spanish spoken audio transcribe on device.
 
 **T31 · command-parser** — Parse the four commands in both languages:

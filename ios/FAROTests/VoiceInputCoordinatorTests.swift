@@ -12,11 +12,11 @@ private final class RecordingVoiceCamera:
         self.events = events
     }
 
-    func pauseCameraForVoiceInput() async {
-        events.values.append("camera.pause")
+    func suspendCameraCaptureForVoiceInput() async {
+        events.values.append("camera.suspend-capture")
     }
 
-    func resumeCameraAfterVoiceInput(
+    func resumeCameraCaptureAfterVoiceInput(
         language: SupportedLanguage
     ) async -> Bool {
         events.values.append("camera.resume.\(language.rawValue)")
@@ -59,7 +59,7 @@ private final class EventLog {
 @MainActor
 struct VoiceInputCoordinatorTests {
     @Test
-    func cameraStopsBeforeMicrophoneStarts() async {
+    func cameraCaptureSuspendsBeforeMicrophoneStarts() async {
         let events = EventLog()
         let coordinator = VoiceInputCoordinator(
             camera: RecordingVoiceCamera(events: events),
@@ -73,7 +73,7 @@ struct VoiceInputCoordinatorTests {
         #expect(started)
         #expect(
             events.values == [
-                "camera.pause",
+                "camera.suspend-capture",
                 "voice.begin.en-US"
             ]
         )
@@ -97,7 +97,7 @@ struct VoiceInputCoordinatorTests {
         #expect(!started)
         #expect(
             events.values == [
-                "camera.pause",
+                "camera.suspend-capture",
                 "voice.begin.es-MX",
                 "camera.resume.es-MX"
             ]

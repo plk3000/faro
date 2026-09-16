@@ -148,8 +148,10 @@ user explicitly starts and finishes each short recording; FARO does not listen
 continuously. “Where am I?” and “what is ahead?” require Navigating mode.
 “Remember this as…” captures the first named view and then opens the existing
 guided multi-view enrollment flow. The app serializes camera and microphone
-ownership by pausing the live camera before voice input and restoring it only
-after speech audio has been released.
+work without restarting the live video session: still-photo requests are
+suspended during voice recording, the camera is prevented from configuring the
+shared audio session, and a short temporary audio file is transcribed on-device
+only after microphone recording finishes.
 
 ### Prototype languages
 
