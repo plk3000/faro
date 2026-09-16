@@ -142,6 +142,13 @@ Keep commands minimal:
 - “remember this as…”
 - “what is ahead?”
 
+The iOS prototype recognizes these commands on-device with
+`SFSpeechRecognizer` in the selected English or Mexican Spanish locale. The
+user explicitly starts and finishes each short recording; FARO does not listen
+continuously. “Where am I?” and “what is ahead?” require Navigating mode.
+“Remember this as…” captures the first named view and then opens the existing
+guided multi-view enrollment flow.
+
 ### Prototype languages
 
 The iPhone prototype supports English (United States) and Spanish (Mexico).

@@ -9,7 +9,7 @@
 | Phase 2 — Scene description | Verified on physical device |
 | Phase 3 — Place memory | Verified on physical device |
 | Phase 4 — Operating modes | Verified on physical device |
-| Phase 5 — Voice commands | Not started |
+| Phase 5 — Voice commands | Implemented; awaiting physical-device validation |
 | Phase 6 — ESP32 boundary | Not started |
 | Phase 7 — Evaluation | Not started |
 
@@ -277,8 +277,8 @@ cancel spoken navigation output when navigation stops.
 ### Phase 5 — Voice commands
 
 **T30 · speech-recognition** — On-device `SFSpeechRecognizer` using the
-selected locale, with permission handling and push-to-talk to avoid
-always-listening complexity.
+selected locale, with permission handling and an explicit start/finish
+recording control to avoid always-listening complexity.
 *Done when:* English and Spanish spoken audio transcribe on device.
 
 **T31 · command-parser** — Parse the four commands in both languages:
@@ -290,6 +290,8 @@ label extraction, and unrecognized input.
 
 **T32 · voice-wiring** — Route parsed commands into the existing flows while
 preserving the selected language through generated and spoken results.
+Navigation-only commands remain gated by Navigating, and voice enrollment
+captures the first named view before opening the existing multi-view flow.
 *Done when:* each command triggers its flow by voice alone in English and
 Spanish.
 

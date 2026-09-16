@@ -2,6 +2,11 @@ import SwiftData
 import SwiftUI
 import UIKit
 
+private struct EnrollmentRequest: Identifiable {
+    let id = UUID()
+    let existingPlace: Place?
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -13,8 +18,10 @@ struct ContentView: View {
 
     @State private var captureModel = CaptureViewModel()
     @State private var modeController = OperatingModeController()
+    @State private var voiceModel = VoiceCommandViewModel()
     @State private var navigationTask: Task<Void, Never>?
-    @State private var showingEnrollment = false
+    @State private var voiceCommandTask: Task<Void, Never>?
+    @State private var enrollmentRequest: EnrollmentRequest?
 
     private var languagePreference: LanguagePreference {
         LanguagePreference(rawValue: languagePreferenceRaw) ?? .followSystem
@@ -30,6 +37,7 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     languagePicker
                     modeCard
+                    voiceCommandCard
                     preview
                     describeButton
                     whereAmIButton
@@ -48,23 +56,33 @@ struct ContentView: View {
             .task {
                 await captureModel.prepare(language: language)
             }
-            .sheet(isPresented: $showingEnrollment) {
+            .sheet(item: $enrollmentRequest) { request in
                 NavigationStack {
                     RememberPlaceView(
                         captureModel: captureModel,
+                        existingPlace: request.existingPlace,
                         language: language
                     )
                 }
+            }
+            .onDisappear {
+                navigationTask?.cancel()
+                voiceCommandTask?.cancel()
+                voiceModel.cancel()
             }
         }
         .environment(\.locale, language.locale)
     }
 
-    private var isBusy: Bool {
+    private var captureIsBusy: Bool {
         captureModel.isCapturing
             || captureModel.isDescribing
             || captureModel.isRecognizing
             || captureModel.isEnrolling
+    }
+
+    private var isBusy: Bool {
+        captureIsBusy || voiceModel.isActive
     }
 
     private var describeButton: some View {
@@ -137,7 +155,9 @@ struct ContentView: View {
 
     private var rememberPlaceButton: some View {
         Button {
-            showingEnrollment = true
+            enrollmentRequest = EnrollmentRequest(
+                existingPlace: nil
+            )
         } label: {
             Label(
                 language.text(.actionRememberPlace),
@@ -274,6 +294,7 @@ struct ContentView: View {
                 }
             }
             .pickerStyle(.menu)
+            .disabled(voiceModel.isActive)
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
@@ -389,6 +410,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, minHeight: 56)
             }
             .buttonStyle(.borderedProminent)
+            .disabled(voiceModel.isActive)
             .tint(
                 modeController.currentMode == .navigating
                     ? .orange
@@ -403,6 +425,132 @@ struct ContentView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var voiceCommandCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(
+                language.text(.voiceTitle),
+                systemImage: "waveform.circle.fill"
+            )
+            .font(.title3.bold())
+
+            Text(language.text(.voiceInstructions))
+                .font(.body)
+                .foregroundStyle(.secondary)
+
+            if !voiceModel.transcript.isEmpty {
+                Text(
+                    language.text(
+                        .voiceTranscript,
+                        argument: voiceModel.transcript
+                    )
+                )
+                .font(.body)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityLabel(
+                    language.text(
+                        .voiceTranscript,
+                        argument: voiceModel.transcript
+                    )
+                )
+            }
+
+            if let error = voiceModel.errorText(language: language) {
+                Label(error, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.red)
+            } else {
+                Text(voiceModel.statusText(language: language))
+                    .foregroundStyle(.secondary)
+            }
+
+            Button {
+                if voiceModel.isListening {
+                    Task {
+                        if let command = await voiceModel.finishListening(
+                            language: language
+                        ) {
+                            executeVoiceCommand(command)
+                        }
+                    }
+                } else {
+                    captureModel.stopNavigationOutput()
+                    Task {
+                        await voiceModel.beginListening(
+                            language: language
+                        )
+                    }
+                }
+            } label: {
+                Label(
+                    language.text(
+                        voiceModel.isListening
+                            ? .actionFinishVoiceCommand
+                            : .actionStartVoiceCommand
+                    ),
+                    systemImage: voiceModel.isListening
+                        ? "stop.circle.fill"
+                        : "mic.circle.fill"
+                )
+                .font(.title3.bold())
+                .frame(maxWidth: .infinity, minHeight: 64)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(voiceModel.isListening ? .red : .blue)
+            .disabled(
+                captureIsBusy
+                    || voiceModel.isPreparing
+                    || voiceModel.isProcessing
+            )
+            .accessibilityHint(
+                language.text(
+                    voiceModel.isListening
+                        ? .hintFinishVoiceCommand
+                        : .hintStartVoiceCommand
+                )
+            )
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func executeVoiceCommand(_ command: VoiceCommand) {
+        let task = Task {
+            do {
+                let result = try await VoiceCommandExecutor(
+                    captureModel: captureModel,
+                    modeController: modeController
+                ).execute(
+                    command,
+                    places: places,
+                    modelContext: modelContext,
+                    language: language
+                )
+                try Task.checkCancellation()
+                if case let .continueEnrollment(place) = result {
+                    enrollmentRequest = EnrollmentRequest(
+                        existingPlace: place
+                    )
+                }
+                voiceModel.markExecutionComplete()
+            } catch is CancellationError {
+                voiceModel.markExecutionComplete()
+            } catch {
+                voiceModel.reportExecutionError(
+                    error,
+                    language: language
+                )
+            }
+        }
+
+        if command.requiresNavigating {
+            navigationTask?.cancel()
+            navigationTask = task
+        } else {
+            voiceCommandTask?.cancel()
+            voiceCommandTask = task
+        }
     }
 
     private func descriptionAccessibilityLabel(

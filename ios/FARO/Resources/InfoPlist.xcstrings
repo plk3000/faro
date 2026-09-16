@@ -82,13 +82,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "FARO uses the microphone while you hold the voice-command button."
+            "value" : "FARO uses the microphone during a voice-command recording."
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "FARO usa el micrófono mientras mantienes presionado el botón de comando de voz."
+            "value" : "FARO usa el micrófono durante la grabación de un comando de voz."
           }
         }
       }

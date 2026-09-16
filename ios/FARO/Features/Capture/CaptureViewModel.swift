@@ -136,6 +136,7 @@ final class CaptureViewModel {
 
         do {
             let image = try await imageSource.capture()
+            try Task.checkCancellation()
             latestImageData = image.data
             statusMessage = AppMessage(.statusDescribingScene)
 
@@ -143,12 +144,16 @@ final class CaptureViewModel {
                 image,
                 language: language
             )
+            try Task.checkCancellation()
             latestDescription = description
             statusMessage = AppMessage(.statusDescriptionReady)
             try speechOutput.speak(
                 description.text,
                 language: description.language
             )
+        } catch is CancellationError {
+            statusMessage = AppMessage(.statusReady)
+            errorMessage = nil
         } catch {
             report(error, language: language, speak: true)
         }

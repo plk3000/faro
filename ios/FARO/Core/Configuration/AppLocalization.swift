@@ -17,12 +17,23 @@ enum AppStringKey: String, CaseIterable, Sendable {
     case actionCapturing = "action.capturing"
     case actionStartNavigating = "action.startNavigating"
     case actionStopNavigating = "action.stopNavigating"
+    case actionStartVoiceCommand = "action.startVoiceCommand"
+    case actionFinishVoiceCommand = "action.finishVoiceCommand"
     case hintDescribe = "hint.describe"
     case hintCapture = "hint.capture"
     case hintStartNavigating = "hint.startNavigating"
     case hintStopNavigating = "hint.stopNavigating"
     case hintWhereAmIRequiresNavigating =
         "hint.whereAmIRequiresNavigating"
+    case hintStartVoiceCommand = "hint.startVoiceCommand"
+    case hintFinishVoiceCommand = "hint.finishVoiceCommand"
+    case voiceTitle = "voice.title"
+    case voiceInstructions = "voice.instructions"
+    case voiceTranscript = "voice.transcript"
+    case voiceCommandDescribe = "voice.command.describe"
+    case voiceCommandWhereAmI = "voice.command.whereAmI"
+    case voiceCommandRememberPlace = "voice.command.rememberPlace"
+    case voiceCommandWhatIsAhead = "voice.command.whatIsAhead"
     case sceneDescriptionLabel = "scene.descriptionLabel"
     case savedTitleCount = "saved.titleCount"
     case savedHint = "saved.hint"
@@ -90,6 +101,11 @@ enum AppStringKey: String, CaseIterable, Sendable {
     case statusCapturingPlaceView = "status.capturingPlaceView"
     case statusSavedPlaceView = "status.savedPlaceView"
     case statusUpdatingPlaceEmbeddings = "status.updatingPlaceEmbeddings"
+    case statusVoiceReady = "status.voiceReady"
+    case statusVoicePreparing = "status.voicePreparing"
+    case statusVoiceListening = "status.voiceListening"
+    case statusVoiceProcessing = "status.voiceProcessing"
+    case statusVoiceRecognized = "status.voiceRecognized"
     case errorGenericAction = "error.genericAction"
     case errorCameraUnavailable = "error.cameraUnavailable"
     case errorCameraPermission = "error.cameraPermission"
@@ -124,6 +140,20 @@ enum AppStringKey: String, CaseIterable, Sendable {
     case errorPlaceDelete = "error.placeDelete"
     case errorNoRememberedPlaces = "error.noRememberedPlaces"
     case errorPlaceMigration = "error.placeMigration"
+    case errorSpeechPermission = "error.speechPermission"
+    case errorMicrophonePermission = "error.microphonePermission"
+    case errorSpeechRecognizerUnavailable =
+        "error.speechRecognizerUnavailable"
+    case errorOnDeviceSpeechUnavailable =
+        "error.onDeviceSpeechUnavailable"
+    case errorSpeechAudioInput = "error.speechAudioInput"
+    case errorSpeechRecognition = "error.speechRecognition"
+    case errorSpeechNoInput = "error.speechNoInput"
+    case errorSpeechAlreadyListening = "error.speechAlreadyListening"
+    case errorVoiceCommandUnrecognized =
+        "error.voiceCommandUnrecognized"
+    case errorVoiceCommandRequiresNavigating =
+        "error.voiceCommandRequiresNavigating"
 
     var tableName: String? {
         switch self {

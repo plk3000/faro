@@ -57,6 +57,7 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
 - Once Navigating mode is armed, local obstacle alerts must continue if Bluetooth, the app, or AI processing fails.
 - Use uncertainty rather than a confident guess when place-recognition confidence is insufficient. False confident identifications are a primary prototype metric.
 - Keep the prototype voice commands minimal and consistent with the concept: `describe`, `where am I?`, `remember this as...`, and `what is ahead?`.
+- Voice commands use an explicit start/finish on-device `SFSpeechRecognizer` session in the selected locale; never add continuous listening. Parse commands through `VoiceCommandParser`, route them through `VoiceCommandExecutor`, and preserve the Navigating gate for `where am I?` and `what is ahead?`.
 - Treat language as explicit data. The prototype supports `en-US` and `es-MX`, plus a persisted Follow iPhone preference. Pass the resolved language through API requests, generated descriptions, speech synthesis, accessibility announcements, and future command recognition.
 - Put user-facing UI, accessibility, error, and permission text in the String Catalogs. Do not translate user-provided place labels.
 
