@@ -59,6 +59,7 @@ narration, memory, and mode control only.
 
 ```
 FARO/
+├── DEVELOPMENT.md               # developer setup and contribution workflow
 ├── IOS-TASKS.md                 # task roadmap (deliverable of T01)
 ├── project-faro.md              # concept source of truth
 ├── docs/

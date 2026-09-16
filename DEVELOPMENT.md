@@ -1,0 +1,371 @@
+# FARO Developer Onboarding
+
+This guide takes a new contributor from a fresh clone to a running FARO build.
+Read [project-faro.md](project-faro.md) for the product and safety model, and
+[IOS-TASKS.md](IOS-TASKS.md) for the current implementation phase and device
+validation gate.
+
+## Project status
+
+FARO is an iOS-first assistive prototype. The iPhone app currently supports:
+
+- rear-camera still capture;
+- bilingual English (US) and Spanish (Mexico) UI and speech;
+- mock and HTTP-backed scene descriptions;
+- on-device visual place enrollment and recognition;
+- explicit Inactive and Navigating operating modes;
+- four bilingual voice commands using Start and Finish controls.
+
+The physically verified voice flow keeps the video-only camera session running,
+records one short command to a temporary local file, releases the microphone,
+and then performs on-device transcription. The Phase 5 hands-free extension is
+planned but not implemented yet. See T33-T38 in `IOS-TASKS.md`.
+
+The ESP32 firmware is intentionally maintained in a separate repository. This
+repository will only define and implement the iOS side of the BLE boundary.
+
+## Prerequisites
+
+- macOS with Xcode 26.x and an iOS 26 SDK;
+- Xcode Command Line Tools selected with `xcode-select`;
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen);
+- Git and SSH access to the FARO remote;
+- an Apple ID and development team for physical-device signing;
+- an iPhone running iOS 26 for camera, microphone, speech, and production
+  FeaturePrint validation.
+
+Verify the command-line setup:
+
+```bash
+xcode-select -p
+xcodebuild -version
+xcodegen --version
+```
+
+Install XcodeGen with Homebrew if needed:
+
+```bash
+brew install xcodegen
+```
+
+## Clone and generate the project
+
+```bash
+git clone ssh://git@git.home.arpa:2222/plk3000/faro.git
+cd faro/ios
+xcodegen generate
+open FARO.xcodeproj
+```
+
+`ios/project.yml` is the source of truth. `ios/FARO.xcodeproj` and the generated
+`ios/FARO/Info.plist` are ignored by Git. Do not hand-edit or commit either
+generated artifact.
+
+Regenerate after:
+
+- changing `ios/project.yml`;
+- adding, removing, or moving Swift source files;
+- changing target resources or Info.plist properties.
+
+## Fastest local start
+
+The default configuration uses the mock scene describer and requires no
+backend:
+
+```bash
+cd ios
+xcodegen generate
+xcodebuild -project FARO.xcodeproj -scheme FARO \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  build CODE_SIGNING_ALLOWED=NO
+```
+
+Run all tests:
+
+```bash
+xcodebuild test -project FARO.xcodeproj -scheme FARO \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+If that simulator is unavailable, select an installed device:
+
+```bash
+xcrun simctl list devices available
+```
+
+Run one Swift Testing test:
+
+```bash
+xcodebuild test -project FARO.xcodeproj -scheme FARO \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  '-only-testing:FAROTests/ImageStoreTests/savesFixturesAsPersistentJPEGs()' \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+There is no separate lint command. Swift 6 strict concurrency errors are
+enforced by the build.
+
+## Build and run on an iPhone
+
+The simulator cannot exercise the production camera, microphone, on-device
+speech assets, or Vision FeaturePrint implementation. Every phase that changes
+those surfaces requires a physical-device run.
+
+1. Run `xcodegen generate` from `ios/`.
+2. Open `ios/FARO.xcodeproj`.
+3. Select the FARO app target and choose your development team under Signing &
+   Capabilities.
+4. Connect and unlock the iPhone, enable Developer Mode if prompted, and select
+   it as the run destination.
+5. Run the `FARO` scheme.
+6. Grant camera, location, microphone, and speech-recognition permissions when
+   the relevant feature is tested.
+
+The generated project has an empty `DEVELOPMENT_TEAM`. Selecting a team in
+Xcode changes only the ignored generated project, so you may need to select it
+again after regeneration. Free provisioning profiles also expire periodically.
+
+Check that the code compiles for a generic physical iOS target without signing:
+
+```bash
+cd ios
+xcodegen generate
+xcodebuild -project FARO.xcodeproj -scheme FARO \
+  -destination 'generic/platform=iOS' \
+  build CODE_SIGNING_ALLOWED=NO
+```
+
+## Mock and live vision configuration
+
+`ios/Config/Shared.xcconfig` defaults to:
+
+```text
+FARO_VISION_MODE = mock
+```
+
+Mock mode is the normal development baseline. It returns bilingual fixture
+descriptions without network access.
+
+To use a FARO vision service:
+
+```bash
+cd ios
+cp Config/Local.xcconfig.example Config/Local.xcconfig
+```
+
+Then edit the ignored `Config/Local.xcconfig`:
+
+```text
+FARO_VISION_MODE = live
+FARO_VISION_BASE_URL = https:/$()/vision.example.internal
+FARO_VISION_TOKEN = replace-with-a-development-token
+```
+
+The `$()` separates the two slash characters from xcconfig comment syntax; the
+value delivered to the app is a normal `https://` URL. Live mode accepts HTTPS,
+or HTTP only for `localhost` and `127.0.0.1`. Remember that `localhost` on an
+iPhone refers to the iPhone, not the development Mac.
+
+Never commit `Local.xcconfig`, service tokens, private hostnames, or credentials.
+The service contract is documented in
+[docs/vision-api-contract.md](docs/vision-api-contract.md).
+
+## Repository map
+
+```text
+FARO/
+|-- DEVELOPMENT.md                 Developer setup and contribution workflow
+|-- IOS-TASKS.md                   Canonical roadmap and phase status
+|-- project-faro.md                Product, architecture, and safety model
+|-- docs/
+|   `-- vision-api-contract.md     Scene-description HTTP boundary
+|-- ios/
+|   |-- project.yml               XcodeGen source of truth
+|   |-- Config/                    Mock/live build configuration
+|   |-- FARO/
+|   |   |-- Core/                 Camera, speech, recognition, mode, and clients
+|   |   |-- Features/             SwiftUI feature views and view models
+|   |   |-- Models/               SwiftData models
+|   |   `-- Resources/            String Catalogs and simulator fixtures
+|   `-- FAROTests/                Swift Testing suites
+`-- .github/copilot-instructions.md
+```
+
+## Architecture at a glance
+
+### Capture and description
+
+- `ImageSource` separates image consumers from capture hardware.
+- `FixtureImageSource` supplies deterministic simulator images.
+- `CameraImageSource` owns the rear `AVCaptureSession` on a dedicated serial
+  queue.
+- `CaptureViewModel` orchestrates capture, persistence, description, place
+  recognition, and enrollment.
+- `SceneDescribing` separates the mock and `FAROVisionClient` implementations.
+
+### Place memory
+
+- SwiftData stores `Place` and `PlaceSnapshot`.
+- Original JPEGs are retained so embeddings can be regenerated after a model
+  change.
+- Physical devices store Codable Vision FeaturePrint observations and compare
+  them with Vision's official distance API.
+- The simulator uses `PixelGridEmbedder` only for deterministic tests.
+- Coarse GPS filters candidate sites; it does not identify an indoor room.
+- Uncertain recognition must remain uncertain. Never replace thresholds with a
+  forced best guess.
+
+### Modes and voice
+
+- `OperatingModeController` owns Inactive and Navigating state.
+- Every fresh launch starts Inactive; the operating mode is never persisted.
+- `VoiceCommandParser` parses bilingual commands.
+- `VoiceCommandExecutor` routes commands into existing capture and place flows.
+- `OnDeviceSpeechRecognizer` records a bounded temporary file and transcribes
+  it after releasing the microphone.
+- `VoiceInputCoordinator` serializes command capture and still-photo access.
+- "Where am I?" and "What is ahead?" require Navigating mode.
+- Manual Start and Finish controls remain the validated fallback while
+  hands-free tasks T33-T38 are developed.
+
+## Camera and audio invariants
+
+Recent iPhone 17 / iOS 26 builds can assert inside `FigCaptureSourceRemote` when
+an app repeatedly stops and restarts the camera around voice input. Preserve
+these rules:
+
+1. Keep the video-only `AVCaptureSession` running.
+2. Set `automaticallyConfiguresApplicationAudioSession` to `false`.
+3. Suspend still-photo requests while command audio is being captured.
+4. Do not add an audio input to the camera session.
+5. Release microphone recording before command transcription and execution.
+6. Do not reintroduce camera `stopRunning()` / `startRunning()` cycles for voice
+   input.
+7. Test repeated camera and microphone transitions on a physical iPhone.
+
+The planned hands-free detector must obey the same rules. It must also stop
+when FARO leaves the foreground and ignore FARO's own tones and spoken output.
+
+## Localization and accessibility
+
+The supported choices are:
+
+- Follow iPhone;
+- English (United States), `en-US`;
+- Spanish (Mexico), `es-MX`.
+
+User-facing UI, accessibility labels, errors, permission text, and spoken
+messages belong in:
+
+- `ios/FARO/Resources/Localizable.xcstrings`;
+- `ios/FARO/Resources/Places.xcstrings`;
+- `ios/FARO/Resources/InfoPlist.xcstrings`.
+
+When adding a string:
+
+1. Add or reuse an `AppStringKey`.
+2. Supply both English and Mexican Spanish translations.
+3. Pass `SupportedLanguage` explicitly through the feature.
+4. Preserve user-provided place labels exactly; do not translate them.
+5. Add or update parameterized localization tests.
+
+Dynamic String Catalog lookup can mark valid entries as `stale`. Do not delete
+such entries without checking `AppStringKey` and `LanguageSupportTests`.
+
+All controls need meaningful VoiceOver labels and hints, Dynamic Type support,
+and large touch targets. Spoken output must use the selected language rather
+than assuming the current system voice.
+
+## Data and privacy
+
+- Captured home imagery is sensitive.
+- Still images are uploaded only after an explicit Describe action in live
+  mode; FARO does not stream camera frames to the service.
+- Saved place JPEGs and embeddings stay in the app container.
+- Voice-command recordings are temporary and deleted after transcription.
+- Future wake-phrase audio must remain on-device and must not be retained as
+  user content.
+- Never log authorization tokens, image contents, or private place data.
+
+Deleting the app from a simulator or device clears its SwiftData store,
+remembered places, and saved images.
+
+## Contribution workflow
+
+1. Read `project-faro.md` and the current phase in `IOS-TASKS.md`.
+2. Work only on tasks whose phase gate is open.
+3. Reuse the existing protocol boundary before adding another implementation.
+4. Keep simulator substitutes deterministic and production behavior
+   device-backed.
+5. Add focused tests for behavior changes.
+6. Regenerate the Xcode project and run the smallest relevant test set.
+7. Run the full simulator suite and generic iOS build before device validation.
+8. Validate hardware-facing behavior on the physical iPhone.
+9. Update the roadmap and architecture docs when behavior or scope changes.
+10. Keep each phase in its own commit; use follow-up commits for validation
+    fixes and do not begin the next phase before acceptance.
+
+Do not commit generated Xcode files, local xcconfig files, DerivedData, secrets,
+or developer-specific signing state.
+
+## Common problems
+
+### Xcode does not see a new Swift file
+
+Run `xcodegen generate` again. The generated project is not updated
+automatically when files move.
+
+### The requested simulator does not exist
+
+Run `xcrun simctl list devices available` and substitute an installed iOS 26
+simulator in the destination string.
+
+### Camera features do not work in the simulator
+
+This is expected. The simulator uses fixture images. Validate
+`CameraImageSource`, microphone capture, and production FeaturePrint behavior on
+an iPhone.
+
+### Physical-device signing fails
+
+Choose a valid development team in Xcode, verify the phone is trusted and in
+Developer Mode, and allow Xcode to manage signing. Regeneration may clear the
+team selection from the ignored project.
+
+### Live descriptions report a configuration error
+
+Confirm `Config/Local.xcconfig` exists, uses `FARO_VISION_MODE = live`, contains
+a valid base URL and token, and was present before regenerating/building.
+
+### On-device speech is unavailable
+
+Confirm Speech Recognition and Microphone permissions, verify that the selected
+English or Mexican Spanish on-device assets are available, and test without a
+Bluetooth route before investigating route-specific behavior.
+
+### A camera/voice transition crashes in AVFoundation
+
+Check that the camera session is not being stopped or restarted, that it cannot
+configure the app audio session, and that microphone recording is released
+before still capture begins. Preserve the file-based transcription boundary
+unless a replacement has equivalent device evidence.
+
+### Tests behave differently after changing place embeddings
+
+Do not compare raw FeaturePrint bytes manually. Physical devices use Vision's
+official `distance(to:)`; simulator tests use the separate deterministic
+PixelGrid representation. Keep model identifiers and migration behavior intact.
+
+## Source-of-truth order
+
+When documentation disagrees, resolve it in this order:
+
+1. `project-faro.md` for product and safety intent;
+2. `IOS-TASKS.md` for current scope, ordering, and phase status;
+3. `ios/project.yml` for targets and generated build settings;
+4. `docs/vision-api-contract.md` for the remote scene-description boundary;
+5. `.github/copilot-instructions.md` for repository implementation invariants.
+
+Update all affected documents in the same change when an architectural
+decision alters more than one source of truth.
