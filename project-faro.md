@@ -141,17 +141,30 @@ Keep commands minimal:
 - “where am I?”
 - “remember this as…”
 - “what is ahead?”
+- “start navigation”
+- “stop navigation”
 
-The iOS prototype recognizes these commands on-device with
-`SFSpeechRecognizer` in the selected English or Mexican Spanish locale. The
-user explicitly starts and finishes each short recording; FARO does not listen
-continuously. “Where am I?” and “what is ahead?” require Navigating mode.
+The validated fallback recognizes commands on-device with
+`SFSpeechRecognizer` in the selected English or Mexican Spanish locale using
+explicit Start and Finish controls. The Phase 5 hands-free extension keeps
+those controls while adding a persisted opt-in flow: the user says “Siri, open
+FARO”; after FARO reaches the foreground and Siri releases the microphone, FARO
+plays a ready tone and listens on-device for “Hey FARO” or “Hola FARO.” A wake
+phrase opens one bounded command window that ends automatically on silence or a
+timeout, then the listener re-arms.
+
+FARO does not claim a custom wake phrase while suspended or terminated. It
+stops wake listening whenever it leaves the foreground, never sends ambient
+audio to a service, and suppresses detection while speaking so it cannot
+trigger itself. “Where am I?” and “what is ahead?” still require Navigating
+mode; bilingual start/stop navigation commands provide hands-free mode control.
 “Remember this as…” captures the first named view and then opens the existing
-guided multi-view enrollment flow. The app serializes camera and microphone
-work without restarting the live video session: still-photo requests are
-suspended during voice recording, the camera is prevented from configuring the
-shared audio session, and a short temporary audio file is transcribed on-device
-only after microphone recording finishes.
+guided multi-view enrollment flow.
+
+Camera and microphone work remain serialized without restarting the live video
+session: still-photo requests are suspended during command capture, the camera
+cannot configure the shared audio session, and bounded command audio is
+transcribed on-device only after capture finishes.
 
 ### Prototype languages
 

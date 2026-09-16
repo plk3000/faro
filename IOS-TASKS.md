@@ -9,7 +9,7 @@
 | Phase 2 — Scene description | Verified on physical device |
 | Phase 3 — Place memory | Verified on physical device |
 | Phase 4 — Operating modes | Verified on physical device |
-| Phase 5 — Voice commands | Verified on physical device |
+| Phase 5 — Voice commands | Core flow verified; hands-free extension planned |
 | Phase 6 — ESP32 boundary | Not started |
 | Phase 7 — Evaluation | Not started |
 
@@ -51,6 +51,8 @@ narration, memory, and mode control only.
 | Repo layout | App under `ios/` | Keeps root for docs and the future API project |
 | First interaction | Accessible buttons, voice added later | Gives a testable capture path before speech complexity |
 | Languages | Follow iPhone, English (US), and Español (México), established in Phase 2 | Prevents language assumptions from spreading into place, mode, voice, BLE, and metrics features |
+| Hands-free entry | Persisted opt-in; Siri opens FARO, then FARO arms after reaching the foreground and acquiring audio | Uses Siri's system-wide wake path without claiming unsupported custom background activation |
+| Wake phrases | “Hey FARO” and “Hola FARO,” detected fully on-device | Two-word phrases reduce false activations; manual Start/Finish remains a fallback |
 | Roadmap file | `IOS-TASKS.md` in repo root | Requested deliverable |
 
 ## Target repository layout
@@ -300,14 +302,71 @@ captures the first named view before opening the existing multi-view flow.
 *Done when:* each command triggers its flow by voice alone in English and
 Spanish.
 
+**T33 · hands-free-state** — Add a persisted, explicit Hands-Free preference.
+When enabled and FARO becomes foreground-active — including after “Siri, open
+FARO” — wait for Siri or another audio interruption to release the microphone,
+then play a ready tone and arm wake listening. Disarm immediately when the app
+leaves the foreground or the preference is disabled. Preserve manual
+Start/Finish controls as a fallback, and keep every fresh launch in Inactive
+operating mode.
+*Done when:* after one-time permissions and opt-in, Siri can open FARO and the
+ready tone confirms wake listening without a screen tap; disabling Hands-Free
+stops microphone use.
+
+**T34 · wake-engine-spike** — Define a `WakePhraseDetecting` boundary and
+compare viable fully on-device engines for “Hey FARO” and “Hola FARO,” including
+iOS 26 Speech APIs, a native custom sound model, and a dedicated keyword engine.
+Measure activation latency, false accepts/rejects, energy use, binary size,
+licensing, and support for both phrases. Do not send ambient audio to a service
+or retain it as user content.
+*Done when:* the selected engine and fallback are recorded with physical-device
+evidence, and fixture audio can drive the protocol in tests.
+
+**T35 · wake-phrase-listener** — Implement the selected detector while
+Hands-Free is armed. Debounce duplicate detections, ignore FARO's own tones and
+speech, expose a clear listening indicator, and keep the video-only camera
+session alive without allowing the wake listener to reconfigure or restart it.
+The listener may run in either FARO operating mode so the user can arm
+Navigating by voice.
+*Done when:* both wake phrases trigger once across quiet and representative
+room noise, ordinary conversation does not trigger, FARO never triggers itself,
+and backgrounding the app stops listening.
+
+**T36 · automatic-command-window** — After a wake phrase, play a distinct
+acknowledgement tone, capture the next utterance, and finish automatically on
+silence or a bounded timeout. Transcribe on-device, route through the existing
+parser/executor, then re-arm the wake listener after success or a localized
+error. Keep the audio handoff serialized and never restart the camera session.
+*Done when:* after opening FARO, all existing English and Spanish commands can
+complete repeatedly without Start or Finish taps.
+
+**T37 · voice-mode-control** — Add bilingual `start navigation` / `inicia
+navegación` and `stop navigation` / `detén navegación` commands. Route them
+through `OperatingModeController`, retain the explicit Inactive boot state, play
+the existing transition confirmations, and make Stop cancel navigation-oriented
+speech immediately.
+*Done when:* the complete Siri-open → wake phrase → start navigation → command
+→ stop navigation workflow requires no touch and preserves every mode-gating
+test.
+
+**T38 · hands-free-validation** — Run the physical-device matrix: Siri audio
+handoff, both wake phrases and languages, first-run permissions, repeated
+wake/command cycles, camera regression, Bluetooth audio routes, interruptions,
+self-speech suppression, foreground exit, manual fallback, VoiceOver, false
+activations, activation latency, and battery/thermal impact. Custom wake
+activation while FARO is suspended or terminated remains explicitly out of
+scope.
+*Done when:* the hands-free flow is accepted on the physical iPhone and its
+measured limitations are documented before Phase 6 begins.
+
 ### Phase 6 — ESP32 boundary
 
-**T33 · ble-contract** — Write `docs/ble-contract.md`: service and characteristic UUIDs, distance and
+**T39 · ble-contract** — Write `docs/ble-contract.md`: service and characteristic UUIDs, distance and
 warning-state payloads, mode arming, and reconnection expectations, stating that the ESP32 alert path
 stays autonomous.
 *Done when:* the separate firmware repo can implement against it without further questions.
 
-**T34 · ble-central** — CoreBluetooth central that scans, connects, and
+**T40 · ble-central** — CoreBluetooth central that scans, connects, and
 subscribes, with a mock peripheral so it is testable without hardware,
 surfacing distance and connection status in a localized debug view.
 *Done when:* mock peripheral drives the debug view in both languages and
@@ -315,17 +374,17 @@ disconnects degrade gracefully.
 
 ### Phase 7 — Evaluation
 
-**T35 · metrics-harness** — Log and export recognition accuracy across angles
+**T41 · metrics-harness** — Log and export recognition accuracy across angles
 and lighting, false confident identifications, end-to-end latency, and selected
 language.
 *Done when:* a run produces an exportable results summary.
 
-**T36 · field-test** — Tune thresholds, language behavior, narration pacing,
+**T42 · field-test** — Tune thresholds, language behavior, narration pacing,
 and proximity bands with the actual user and record findings.
 *Done when:* thresholds and language defaults are updated from real
 observations, not assumptions.
 
-**T37 · clip-fallback** *(conditional)* — Only if T35 shows poor recall: add a CLIP Core ML embedder
+**T43 · clip-fallback** *(conditional)* — Only if T41 shows poor recall: add a CLIP Core ML embedder
 behind `ImageEmbedder` and re-embed stored JPEGs in the background.
 *Done when:* both embedders are comparable on the same fixture set.
 
@@ -336,10 +395,13 @@ behind `ImageEmbedder` and re-embed stored JPEGs in the background.
 - One forward sonar misses thin, soft, angled, high/low obstacles, stairs, and drop-offs. iOS
   messaging must not imply full hazard coverage.
 - FeaturePrint degrades with large viewpoint and lighting changes; multi-view enrollment (T22) and
-  measurement (T35) are the planned mitigations, with T37 as the escape hatch.
+  measurement (T41) are the planned mitigations, with T43 as the escape hatch.
 - The vision API does not exist yet, so Phase 2 stays fully functional on the mock until T13.
 - Bilingual support is intentionally completed now: retrofitting after place,
   mode, voice, BLE, and metrics work would multiply localization and regression
   work across every later surface.
+- iOS does not grant third-party apps Siri's system-wide custom wake-word
+  privilege. The planned route depends on Siri to foreground FARO first; FARO
+  must stop its wake listener whenever it leaves the foreground.
 - `project-faro.md` and `.github/copilot-instructions.md` should be updated whenever behaviour,
   architecture, or scope changes.
