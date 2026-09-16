@@ -8,7 +8,7 @@
 | Phase 1 — Image capture | Verified on physical device |
 | Phase 2 — Scene description | Verified on physical device |
 | Phase 3 — Place memory | Verified on physical device |
-| Phase 4 — Operating modes | Implemented; awaiting physical-device validation |
+| Phase 4 — Operating modes | Verified on physical device |
 | Phase 5 — Voice commands | Not started |
 | Phase 6 — ESP32 boundary | Not started |
 | Phase 7 — Evaluation | Not started |
