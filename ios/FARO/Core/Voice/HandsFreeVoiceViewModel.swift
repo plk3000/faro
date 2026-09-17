@@ -38,24 +38,52 @@ protocol HandsFreeFeedbackProviding: AnyObject {
     func confirmWakePhrase() async
 }
 
+struct SystemSoundAwaiter: Sendable {
+    typealias Playback = @Sendable (
+        SystemSoundID,
+        @escaping @Sendable () -> Void
+    ) -> Void
+
+    private let playback: Playback
+
+    init(
+        playback: @escaping Playback = {
+            soundID,
+            completion in
+            AudioServicesPlaySystemSoundWithCompletion(
+                soundID,
+                completion
+            )
+        }
+    ) {
+        self.playback = playback
+    }
+
+    nonisolated func play(_ soundID: SystemSoundID) async {
+        await withCheckedContinuation { continuation in
+            playback(soundID) {
+                continuation.resume()
+            }
+        }
+    }
+}
+
 @MainActor
 final class HandsFreeFeedback: HandsFreeFeedbackProviding {
+    private let soundAwaiter: SystemSoundAwaiter
+
+    init(soundAwaiter: SystemSoundAwaiter = SystemSoundAwaiter()) {
+        self.soundAwaiter = soundAwaiter
+    }
+
     func confirmArmed() async {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        await playSystemSound(1117)
+        await soundAwaiter.play(1117)
     }
 
     func confirmWakePhrase() async {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        await playSystemSound(1118)
-    }
-
-    private func playSystemSound(_ soundID: SystemSoundID) async {
-        await withCheckedContinuation { continuation in
-            AudioServicesPlaySystemSoundWithCompletion(soundID) {
-                continuation.resume()
-            }
-        }
+        await soundAwaiter.play(1118)
     }
 }
 

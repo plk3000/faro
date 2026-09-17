@@ -382,8 +382,12 @@ measured limitations are documented before Phase 6 begins.
 *Status:* In progress. Initial device testing confirmed foreground wake phrases
 and automatic commands work. The first pass found that the acknowledgement
 sound was interrupted by the command recorder's audio-session transition; FARO
-now awaits the system-sound completion callback before starting capture. This
-fix and the remaining device matrix still require physical retesting.
+now awaits the system-sound completion callback before starting capture. That
+first implementation exposed a Swift actor-isolation trap because the system
+invokes its completion on `SSClientCompletionQueue`; the callback bridge is now
+nonisolated. The corrected build has launched successfully on the physical
+iPhone with Hands-Free already enabled. Audio completion and the remaining
+device matrix still require physical retesting.
 
 ### Phase 6 — ESP32 boundary
 

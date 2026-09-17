@@ -1,3 +1,4 @@
+import Dispatch
 import Testing
 @testable import FARO
 
@@ -85,6 +86,16 @@ private final class RecordingHandsFreeFailureFeedback:
 
 @MainActor
 struct HandsFreeVoiceViewModelTests {
+    @Test
+    func systemSoundCompletionCanArriveOffMainActor() async {
+        let soundAwaiter = SystemSoundAwaiter {
+            _, completion in
+            DispatchQueue.global().async(execute: completion)
+        }
+
+        await soundAwaiter.play(1118)
+    }
+
     @Test
     func armsAndEmitsOneWakeEvent() async {
         let detector = StubWakePhraseDetector()
