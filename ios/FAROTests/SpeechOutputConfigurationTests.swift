@@ -1,6 +1,17 @@
 import AVFoundation
+import Dispatch
+import Foundation
 import Testing
 @testable import FARO
+
+@MainActor
+private final class SpeechCompletionFlag {
+    var value = false
+}
+
+private struct UncheckedSendable<Value>: @unchecked Sendable {
+    let value: Value
+}
 
 struct SpeechOutputConfigurationTests {
     @Test
@@ -54,5 +65,53 @@ struct SpeechOutputConfigurationTests {
         #expect(
             !error.appMessage.localized(in: language).isEmpty
         )
+    }
+
+    @Test
+    @MainActor
+    func waitsForEveryQueuedUtterance() async {
+        let first = AVSpeechUtterance(string: "First")
+        let second = AVSpeechUtterance(string: "Second")
+        let tracker = SpeechUtteranceCompletionTracker()
+        let completed = SpeechCompletionFlag()
+        tracker.begin([first, second])
+
+        let waitTask = Task { @MainActor in
+            await tracker.waitUntilFinished()
+            completed.value = true
+        }
+        await Task.yield()
+        #expect(!completed.value)
+
+        tracker.complete(ObjectIdentifier(first))
+        await Task.yield()
+        #expect(!completed.value)
+
+        tracker.complete(ObjectIdentifier(second))
+        await waitTask.value
+        #expect(completed.value)
+    }
+
+    @Test
+    @MainActor
+    func delegateCompletionCanArriveOffMainActor() async {
+        let output = SpeechOutput()
+        let synthesizer = UncheckedSendable(
+            value: AVSpeechSynthesizer()
+        )
+        let utterance = UncheckedSendable(
+            value: AVSpeechUtterance(string: "Finished")
+        )
+
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                output.speechSynthesizer(
+                    synthesizer.value,
+                    didFinish: utterance.value
+                )
+                continuation.resume()
+            }
+        }
+        await Task.yield()
     }
 }

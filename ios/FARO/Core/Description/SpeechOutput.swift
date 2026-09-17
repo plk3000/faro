@@ -106,15 +106,57 @@ enum SpeechPhrasePacer {
 }
 
 @MainActor
-final class SpeechOutput: NSObject, SpeechOutputProviding {
+final class SpeechUtteranceCompletionTracker {
+    private(set) var pendingIdentifiers:
+        Set<ObjectIdentifier> = []
+
+    var hasPendingUtterances: Bool {
+        !pendingIdentifiers.isEmpty
+    }
+
+    func begin(_ utterances: [AVSpeechUtterance]) {
+        pendingIdentifiers = Set(
+            utterances.map(ObjectIdentifier.init)
+        )
+    }
+
+    func complete(_ identifier: ObjectIdentifier) {
+        pendingIdentifiers.remove(identifier)
+    }
+
+    func cancelAll() {
+        pendingIdentifiers.removeAll()
+    }
+
+    func waitUntilFinished() async {
+        while hasPendingUtterances {
+            do {
+                try await Task.sleep(for: .milliseconds(50))
+            } catch {
+                return
+            }
+        }
+    }
+}
+
+@MainActor
+final class SpeechOutput:
+    NSObject,
+    SpeechOutputProviding,
+    AVSpeechSynthesizerDelegate
+{
     private let synthesizer = AVSpeechSynthesizer()
     private let configuration: SpeechOutputConfiguration
+    private let completionTracker =
+        SpeechUtteranceCompletionTracker()
     private var voiceOverOutputEndDate: Date?
 
     init(
         configuration: SpeechOutputConfiguration = .accessibleDefault
     ) {
         self.configuration = configuration
+        super.init()
+        synthesizer.delegate = self
     }
 
     func speak(
@@ -174,7 +216,9 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
             )
         }
 
-        for (index, phrase) in phrases.enumerated() {
+        let utterances = phrases.enumerated().map {
+            index,
+            phrase in
             let utterance = AVSpeechUtterance(string: phrase)
             utterance.voice = voice
             utterance.rate = configuration.rate
@@ -182,25 +226,26 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
                 ? configuration.preUtteranceDelay
                 : 0
             utterance.postUtteranceDelay = configuration.phraseDelay
+            return utterance
+        }
+        completionTracker.begin(utterances)
+        for utterance in utterances {
             synthesizer.speak(utterance)
         }
     }
 
     func stop() {
         voiceOverOutputEndDate = nil
-        if synthesizer.isSpeaking {
+        let hadPendingUtterances =
+            completionTracker.hasPendingUtterances
+        completionTracker.cancelAll()
+        if synthesizer.isSpeaking || hadPendingUtterances {
             synthesizer.stopSpeaking(at: .immediate)
         }
     }
 
     func waitUntilFinished() async {
-        while synthesizer.isSpeaking {
-            do {
-                try await Task.sleep(for: .milliseconds(100))
-            } catch {
-                return
-            }
-        }
+        await completionTracker.waitUntilFinished()
         while let endDate = voiceOverOutputEndDate,
               endDate > Date() {
             do {
@@ -210,5 +255,28 @@ final class SpeechOutput: NSObject, SpeechOutputProviding {
             }
         }
         voiceOverOutputEndDate = nil
+    }
+
+    nonisolated func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        didFinish utterance: AVSpeechUtterance
+    ) {
+        complete(utterance)
+    }
+
+    nonisolated func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        didCancel utterance: AVSpeechUtterance
+    ) {
+        complete(utterance)
+    }
+
+    private nonisolated func complete(
+        _ utterance: AVSpeechUtterance
+    ) {
+        let identifier = ObjectIdentifier(utterance)
+        Task { @MainActor [weak self] in
+            self?.completionTracker.complete(identifier)
+        }
     }
 }

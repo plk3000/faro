@@ -387,7 +387,12 @@ first implementation exposed a Swift actor-isolation trap because the system
 invokes its completion on `SSClientCompletionQueue`; the callback bridge is now
 nonisolated. The corrected build has launched successfully on the physical
 iPhone with Hands-Free already enabled. Audio completion and the remaining
-device matrix still require physical retesting.
+device matrix still require physical retesting. A subsequent “Hola FARO” →
+“dónde estoy” pass showed that spoken place output could begin and then be cut
+off because `AVSpeechSynthesizer.isSpeaking` briefly reports false before or
+between queued phrases. FARO now tracks every queued utterance through
+`AVSpeechSynthesizerDelegate` and does not re-arm wake listening until all
+phrases finish; this build is installed for device retesting.
 
 ### Phase 6 — ESP32 boundary
 
