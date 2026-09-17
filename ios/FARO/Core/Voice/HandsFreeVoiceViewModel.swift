@@ -34,20 +34,28 @@ protocol WakePhraseDetecting: AnyObject {
 
 @MainActor
 protocol HandsFreeFeedbackProviding: AnyObject {
-    func confirmArmed()
-    func confirmWakePhrase()
+    func confirmArmed() async
+    func confirmWakePhrase() async
 }
 
 @MainActor
 final class HandsFreeFeedback: HandsFreeFeedbackProviding {
-    func confirmArmed() {
+    func confirmArmed() async {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        AudioServicesPlaySystemSound(1117)
+        await playSystemSound(1117)
     }
 
-    func confirmWakePhrase() {
+    func confirmWakePhrase() async {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        AudioServicesPlaySystemSound(1118)
+        await playSystemSound(1118)
+    }
+
+    private func playSystemSound(_ soundID: SystemSoundID) async {
+        await withCheckedContinuation { continuation in
+            AudioServicesPlaySystemSoundWithCompletion(soundID) {
+                continuation.resume()
+            }
+        }
     }
 }
 
@@ -101,6 +109,7 @@ final class HandsFreeVoiceViewModel {
     private let failureFeedback: any VoiceCommandFeedbackProviding
     private let configuration: HandsFreeActivationConfiguration
     private var activeRequestID: UUID?
+    private var wakeFeedbackTask: Task<Void, Never>?
 
     private(set) var state: HandsFreeListeningState = .disabled
     private(set) var errorMessage: AppMessage?
@@ -141,6 +150,8 @@ final class HandsFreeVoiceViewModel {
         onWakePhrase: @escaping @MainActor () -> Void
     ) async -> Bool {
         detector.stop()
+        wakeFeedbackTask?.cancel()
+        wakeFeedbackTask = nil
         let requestID = UUID()
         activeRequestID = requestID
         state = .preparing
@@ -172,8 +183,13 @@ final class HandsFreeVoiceViewModel {
                     detector.stop()
                     return false
                 }
+                await feedback.confirmArmed()
+                try Task.checkCancellation()
+                guard activeRequestID == requestID else {
+                    detector.stop()
+                    return false
+                }
                 state = .listeningForWakePhrase
-                feedback.confirmArmed()
                 return true
             } catch is CancellationError {
                 disarm()
@@ -212,6 +228,8 @@ final class HandsFreeVoiceViewModel {
 
     func disarm() {
         detector.stop()
+        wakeFeedbackTask?.cancel()
+        wakeFeedbackTask = nil
         activeRequestID = nil
         state = .disabled
         errorMessage = nil
@@ -236,8 +254,19 @@ final class HandsFreeVoiceViewModel {
         detector.stop()
         activeRequestID = nil
         state = .wakePhraseDetected
-        feedback.confirmWakePhrase()
-        onWakePhrase()
+        wakeFeedbackTask?.cancel()
+        wakeFeedbackTask = Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+            await feedback.confirmWakePhrase()
+            guard !Task.isCancelled,
+                  state == .wakePhraseDetected else {
+                return
+            }
+            wakeFeedbackTask = nil
+            onWakePhrase()
+        }
     }
 
     private func shouldRetry(_ error: any Error) -> Bool {

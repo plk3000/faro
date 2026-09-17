@@ -823,7 +823,6 @@ struct ContentView: View {
         language: SupportedLanguage
     ) async {
         do {
-            try await Task.sleep(for: .milliseconds(350))
             try Task.checkCancellation()
             guard handsFreeCommandID == id,
                   handsFreeEnabled,

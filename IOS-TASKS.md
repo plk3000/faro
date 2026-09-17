@@ -9,7 +9,7 @@
 | Phase 2 — Scene description | Verified on physical device |
 | Phase 3 — Place memory | Verified on physical device |
 | Phase 4 — Operating modes | Verified on physical device |
-| Phase 5 — Voice commands | Hands-free implemented; physical validation pending |
+| Phase 5 — Voice commands | Hands-free device validation in progress |
 | Phase 6 — ESP32 boundary | Not started |
 | Phase 7 — Evaluation | Not started |
 
@@ -379,7 +379,11 @@ scope.
 *Done when:* the hands-free flow is accepted on the physical iPhone and its
 measured limitations are documented before Phase 6 begins.
 
-*Status:* Pending physical-device validation.
+*Status:* In progress. Initial device testing confirmed foreground wake phrases
+and automatic commands work. The first pass found that the acknowledgement
+sound was interrupted by the command recorder's audio-session transition; FARO
+now awaits the system-sound completion callback before starting capture. This
+fix and the remaining device matrix still require physical retesting.
 
 ### Phase 6 — ESP32 boundary
 

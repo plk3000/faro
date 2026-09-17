@@ -45,13 +45,27 @@ private final class RecordingHandsFreeFeedback:
     HandsFreeFeedbackProviding
 {
     private(set) var events: [String] = []
+    var holdsWakeConfirmation = false
+    private var wakeContinuation:
+        CheckedContinuation<Void, Never>?
 
-    func confirmArmed() {
+    func confirmArmed() async {
         events.append("armed")
     }
 
-    func confirmWakePhrase() {
-        events.append("wake")
+    func confirmWakePhrase() async {
+        events.append("wake-started")
+        if holdsWakeConfirmation {
+            await withCheckedContinuation { continuation in
+                wakeContinuation = continuation
+            }
+        }
+        events.append("wake-finished")
+    }
+
+    func finishWakeConfirmation() {
+        wakeContinuation?.resume()
+        wakeContinuation = nil
     }
 }
 
@@ -90,11 +104,83 @@ struct HandsFreeVoiceViewModelTests {
         }
         detector.emitWakePhrase()
         detector.emitWakePhrase()
+        await waitUntil { wakeCount == 1 }
 
         #expect(armed)
         #expect(model.state == .wakePhraseDetected)
         #expect(wakeCount == 1)
-        #expect(feedback.events == ["armed", "wake"])
+        #expect(
+            feedback.events == [
+                "armed",
+                "wake-started",
+                "wake-finished"
+            ]
+        )
+    }
+
+    @Test
+    func startsCommandOnlyAfterWakeFeedbackFinishes() async {
+        let detector = StubWakePhraseDetector()
+        let feedback = RecordingHandsFreeFeedback()
+        feedback.holdsWakeConfirmation = true
+        let model = HandsFreeVoiceViewModel(
+            detector: detector,
+            feedback: feedback,
+            failureFeedback: RecordingHandsFreeFailureFeedback(),
+            configuration: HandsFreeActivationConfiguration(
+                retryDelays: [.zero]
+            )
+        )
+        var wakeCount = 0
+
+        await model.arm(language: .englishUS) {
+            wakeCount += 1
+        }
+        detector.emitWakePhrase()
+        await waitUntil {
+            feedback.events.contains("wake-started")
+        }
+
+        #expect(model.state == .wakePhraseDetected)
+        #expect(wakeCount == 0)
+
+        feedback.finishWakeConfirmation()
+        await waitUntil { wakeCount == 1 }
+
+        #expect(wakeCount == 1)
+        #expect(feedback.events.last == "wake-finished")
+    }
+
+    @Test
+    func disarmingDuringFeedbackPreventsCommandCapture() async {
+        let detector = StubWakePhraseDetector()
+        let feedback = RecordingHandsFreeFeedback()
+        feedback.holdsWakeConfirmation = true
+        let model = HandsFreeVoiceViewModel(
+            detector: detector,
+            feedback: feedback,
+            failureFeedback: RecordingHandsFreeFailureFeedback(),
+            configuration: HandsFreeActivationConfiguration(
+                retryDelays: [.zero]
+            )
+        )
+        var wakeCount = 0
+
+        await model.arm(language: .englishUS) {
+            wakeCount += 1
+        }
+        detector.emitWakePhrase()
+        await waitUntil {
+            feedback.events.contains("wake-started")
+        }
+        model.disarm()
+        feedback.finishWakeConfirmation()
+        await waitUntil {
+            feedback.events.contains("wake-finished")
+        }
+
+        #expect(model.state == .disabled)
+        #expect(wakeCount == 0)
     }
 
     @Test
@@ -265,5 +351,17 @@ struct HandsFreeVoiceViewModelTests {
                 isVoiceSessionActive: true
             )
         )
+    }
+
+    private func waitUntil(
+        _ condition: @escaping @MainActor () -> Bool
+    ) async {
+        for _ in 0..<100 {
+            if condition() {
+                return
+            }
+            await Task.yield()
+        }
+        Issue.record("Timed out waiting for asynchronous state")
     }
 }
