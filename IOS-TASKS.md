@@ -298,10 +298,18 @@ label extraction, and unrecognized input.
 
 **T32 · voice-wiring** — Route parsed commands into the existing flows while
 preserving the selected language through generated and spoken results.
-Navigation-only commands remain gated by Navigating, and voice enrollment
-captures the first named view before opening the existing multi-view flow.
+Navigation-only commands remain gated by Navigating. Voice enrollment speaks
+movement guidance, waits for that guidance to finish, then automatically
+captures nine timed views across an approximately 180-degree left-to-right
+sweep through the existing still-photo path before announcing completion. The
+touch-based enrollment sheet remains available for manual enrollment and
+adding views.
 *Done when:* each command triggers its flow by voice alone in English and
 Spanish.
+
+*Implementation status:* Voice enrollment now performs the bounded nine-view,
+approximately 180-degree scan without opening the touch sheet. The final signed
+build is installed on the paired iPhone for physical acceptance.
 
 **T33 · hands-free-state** — Add a persisted, explicit Hands-Free preference.
 When enabled and FARO becomes foreground-active — including after “Siri, open
@@ -372,10 +380,10 @@ hands-free acceptance awaits T38.
 **T38 · hands-free-validation** — Run the physical-device matrix: Siri audio
 handoff, both wake phrases and languages, first-run permissions, repeated
 wake/command cycles, camera regression, Bluetooth audio routes, interruptions,
-self-speech suppression, foreground exit, manual fallback, VoiceOver, false
-activations, activation latency, and battery/thermal impact. Custom wake
-activation while FARO is suspended or terminated remains explicitly out of
-scope.
+self-speech suppression, automatic nine-view place enrollment, foreground
+exit, manual fallback, VoiceOver, false activations, activation latency, and
+battery/thermal impact. Custom wake activation while FARO is suspended or
+terminated remains explicitly out of scope.
 *Done when:* the hands-free flow is accepted on the physical iPhone and its
 measured limitations are documented before Phase 6 begins.
 
@@ -392,7 +400,13 @@ device matrix still require physical retesting. A subsequent “Hola FARO” →
 off because `AVSpeechSynthesizer.isSpeaking` briefly reports false before or
 between queued phrases. FARO now tracks every queued utterance through
 `AVSpeechSynthesizerDelegate` and does not re-arm wake listening until all
-phrases finish; this build is installed for device retesting.
+phrases finish; this build is installed for device retesting. Voice place
+enrollment now waits through first-run permission prompts, speaks turning
+guidance, captures nine timed still views across an approximately 180-degree
+sweep without restarting the camera, and announces completion before re-arming.
+The signed build containing this flow is installed; automated launch was
+blocked because the paired iPhone was locked, so its physical enrollment pass
+remains part of this gate.
 
 ### Phase 6 — ESP32 boundary
 

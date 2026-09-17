@@ -13,6 +13,31 @@ struct PlaceRecognitionOutput: Equatable, Sendable {
     }
 }
 
+struct PlaceScanConfiguration: Equatable, Sendable {
+    static let voiceEnrollment = PlaceScanConfiguration(
+        viewCount: 9,
+        initialCaptureDelay: .milliseconds(1_500),
+        captureInterval: .seconds(1)
+    )
+
+    let viewCount: Int
+    let initialCaptureDelay: Duration
+    let captureInterval: Duration
+
+    init(
+        viewCount: Int,
+        initialCaptureDelay: Duration,
+        captureInterval: Duration
+    ) {
+        precondition(viewCount > 0)
+        precondition(initialCaptureDelay >= .zero)
+        precondition(captureInterval >= .zero)
+        self.viewCount = viewCount
+        self.initialCaptureDelay = initialCaptureDelay
+        self.captureInterval = captureInterval
+    }
+}
+
 @MainActor
 @Observable
 final class CaptureViewModel {
@@ -39,6 +64,7 @@ final class CaptureViewModel {
     private(set) var isDescribing = false
     private(set) var isRecognizing = false
     private(set) var isEnrolling = false
+    private(set) var isPreparingPlaceMemory = false
     private(set) var statusMessage = AppMessage(.statusReady)
     private(set) var errorMessage: AppMessage?
 
@@ -96,8 +122,13 @@ final class CaptureViewModel {
         }
     }
 
-    func preparePlaceMemoryLocation() {
-        locationProvider.requestAuthorization()
+    func preparePlaceMemoryLocation() async {
+        isPreparingPlaceMemory = true
+        defer { isPreparingPlaceMemory = false }
+        await locationProvider.requestAuthorization()
+        guard !Task.isCancelled else {
+            return
+        }
         locationProvider.start()
     }
 
@@ -210,28 +241,12 @@ final class CaptureViewModel {
         errorMessage = nil
         defer { isEnrolling = false }
 
-        var savedImage: StoredImage?
         do {
-            let image = try await imageSource.capture()
-            let saved = try await imageStore.save(image)
-            savedImage = saved
-            let embedding = try await imageEmbedder.embed(image)
-
-            let place = existingPlace ?? Place(label: normalizedLabel)
-            if existingPlace == nil {
-                modelContext.insert(place)
-            }
-            let snapshot = PlaceSnapshot(
-                imageFilename: saved.filename,
-                embedding: embedding,
-                capturedAt: image.capturedAt,
-                location: locationProvider.latestSnapshot
+            let place = try await savePlaceView(
+                normalizedLabel: normalizedLabel,
+                into: existingPlace,
+                modelContext: modelContext
             )
-            place.snapshots.append(snapshot)
-            try modelContext.save()
-
-            latestImageData = image.data
-            storedImages.insert(saved, at: 0)
             statusMessage = AppMessage(
                 .statusSavedPlaceView,
                 arguments: [
@@ -249,30 +264,135 @@ final class CaptureViewModel {
                 report(error, language: language)
             }
             return place
+        } catch is CancellationError {
+            statusMessage = AppMessage(.statusReady)
+            errorMessage = nil
+            return existingPlace
         } catch {
-            modelContext.rollback()
-            if let savedImage {
-                do {
-                    try await imageStore.delete(
-                        filename: savedImage.filename
-                    )
-                } catch {
-                    report(
-                        PlaceWorkflowError.saveFailed,
-                        language: language,
-                        speak: true
-                    )
-                    return existingPlace
-                }
-            }
-            let reportedError = error as? any AppMessageProviding
-                ?? PlaceWorkflowError.saveFailed
+            reportPlaceCaptureError(error, language: language)
+            return existingPlace
+        }
+    }
+
+    @discardableResult
+    func capturePlaceScan(
+        label: String,
+        into existingPlace: Place? = nil,
+        modelContext: ModelContext,
+        language: SupportedLanguage,
+        configuration: PlaceScanConfiguration = .voiceEnrollment
+    ) async -> Place? {
+        guard !isBusy else {
+            return existingPlace
+        }
+
+        let normalizedLabel = label.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !normalizedLabel.isEmpty else {
             report(
-                reportedError,
+                PlaceWorkflowError.missingLabel,
                 language: language,
                 speak: true
             )
             return existingPlace
+        }
+
+        isEnrolling = true
+        errorMessage = nil
+        defer { isEnrolling = false }
+
+        let startingViewCount = existingPlace?.snapshots.count ?? 0
+        var enrolledPlace = existingPlace
+
+        do {
+            let instruction = AppMessage(
+                .placeScanInstructions,
+                arguments: [
+                    String(configuration.viewCount),
+                    existingPlace?.label ?? normalizedLabel
+                ]
+            )
+            statusMessage = instruction
+            try speechOutput.speak(
+                instruction.localized(in: language),
+                language: language
+            )
+            await speechOutput.waitUntilFinished()
+            try Task.checkCancellation()
+
+            if configuration.initialCaptureDelay > .zero {
+                try await Task.sleep(
+                    for: configuration.initialCaptureDelay
+                )
+            }
+
+            for index in 0..<configuration.viewCount {
+                if index > 0, configuration.captureInterval > .zero {
+                    try await Task.sleep(
+                        for: configuration.captureInterval
+                    )
+                }
+                try Task.checkCancellation()
+
+                let placeLabel = enrolledPlace?.label ?? normalizedLabel
+                statusMessage = AppMessage(
+                    .statusCapturingPlaceView,
+                    argument: placeLabel
+                )
+                enrolledPlace = try await savePlaceView(
+                    normalizedLabel: normalizedLabel,
+                    into: enrolledPlace,
+                    modelContext: modelContext
+                )
+                statusMessage = AppMessage(
+                    .statusSavedPlaceView,
+                    arguments: [
+                        String(enrolledPlace?.snapshots.count ?? 0),
+                        placeLabel
+                    ]
+                )
+            }
+
+            try Task.checkCancellation()
+            guard let enrolledPlace else {
+                throw PlaceWorkflowError.saveFailed
+            }
+            let capturedViewCount =
+                enrolledPlace.snapshots.count - startingViewCount
+            let completion = AppMessage(
+                .statusPlaceScanComplete,
+                arguments: [
+                    enrolledPlace.label,
+                    String(capturedViewCount)
+                ]
+            )
+            statusMessage = completion
+            try speechOutput.speak(
+                completion.localized(in: language),
+                language: language
+            )
+            await speechOutput.waitUntilFinished()
+            try Task.checkCancellation()
+            return enrolledPlace
+        } catch is CancellationError {
+            speechOutput.stop()
+            if let enrolledPlace {
+                statusMessage = AppMessage(
+                    .statusSavedPlaceView,
+                    arguments: [
+                        String(enrolledPlace.snapshots.count),
+                        enrolledPlace.label
+                    ]
+                )
+            } else {
+                statusMessage = AppMessage(.statusReady)
+            }
+            errorMessage = nil
+            return enrolledPlace
+        } catch {
+            reportPlaceCaptureError(error, language: language)
+            return enrolledPlace
         }
     }
 
@@ -416,7 +536,84 @@ final class CaptureViewModel {
     }
 
     private var isBusy: Bool {
-        isCapturing || isDescribing || isRecognizing || isEnrolling
+        isCapturing
+            || isDescribing
+            || isRecognizing
+            || isEnrolling
+            || isPreparingPlaceMemory
+    }
+
+    private func savePlaceView(
+        normalizedLabel: String,
+        into existingPlace: Place?,
+        modelContext: ModelContext
+    ) async throws -> Place {
+        var savedImage: StoredImage?
+
+        do {
+            try Task.checkCancellation()
+            let image = try await imageSource.capture()
+            try Task.checkCancellation()
+            let saved = try await imageStore.save(image)
+            savedImage = saved
+            try Task.checkCancellation()
+            let embedding = try await imageEmbedder.embed(image)
+            try Task.checkCancellation()
+
+            let place = existingPlace ?? Place(label: normalizedLabel)
+            if existingPlace == nil {
+                modelContext.insert(place)
+            }
+            let snapshot = PlaceSnapshot(
+                imageFilename: saved.filename,
+                embedding: embedding,
+                capturedAt: image.capturedAt,
+                location: locationProvider.latestSnapshot
+            )
+            place.snapshots.append(snapshot)
+            try modelContext.save()
+
+            latestImageData = image.data
+            storedImages.insert(saved, at: 0)
+            return place
+        } catch {
+            modelContext.rollback()
+            var imageCleanupFailed = false
+            if let savedImage {
+                do {
+                    try await imageStore.delete(
+                        filename: savedImage.filename
+                    )
+                } catch {
+                    imageCleanupFailed = true
+                }
+            }
+            if Task.isCancelled || error is CancellationError {
+                if imageCleanupFailed {
+                    Self.logger.error(
+                        "Failed to remove a canceled place capture"
+                    )
+                }
+                throw CancellationError()
+            }
+            if imageCleanupFailed {
+                throw PlaceWorkflowError.saveFailed
+            }
+            throw error
+        }
+    }
+
+    private func reportPlaceCaptureError(
+        _ error: any Error,
+        language: SupportedLanguage
+    ) {
+        let reportedError = error as? any AppMessageProviding
+            ?? PlaceWorkflowError.saveFailed
+        report(
+            reportedError,
+            language: language,
+            speak: true
+        )
     }
 
     private func placeCandidates(

@@ -34,7 +34,7 @@ protocol LocationProviding: AnyObject {
     var authorizationStatus: CLAuthorizationStatus { get }
     var latestSnapshot: LocationSnapshot? { get }
 
-    func requestAuthorization()
+    func requestAuthorization() async
     func start()
     func stop()
 }
@@ -48,6 +48,8 @@ final class LocationProvider:
 {
     private let manager: CLLocationManager
     private let fixPolicy: LocationFixPolicy
+    private var authorizationWaiters:
+        [UUID: CheckedContinuation<Void, Never>] = [:]
 
     private(set) var authorizationStatus: CLAuthorizationStatus
     private(set) var latestSnapshot: LocationSnapshot?
@@ -67,9 +69,27 @@ final class LocationProvider:
         manager.headingFilter = 10
     }
 
-    func requestAuthorization() {
-        if authorizationStatus == .notDetermined {
-            manager.requestWhenInUseAuthorization()
+    func requestAuthorization() async {
+        authorizationStatus = manager.authorizationStatus
+        guard authorizationStatus == .notDetermined else {
+            return
+        }
+
+        let waiterID = UUID()
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                authorizationWaiters[waiterID] = continuation
+                authorizationStatus = manager.authorizationStatus
+                if authorizationStatus == .notDetermined {
+                    manager.requestWhenInUseAuthorization()
+                } else {
+                    resumeAuthorizationWaiter(waiterID)
+                }
+            }
+        } onCancel: {
+            Task { @MainActor [weak self] in
+                self?.resumeAuthorizationWaiter(waiterID)
+            }
         }
     }
 
@@ -91,12 +111,23 @@ final class LocationProvider:
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
+        if authorizationStatus != .notDetermined {
+            let waiters = Array(authorizationWaiters.values)
+            authorizationWaiters.removeAll()
+            for waiter in waiters {
+                waiter.resume()
+            }
+        }
         if authorizationStatus == .authorizedWhenInUse
             || authorizationStatus == .authorizedAlways {
             start()
         } else {
             stop()
         }
+    }
+
+    private func resumeAuthorizationWaiter(_ id: UUID) {
+        authorizationWaiters.removeValue(forKey: id)?.resume()
     }
 
     func locationManager(

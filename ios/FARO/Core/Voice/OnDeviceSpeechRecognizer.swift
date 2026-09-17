@@ -86,7 +86,9 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
         }
 
         try await VoiceAuthorization.requireSpeechRecognition()
+        try Task.checkCancellation()
         try await VoiceAuthorization.requireMicrophone()
+        try Task.checkCancellation()
 
         guard let recognizer = SFSpeechRecognizer(
             locale: language.locale
@@ -114,6 +116,7 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
         recordingURL = url
 
         do {
+            try Task.checkCancellation()
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setCategory(
                 .record,
@@ -139,10 +142,14 @@ final class OnDeviceSpeechRecognizer: SpeechRecognizing {
             )
             audioRecorder = recorder
             recorder.isMeteringEnabled = true
+            try Task.checkCancellation()
             guard recorder.prepareToRecord(), recorder.record() else {
                 throw SpeechRecognitionError.audioInputUnavailable
             }
             isListening = true
+        } catch is CancellationError {
+            cancel()
+            throw CancellationError()
         } catch let error as SpeechRecognitionError {
             cancel()
             throw error

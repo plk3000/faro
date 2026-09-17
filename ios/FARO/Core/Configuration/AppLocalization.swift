@@ -97,6 +97,7 @@ enum AppStringKey: String, CaseIterable, Sendable {
     case placeInstructionReverse = "place.instruction.reverse"
     case placeInstructionLighting = "place.instruction.lighting"
     case placeInstructionEnough = "place.instruction.enough"
+    case placeScanInstructions = "place.scan.instructions"
     case statusReady = "status.ready"
     case statusCapturingImage = "status.capturingImage"
     case statusImageCapturedSaved = "status.imageCapturedSaved"
@@ -105,6 +106,7 @@ enum AppStringKey: String, CaseIterable, Sendable {
     case statusDescriptionReady = "status.descriptionReady"
     case statusCheckingLocation = "status.checkingLocation"
     case statusPlaceRecognitionComplete = "status.placeRecognitionComplete"
+    case statusPlaceScanComplete = "status.placeScanComplete"
     case statusCapturingPlaceView = "status.capturingPlaceView"
     case statusSavedPlaceView = "status.savedPlaceView"
     case statusUpdatingPlaceEmbeddings = "status.updatingPlaceEmbeddings"
@@ -209,8 +211,10 @@ enum AppStringKey: String, CaseIterable, Sendable {
              .placeInstructionReverse,
              .placeInstructionLighting,
              .placeInstructionEnough,
+             .placeScanInstructions,
              .statusCheckingLocation,
              .statusPlaceRecognitionComplete,
+             .statusPlaceScanComplete,
              .statusCapturingPlaceView,
              .statusSavedPlaceView,
              .statusUpdatingPlaceEmbeddings,

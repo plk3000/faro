@@ -24,6 +24,13 @@ Siri can foreground FARO, and FARO listens on-device for "Hey FARO" or "Hola
 FARO" before opening one automatic command window. See T33-T38 in
 `IOS-TASKS.md`.
 
+The voice command "Remember this as..." now provides localized movement
+guidance and automatically captures nine still views about one second apart
+while the user sweeps from left to right through approximately 180 degrees. It
+deliberately reuses the proven photo path instead of recording video or
+reconfiguring the camera session. The touch enrollment screen remains available
+for manual enrollment and adding views.
+
 The ESP32 firmware is intentionally maintained in a separate repository. This
 repository will only define and implement the iOS side of the BLE boundary.
 
@@ -129,6 +136,10 @@ For the hands-free flow, enable **Hands-Free** once and allow any requested
 speech-asset download. Close or background FARO, say "Siri, open FARO," wait
 for the ready tone, say "Hey FARO" or "Hola FARO," wait for the acknowledgement
 tone, and then say one command. Confirm that backgrounding FARO stops listening.
+For place enrollment, say "Remember this as Kitchen" or "Recuerda este lugar
+como Cocina," follow the spoken turning instruction, and confirm that FARO
+announces completion after saving nine views without opening the enrollment
+sheet.
 
 The generated project has an empty `DEVELOPMENT_TEAM`. Selecting a team in
 Xcode changes only the ignored generated project, so you may need to select it

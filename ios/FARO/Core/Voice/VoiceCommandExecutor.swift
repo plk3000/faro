@@ -2,13 +2,23 @@ import SwiftData
 
 enum VoiceCommandExecutionResult {
     case completed
-    case continueEnrollment(Place)
 }
 
 @MainActor
 struct VoiceCommandExecutor {
     let captureModel: CaptureViewModel
     let modeController: OperatingModeController
+    let placeScanConfiguration: PlaceScanConfiguration
+
+    init(
+        captureModel: CaptureViewModel,
+        modeController: OperatingModeController,
+        placeScanConfiguration: PlaceScanConfiguration = .voiceEnrollment
+    ) {
+        self.captureModel = captureModel
+        self.modeController = modeController
+        self.placeScanConfiguration = placeScanConfiguration
+    }
 
     func execute(
         _ command: VoiceCommand,
@@ -25,7 +35,8 @@ struct VoiceCommandExecutor {
 
         case .whereAmI:
             try requireNavigating()
-            captureModel.preparePlaceMemoryLocation()
+            await captureModel.preparePlaceMemoryLocation()
+            try Task.checkCancellation()
             await captureModel.recognizePlace(
                 in: places,
                 modelContext: modelContext,
@@ -34,16 +45,15 @@ struct VoiceCommandExecutor {
             return .completed
 
         case let .rememberPlace(label):
-            captureModel.preparePlaceMemoryLocation()
-            let place = await captureModel.capturePlaceView(
+            await captureModel.preparePlaceMemoryLocation()
+            try Task.checkCancellation()
+            await captureModel.capturePlaceScan(
                 label: label,
                 into: nil,
                 modelContext: modelContext,
-                language: language
+                language: language,
+                configuration: placeScanConfiguration
             )
-            if let place {
-                return .continueEnrollment(place)
-            }
             return .completed
 
         case .whatIsAhead:

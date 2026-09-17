@@ -4,6 +4,7 @@
 @MainActor
 enum VoiceAuthorization {
     static func requireSpeechRecognition() async throws {
+        try Task.checkCancellation()
         let current = SFSpeechRecognizer.authorizationStatus()
         let status: SFSpeechRecognizerAuthorizationStatus
         if current == .notDetermined {
@@ -15,17 +16,20 @@ enum VoiceAuthorization {
         } else {
             status = current
         }
+        try Task.checkCancellation()
         guard status == .authorized else {
             throw SpeechRecognitionError.speechPermissionDenied
         }
     }
 
     static func requireMicrophone() async throws {
+        try Task.checkCancellation()
         let granted = await withCheckedContinuation { continuation in
             AVAudioApplication.requestRecordPermission {
                 continuation.resume(returning: $0)
             }
         }
+        try Task.checkCancellation()
         guard granted else {
             throw SpeechRecognitionError.microphonePermissionDenied
         }

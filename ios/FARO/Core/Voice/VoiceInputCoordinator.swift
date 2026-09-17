@@ -23,6 +23,8 @@ protocol VoiceCommandSessionControlling: AnyObject {
         language: SupportedLanguage,
         onSpeechEndpoint: @MainActor () -> Void
     ) async -> VoiceCommand?
+
+    func cancel()
 }
 
 extension VoiceCommandViewModel: VoiceCommandSessionControlling {}
@@ -35,9 +37,23 @@ struct VoiceInputCoordinator {
     @discardableResult
     func begin(language: SupportedLanguage) async -> Bool {
         await camera.suspendCameraCaptureForVoiceInput()
+        guard !Task.isCancelled else {
+            _ = await camera.resumeCameraCaptureAfterVoiceInput(
+                language: language
+            )
+            return false
+        }
+
         let started = await voiceSession.beginListening(
             language: language
         )
+        guard !Task.isCancelled else {
+            voiceSession.cancel()
+            _ = await camera.resumeCameraCaptureAfterVoiceInput(
+                language: language
+            )
+            return false
+        }
         if !started {
             _ = await camera.resumeCameraCaptureAfterVoiceInput(
                 language: language
@@ -55,6 +71,9 @@ struct VoiceInputCoordinator {
         let cameraReady = await camera.resumeCameraCaptureAfterVoiceInput(
             language: language
         )
+        guard !Task.isCancelled else {
+            return nil
+        }
         return cameraReady ? command : nil
     }
 
@@ -71,6 +90,9 @@ struct VoiceInputCoordinator {
             await camera.resumeCameraCaptureAfterVoiceInput(
                 language: language
             )
+        guard !Task.isCancelled else {
+            return nil
+        }
         return cameraReady ? command : nil
     }
 }

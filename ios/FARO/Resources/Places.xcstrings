@@ -613,6 +613,22 @@
         }
       }
     },
+    "place.scan.instructions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO will capture %1$@ views for %2$@. Aim the phone toward your left side, then slowly turn to your right through about half a turn."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO capturará %1$@ vistas de %2$@. Apunta el teléfono hacia tu lado izquierdo y luego gira lentamente hacia la derecha hasta completar aproximadamente media vuelta."
+          }
+        }
+      }
+    },
     "place.uncertain" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -813,6 +829,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reconocimiento del lugar completado"
+          }
+        }
+      }
+    },
+    "status.placeScanComplete" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved %1$@ with %2$@ views."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se guardó %1$@ con %2$@ vistas."
           }
         }
       }

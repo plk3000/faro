@@ -166,8 +166,10 @@ stops wake listening whenever it leaves the foreground, never sends ambient
 audio to a service, and suppresses detection while speaking so it cannot
 trigger itself. “Where am I?” and “what is ahead?” still require Navigating
 mode; bilingual start/stop navigation commands provide hands-free mode control.
-“Remember this as…” captures the first named view and then opens the existing
-guided multi-view enrollment flow.
+“Remember this as…” speaks movement guidance and automatically captures nine
+timed views across an approximately 180-degree left-to-right sweep. The existing
+guided enrollment screen remains available for touch-based enrollment and
+adding more views.
 
 Camera and microphone work remain serialized without restarting the live video
 session: still-photo requests are suspended during command capture, the camera

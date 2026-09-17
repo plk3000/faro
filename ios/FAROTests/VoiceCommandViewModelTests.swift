@@ -7,6 +7,8 @@ private final class StubSpeechRecognizer: SpeechRecognizing {
     var finalTranscript = ""
     var startError: (any Error)?
     var stopError: (any Error)?
+    var waitForStartCancellation = false
+    private(set) var isStarting = false
     private(set) var startedLanguages: [SupportedLanguage] = []
     private(set) var cancelCount = 0
     private(set) var endpointWaitCount = 0
@@ -15,6 +17,17 @@ private final class StubSpeechRecognizer: SpeechRecognizing {
         language: SupportedLanguage,
         onTranscript: @escaping @MainActor (String) -> Void
     ) async throws {
+        if waitForStartCancellation {
+            isStarting = true
+            defer { isStarting = false }
+            while true {
+                do {
+                    try await Task.sleep(for: .seconds(1))
+                } catch {
+                    throw CancellationError()
+                }
+            }
+        }
         if let startError {
             throw startError
         }
@@ -167,5 +180,31 @@ struct VoiceCommandViewModelTests {
 
         #expect(command == .describeScene)
         #expect(recognizer.endpointWaitCount == 1)
+    }
+
+    @Test
+    func cancelledStartReturnsToReadyWithoutReportingAnError() async {
+        let recognizer = StubSpeechRecognizer()
+        recognizer.waitForStartCancellation = true
+        let feedback = RecordingVoiceCommandFeedback()
+        let model = VoiceCommandViewModel(
+            recognizer: recognizer,
+            feedback: feedback
+        )
+        let task = Task { @MainActor in
+            await model.beginListening(language: .englishUS)
+        }
+        while !recognizer.isStarting {
+            await Task.yield()
+        }
+
+        task.cancel()
+        let started = await task.value
+
+        #expect(!started)
+        #expect(!model.isActive)
+        #expect(model.errorMessage == nil)
+        #expect(feedback.events.isEmpty)
+        #expect(recognizer.cancelCount == 1)
     }
 }

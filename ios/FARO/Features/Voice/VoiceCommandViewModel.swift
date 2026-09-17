@@ -87,6 +87,15 @@ final class VoiceCommandViewModel {
             isListening = true
             statusMessage = AppMessage(.statusVoiceListening)
             return true
+        } catch is CancellationError {
+            recognizer.cancel()
+            guard activeRequestID == requestID else {
+                return false
+            }
+            activeRequestID = nil
+            statusMessage = AppMessage(.statusVoiceReady)
+            errorMessage = nil
+            return false
         } catch {
             guard activeRequestID == requestID else {
                 return false

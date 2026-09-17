@@ -9,7 +9,7 @@ private final class VoiceCommandLocationProvider: LocationProviding {
     let authorizationStatus: CLAuthorizationStatus = .authorizedWhenInUse
     let latestSnapshot: LocationSnapshot? = nil
 
-    func requestAuthorization() {}
+    func requestAuthorization() async {}
     func start() {}
     func stop() {}
 }
@@ -55,7 +55,12 @@ struct VoiceCommandExecutorTests {
         )
         let executor = VoiceCommandExecutor(
             captureModel: captureModel,
-            modeController: modeController
+            modeController: modeController,
+            placeScanConfiguration: PlaceScanConfiguration(
+                viewCount: 9,
+                initialCaptureDelay: .zero,
+                captureInterval: .zero
+            )
         )
 
         _ = try await executor.execute(
@@ -66,18 +71,40 @@ struct VoiceCommandExecutorTests {
         )
         #expect(captureModel.latestDescription?.language == language)
 
-        let enrollmentResult = try await executor.execute(
+        _ = try await executor.execute(
             .rememberPlace(label: "Cocina de José"),
             places: [],
             modelContext: resources.context,
             language: language
         )
-        guard case let .continueEnrollment(place) = enrollmentResult else {
-            Issue.record("Expected voice enrollment to capture a view")
-            return
-        }
+        let savedPlaces = try resources.context.fetch(
+            FetchDescriptor<Place>()
+        )
+        let place = try #require(savedPlaces.first)
         #expect(place.label == "Cocina de José")
-        #expect(place.snapshots.count == 1)
+        #expect(place.snapshots.count == 9)
+        #expect(
+            speech.spoken.contains(
+                .init(
+                    text: language.text(
+                        .placeScanInstructions,
+                        arguments: ["9", "Cocina de José"]
+                    ),
+                    language: language
+                )
+            )
+        )
+        #expect(
+            speech.spoken.contains(
+                .init(
+                    text: language.text(
+                        .statusPlaceScanComplete,
+                        arguments: ["Cocina de José", "9"]
+                    ),
+                    language: language
+                )
+            )
+        )
 
         _ = try await executor.execute(
             .startNavigating,

@@ -24,6 +24,8 @@ struct ContentView: View {
     @State private var voiceModel = VoiceCommandViewModel()
     @State private var handsFreeModel = HandsFreeVoiceViewModel()
     @State private var navigationTask: Task<Void, Never>?
+    @State private var voiceInputTask: Task<Void, Never>?
+    @State private var voiceInputOperationID: UUID?
     @State private var voiceCommandTask: Task<Void, Never>?
     @State private var handsFreeArmTask: Task<Void, Never>?
     @State private var handsFreeCommandTask: Task<Void, Never>?
@@ -83,11 +85,24 @@ struct ContentView: View {
                 }
             }
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active {
+                switch phase {
+                case .active:
                     activateHandsFreeIfNeeded(
                         after: .milliseconds(450)
                     )
-                } else {
+                case .inactive:
+                    suspendHandsFree(cancelCommand: false)
+                case .background:
+                    navigationTask?.cancel()
+                    voiceInputTask?.cancel()
+                    voiceCommandTask?.cancel()
+                    captureModel.stopNavigationOutput()
+                    suspendHandsFree(cancelCommand: true)
+                @unknown default:
+                    navigationTask?.cancel()
+                    voiceInputTask?.cancel()
+                    voiceCommandTask?.cancel()
+                    captureModel.stopNavigationOutput()
                     suspendHandsFree(cancelCommand: true)
                 }
             }
@@ -101,6 +116,7 @@ struct ContentView: View {
             }
             .onDisappear {
                 navigationTask?.cancel()
+                voiceInputTask?.cancel()
                 voiceCommandTask?.cancel()
                 captureModel.stopNavigationOutput()
                 suspendHandsFree(cancelCommand: true)
@@ -114,6 +130,7 @@ struct ContentView: View {
             || captureModel.isDescribing
             || captureModel.isRecognizing
             || captureModel.isEnrolling
+            || captureModel.isPreparingPlaceMemory
     }
 
     private var isBusy: Bool {
@@ -130,6 +147,8 @@ struct ContentView: View {
             isCaptureBusy: captureIsBusy,
             isVoiceSessionActive: voiceModel.isActive
         )
+        && voiceInputOperationID == nil
+        && handsFreeCommandID == nil
     }
 
     private var handsFreeIsHandlingCommand: Bool {
@@ -633,13 +652,33 @@ struct ContentView: View {
         suspendHandsFree(cancelCommand: false)
         captureModel.stopNavigationOutput()
         let selectedLanguage = language
-        Task {
+        voiceInputTask?.cancel()
+        let operationID = UUID()
+        voiceInputOperationID = operationID
+        voiceInputTask = Task {
             let started = await VoiceInputCoordinator(
                 camera: captureModel,
                 voiceSession: voiceModel
             ).begin(
                 language: selectedLanguage
             )
+            guard !Task.isCancelled,
+                  scenePhase == .active,
+                  language == selectedLanguage else {
+                if started {
+                    voiceModel.cancel()
+                    _ = await captureModel
+                        .resumeCameraCaptureAfterVoiceInput(
+                            language: selectedLanguage
+                        )
+                }
+                finishVoiceInputOperation(operationID)
+                activateHandsFreeIfNeeded(
+                    after: .milliseconds(500)
+                )
+                return
+            }
+            finishVoiceInputOperation(operationID)
             if !started {
                 activateHandsFreeIfNeeded(
                     after: .milliseconds(500)
@@ -650,11 +689,24 @@ struct ContentView: View {
 
     private func finishVoiceCommand() {
         let selectedLanguage = language
-        Task {
+        voiceInputTask?.cancel()
+        let operationID = UUID()
+        voiceInputOperationID = operationID
+        voiceInputTask = Task {
             let command = await VoiceInputCoordinator(
                 camera: captureModel,
                 voiceSession: voiceModel
             ).finish(language: selectedLanguage)
+            guard !Task.isCancelled,
+                  scenePhase == .active,
+                  language == selectedLanguage else {
+                finishVoiceInputOperation(operationID)
+                activateHandsFreeIfNeeded(
+                    after: .milliseconds(500)
+                )
+                return
+            }
+            finishVoiceInputOperation(operationID)
             if let command {
                 executeVoiceCommand(
                     command,
@@ -666,6 +718,13 @@ struct ContentView: View {
                 )
             }
         }
+    }
+
+    private func finishVoiceInputOperation(_ id: UUID) {
+        guard voiceInputOperationID == id else {
+            return
+        }
+        voiceInputOperationID = nil
     }
 
     private func executeVoiceCommand(
@@ -683,7 +742,14 @@ struct ContentView: View {
                 language: language
             )
             await captureModel.waitForSpeechOutputToFinish()
-            guard shouldRearm, !Task.isCancelled else {
+            if Task.isCancelled {
+                captureModel.stopNavigationOutput()
+                activateHandsFreeIfNeeded(
+                    after: .milliseconds(500)
+                )
+                return
+            }
+            guard shouldRearm else {
                 return
             }
             activateHandsFreeIfNeeded(
@@ -710,7 +776,7 @@ struct ContentView: View {
         }
 
         do {
-            let result = try await VoiceCommandExecutor(
+            _ = try await VoiceCommandExecutor(
                 captureModel: captureModel,
                 modeController: modeController
             ).execute(
@@ -720,16 +786,10 @@ struct ContentView: View {
                 language: language
             )
             try Task.checkCancellation()
-            if case let .continueEnrollment(place) = result {
-                enrollmentRequest = EnrollmentRequest(
-                    existingPlace: place
-                )
-                voiceModel.markExecutionComplete()
-                return false
-            }
             voiceModel.markExecutionComplete()
             return true
         } catch is CancellationError {
+            captureModel.stopNavigationOutput()
             voiceModel.markExecutionComplete()
             return false
         } catch {
@@ -782,9 +842,11 @@ struct ContentView: View {
         guard cancelCommand else {
             return
         }
-        handsFreeCommandID = nil
-        handsFreeCommandTask?.cancel()
-        handsFreeCommandTask = nil
+        if let handsFreeCommandTask {
+            handsFreeCommandTask.cancel()
+        } else {
+            handsFreeCommandID = nil
+        }
         if voiceModel.isActive {
             voiceModel.cancel()
             Task {
@@ -911,7 +973,11 @@ struct ContentView: View {
         }
         handsFreeCommandID = nil
         handsFreeCommandTask = nil
+        captureModel.stopNavigationOutput()
         handsFreeModel.disarm()
+        activateHandsFreeIfNeeded(
+            after: .milliseconds(500)
+        )
     }
 
     private func performTouchCaptureAction(
@@ -934,10 +1000,13 @@ struct ContentView: View {
     private func beginTouchPlaceRecognition() {
         modeController.performNavigationOutput {
             suspendHandsFree(cancelCommand: false)
-            captureModel.preparePlaceMemoryLocation()
             navigationTask?.cancel()
             let selectedLanguage = language
             navigationTask = Task {
+                await captureModel.preparePlaceMemoryLocation()
+                guard !Task.isCancelled else {
+                    return
+                }
                 await captureModel.recognizePlace(
                     in: places,
                     modelContext: modelContext,

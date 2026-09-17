@@ -35,7 +35,9 @@ struct RememberPlaceView: View {
                 )
                 .textInputAutocapitalization(.words)
                 .disabled(
-                    enrolledPlace != nil || captureModel.isEnrolling
+                    enrolledPlace != nil
+                        || captureModel.isEnrolling
+                        || captureModel.isPreparingPlaceMemory
                 )
                 .accessibilityLabel(language.text(.placeNameLabel))
             }
@@ -85,6 +87,7 @@ struct RememberPlaceView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(
                     captureModel.isEnrolling
+                        || captureModel.isPreparingPlaceMemory
                         || label.trimmingCharacters(
                             in: .whitespacesAndNewlines
                         ).isEmpty
@@ -127,7 +130,7 @@ struct RememberPlaceView: View {
             }
         }
         .task {
-            captureModel.preparePlaceMemoryLocation()
+            await captureModel.preparePlaceMemoryLocation()
         }
         .environment(\.locale, language.locale)
     }

@@ -13,13 +13,372 @@ private final class FixedLocationProvider: LocationProviding {
         latestSnapshot = snapshot
     }
 
-    func requestAuthorization() {}
+    func requestAuthorization() async {}
     func start() {}
     func stop() {}
 }
 
+private actor FailingAfterImageSource: ImageSource {
+    private let source: FixtureImageSource
+    private let successfulCaptureLimit: Int
+    private var successfulCaptureCount = 0
+
+    init(
+        successfulCaptureLimit: Int,
+        resourceNames: [String]
+    ) {
+        self.successfulCaptureLimit = successfulCaptureLimit
+        source = FixtureImageSource(resourceNames: resourceNames)
+    }
+
+    func capture() async throws -> CapturedImage {
+        guard successfulCaptureCount < successfulCaptureLimit else {
+            throw ImageSourceError.captureFailed
+        }
+        successfulCaptureCount += 1
+        return try await source.capture()
+    }
+}
+
+@MainActor
+private final class CancellationAwareSpeechOutput: SpeechOutputProviding {
+    private let blockedWaitNumber: Int
+    private(set) var spoken: [RecordingSpeechOutput.Entry] = []
+    private(set) var stopCount = 0
+    private(set) var waitCount = 0
+    private(set) var isWaiting = false
+
+    init(blockedWaitNumber: Int) {
+        self.blockedWaitNumber = blockedWaitNumber
+    }
+
+    func speak(
+        _ text: String,
+        language: SupportedLanguage
+    ) throws {
+        spoken.append(.init(text: text, language: language))
+    }
+
+    func stop() {
+        stopCount += 1
+    }
+
+    func waitUntilFinished() async {
+        waitCount += 1
+        guard waitCount == blockedWaitNumber else {
+            return
+        }
+
+        isWaiting = true
+        defer { isWaiting = false }
+
+        while true {
+            do {
+                try await Task.sleep(for: .seconds(1))
+            } catch {
+                return
+            }
+        }
+    }
+}
+
+private actor CancellationMaskingImageSource: ImageSource {
+    private(set) var isCapturing = false
+
+    func capture() async throws -> CapturedImage {
+        isCapturing = true
+        do {
+            try await Task.sleep(for: .seconds(10))
+        } catch {
+            throw ImageSourceError.captureFailed
+        }
+        throw ImageSourceError.captureFailed
+    }
+}
+
 @MainActor
 struct PlaceWorkflowTests {
+    @Test(arguments: SupportedLanguage.allCases)
+    func automaticPlaceScanCapturesNineViewSweep(
+        language: SupportedLanguage
+    ) async throws {
+        let resources = try makeResources()
+        defer {
+            try? FileManager.default.removeItem(
+                at: resources.directory
+            )
+        }
+        let speech = RecordingSpeechOutput()
+        let model = CaptureViewModel(
+            imageSource: FixtureImageSource(
+                resourceNames: [
+                    "kitchen-a",
+                    "kitchen-b",
+                    "kitchen-a",
+                    "kitchen-b",
+                    "kitchen-a"
+                ]
+            ),
+            imageStore: ImageStore(directoryURL: resources.directory),
+            speechOutput: speech,
+            imageEmbedder: PixelGridEmbedder(),
+            locationProvider: FixedLocationProvider()
+        )
+        let configuration = PlaceScanConfiguration(
+            viewCount: 9,
+            initialCaptureDelay: .zero,
+            captureInterval: .zero
+        )
+
+        let place = await model.capturePlaceScan(
+            label: "Cocina de José",
+            modelContext: resources.context,
+            language: language,
+            configuration: configuration
+        )
+
+        #expect(place?.label == "Cocina de José")
+        #expect(place?.snapshots.count == 9)
+        #expect(model.storedImages.count == 9)
+        #expect(model.errorMessage == nil)
+        #expect(
+            model.statusText(language: language)
+                == language.text(
+                    .statusPlaceScanComplete,
+                    arguments: ["Cocina de José", "9"]
+                )
+        )
+        #expect(
+            speech.spoken == [
+                .init(
+                    text: language.text(
+                        .placeScanInstructions,
+                        arguments: ["9", "Cocina de José"]
+                    ),
+                    language: language
+                ),
+                .init(
+                    text: language.text(
+                        .statusPlaceScanComplete,
+                        arguments: ["Cocina de José", "9"]
+                    ),
+                    language: language
+                )
+            ]
+        )
+    }
+
+    @Test
+    func voiceEnrollmentUsesNinePicturesAcrossAHalfTurn() {
+        #expect(PlaceScanConfiguration.voiceEnrollment.viewCount == 9)
+        #expect(
+            PlaceScanConfiguration.voiceEnrollment.initialCaptureDelay
+                == .milliseconds(1_500)
+        )
+        #expect(
+            PlaceScanConfiguration.voiceEnrollment.captureInterval
+                == .seconds(1)
+        )
+    }
+
+    @Test
+    func automaticPlaceScanPreservesViewsBeforeCaptureFailure() async throws {
+        let resources = try makeResources()
+        defer {
+            try? FileManager.default.removeItem(
+                at: resources.directory
+            )
+        }
+        let speech = RecordingSpeechOutput()
+        let model = CaptureViewModel(
+            imageSource: FailingAfterImageSource(
+                successfulCaptureLimit: 2,
+                resourceNames: ["kitchen-a", "kitchen-b"]
+            ),
+            imageStore: ImageStore(directoryURL: resources.directory),
+            speechOutput: speech,
+            imageEmbedder: PixelGridEmbedder(),
+            locationProvider: FixedLocationProvider()
+        )
+
+        let place = await model.capturePlaceScan(
+            label: "Kitchen",
+            modelContext: resources.context,
+            language: .englishUS,
+            configuration: PlaceScanConfiguration(
+                viewCount: 5,
+                initialCaptureDelay: .zero,
+                captureInterval: .zero
+            )
+        )
+
+        #expect(place?.snapshots.count == 2)
+        #expect(model.storedImages.count == 2)
+        #expect(
+            model.errorText(language: .englishUS)
+                == ImageSourceError.captureFailed.appMessage.localized(
+                    in: .englishUS
+                )
+        )
+        let savedPlaces = try resources.context.fetch(
+            FetchDescriptor<Place>()
+        )
+        #expect(savedPlaces.count == 1)
+        #expect(savedPlaces.first?.snapshots.count == 2)
+        #expect(
+            speech.spoken.last?.text
+                == ImageSourceError.captureFailed.appMessage.localized(
+                    in: .englishUS
+                )
+        )
+    }
+
+    @Test
+    func cancellingPlaceScanStopsGuidanceBeforeCapturing() async throws {
+        let resources = try makeResources()
+        defer {
+            try? FileManager.default.removeItem(
+                at: resources.directory
+            )
+        }
+        let speech = CancellationAwareSpeechOutput(
+            blockedWaitNumber: 1
+        )
+        let model = CaptureViewModel(
+            imageSource: FixtureImageSource(
+                resourceNames: ["kitchen-a"]
+            ),
+            imageStore: ImageStore(directoryURL: resources.directory),
+            speechOutput: speech,
+            imageEmbedder: PixelGridEmbedder(),
+            locationProvider: FixedLocationProvider()
+        )
+
+        let scanTask = Task { @MainActor in
+            _ = await model.capturePlaceScan(
+                label: "Kitchen",
+                modelContext: resources.context,
+                language: .englishUS,
+                configuration: PlaceScanConfiguration(
+                    viewCount: 5,
+                    initialCaptureDelay: .zero,
+                    captureInterval: .zero
+                )
+            )
+        }
+        while !speech.isWaiting {
+            await Task.yield()
+        }
+        scanTask.cancel()
+        scanTask.cancel()
+        await scanTask.value
+
+        #expect(speech.stopCount == 1)
+        #expect(model.storedImages.isEmpty)
+        #expect(
+            try resources.context.fetch(
+                FetchDescriptor<Place>()
+            ).isEmpty
+        )
+    }
+
+    @Test
+    func placeScanRemainsBusyUntilCompletionSpeechFinishes() async throws {
+        let resources = try makeResources()
+        defer {
+            try? FileManager.default.removeItem(
+                at: resources.directory
+            )
+        }
+        let speech = CancellationAwareSpeechOutput(
+            blockedWaitNumber: 2
+        )
+        let model = CaptureViewModel(
+            imageSource: FixtureImageSource(
+                resourceNames: ["kitchen-a"]
+            ),
+            imageStore: ImageStore(directoryURL: resources.directory),
+            speechOutput: speech,
+            imageEmbedder: PixelGridEmbedder(),
+            locationProvider: FixedLocationProvider()
+        )
+
+        let scanTask = Task { @MainActor in
+            _ = await model.capturePlaceScan(
+                label: "Kitchen",
+                modelContext: resources.context,
+                language: .englishUS,
+                configuration: PlaceScanConfiguration(
+                    viewCount: 5,
+                    initialCaptureDelay: .zero,
+                    captureInterval: .zero
+                )
+            )
+        }
+        while !speech.isWaiting {
+            await Task.yield()
+        }
+
+        #expect(model.isEnrolling)
+        #expect(
+            try resources.context.fetch(
+                FetchDescriptor<Place>()
+            ).first?.snapshots.count == 5
+        )
+
+        scanTask.cancel()
+        await scanTask.value
+
+        #expect(!model.isEnrolling)
+        #expect(speech.stopCount == 1)
+    }
+
+    @Test
+    func taskCancellationOverridesImageSourceFailure() async throws {
+        let resources = try makeResources()
+        defer {
+            try? FileManager.default.removeItem(
+                at: resources.directory
+            )
+        }
+        let source = CancellationMaskingImageSource()
+        let speech = RecordingSpeechOutput()
+        let model = CaptureViewModel(
+            imageSource: source,
+            imageStore: ImageStore(directoryURL: resources.directory),
+            speechOutput: speech,
+            imageEmbedder: PixelGridEmbedder(),
+            locationProvider: FixedLocationProvider()
+        )
+
+        let scanTask = Task { @MainActor in
+            _ = await model.capturePlaceScan(
+                label: "Kitchen",
+                modelContext: resources.context,
+                language: .englishUS,
+                configuration: PlaceScanConfiguration(
+                    viewCount: 5,
+                    initialCaptureDelay: .zero,
+                    captureInterval: .zero
+                )
+            )
+        }
+        while !(await source.isCapturing) {
+            await Task.yield()
+        }
+
+        scanTask.cancel()
+        await scanTask.value
+
+        #expect(model.errorMessage == nil)
+        #expect(model.storedImages.isEmpty)
+        #expect(
+            model.statusText(language: .englishUS)
+                == SupportedLanguage.englishUS.text(.statusReady)
+        )
+        #expect(speech.spoken.count == 1)
+    }
+
     @Test(arguments: SupportedLanguage.allCases)
     func enrollsAndRecognizesWithoutTranslatingTheLabel(
         language: SupportedLanguage
