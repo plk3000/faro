@@ -5,3 +5,9 @@ ios/*.xcworkspace/
 **/xcuserdata/
 ios/FARO/Info.plist
 ios/Config/Local.xcconfig
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.vscode/

@@ -189,6 +189,8 @@ iPhone refers to the iPhone, not the development Mac.
 Never commit `Local.xcconfig`, service tokens, private hostnames, or credentials.
 The service contract is documented in
 [docs/vision-api-contract.md](docs/vision-api-contract.md).
+To run and exercise the included FastAPI prototype locally, follow
+[backend/README.md](backend/README.md).
 
 ## Repository map
 
@@ -197,6 +199,7 @@ FARO/
 |-- DEVELOPMENT.md                 Developer setup and contribution workflow
 |-- IOS-TASKS.md                   Canonical roadmap and phase status
 |-- project-faro.md                Product, architecture, and safety model
+|-- backend/                       FastAPI vision-service prototype and tests
 |-- docs/
 |   `-- vision-api-contract.md     Scene-description HTTP boundary
 |-- ios/
