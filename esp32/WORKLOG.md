@@ -1,4 +1,4 @@
-# FARO ESP32 bench POC work log
+# FARO ESP32 work log
 
 ## 2026-09-17 — Sonar, LED, and passive-buzzer bring-up
 

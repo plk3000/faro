@@ -30,9 +30,10 @@ deliberately reuses the proven photo path instead of recording video or
 reconfiguring the camera session. The touch enrollment screen remains available
 for manual enrollment and adding views.
 
-The checked-in `esp32/` folder is the bench hardware POC. Production ESP32
-firmware is maintained separately against `docs/ble-contract.md`; this
-repository defines and implements the iOS side of that boundary.
+The checked-in `esp32/` folder contains the physically validated
+obstacle-module firmware. It shares the versioned boundary in
+`docs/ble-contract.md` with the iOS Core Bluetooth implementation and has a
+separate Arduino build/flash workflow.
 
 ## Prerequisites
 
@@ -43,6 +44,8 @@ repository defines and implements the iOS side of that boundary.
 - an Apple ID and development team for physical-device signing;
 - an iPhone running iOS 26 for camera, microphone, speech, and production
   FeaturePrint validation.
+- for ESP32 work, Arduino CLI with the `esp32:esp32` core and Adafruit
+  NeoPixel library.
 
 Verify the command-line setup:
 
@@ -181,6 +184,9 @@ For a physical integration test:
 6. Reconnect, leave Navigating, and confirm the ESP32 reports Inactive and
    silences its local buzzer.
 
+The Phase 6 iPhone-to-ESP32 integration was physically validated against this
+contract on September 17, 2026.
+
 Do not infer a clear path from missing or stale telemetry. The iPhone removes a
 reading after two seconds without a valid packet, while immediate warnings
 remain entirely local to the ESP32.
@@ -219,7 +225,7 @@ iPhone refers to the iPhone, not the development Mac.
 Never commit `Local.xcconfig`, service tokens, private hostnames, or credentials.
 The service contract is documented in
 [docs/vision-api-contract.md](docs/vision-api-contract.md).
-To run and exercise the included FastAPI prototype locally, follow
+To run and exercise the included FastAPI service locally, follow
 [backend/README.md](backend/README.md).
 
 ## Repository map
@@ -229,9 +235,11 @@ FARO/
 |-- DEVELOPMENT.md                 Developer setup and contribution workflow
 |-- IOS-TASKS.md                   Canonical roadmap and phase status
 |-- project-faro.md                Product, architecture, and safety model
-|-- backend/                       FastAPI vision-service prototype and tests
+|-- backend/                       Private FastAPI vision service and tests
 |-- docs/
+|   |-- ble-contract.md            iPhone/ESP32 GATT boundary
 |   `-- vision-api-contract.md     Scene-description HTTP boundary
+|-- esp32/                         Obstacle firmware and host protocol tests
 |-- ios/
 |   |-- project.yml               XcodeGen source of truth
 |   |-- Config/                    Mock/live build configuration
@@ -285,6 +293,18 @@ FARO/
 - "Start navigation" and "Stop navigation" provide bilingual voice mode
   control.
 - Manual Start and Finish controls remain the physically validated fallback.
+
+### Bluetooth and obstacle module
+
+- `ObstacleModuleProtocol` mirrors the packet and mode values in
+  `docs/ble-contract.md`.
+- `CoreBluetoothObstacleModuleTransport` discovers the advertised service,
+  subscribes to telemetry and mode confirmation, and reconnects automatically.
+- `MockObstaclePeripheral` is simulator-only infrastructure.
+- The ESP32 firmware under `esp32/` owns sonar filtering, warning
+  classification, and local passive-buzzer output.
+- Bluetooth disconnects never disarm an already-Navigating ESP32; rebooting the
+  ESP32 always returns it to Inactive.
 
 ## Camera and audio invariants
 
@@ -423,7 +443,8 @@ When documentation disagrees, resolve it in this order:
 2. `IOS-TASKS.md` for current scope, ordering, and phase status;
 3. `ios/project.yml` for targets and generated build settings;
 4. `docs/vision-api-contract.md` for the remote scene-description boundary;
-5. `.github/copilot-instructions.md` for repository implementation invariants.
+5. `docs/ble-contract.md` for the iPhone/ESP32 wire boundary;
+6. `.github/copilot-instructions.md` for repository implementation invariants.
 
 Update all affected documents in the same change when an architectural
 decision alters more than one source of truth.

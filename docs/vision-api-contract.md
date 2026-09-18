@@ -1,8 +1,8 @@
 # FARO Vision API Contract
 
-This contract defines the boundary between the FARO iOS app and the separately
-implemented FARO vision service. The service describes a user-selected still
-image. The app does not continuously stream camera frames.
+This contract defines the boundary between the FARO iOS app and the private
+vision service implemented under `backend/`. The service describes a
+user-selected still image. The app does not continuously stream camera frames.
 
 ## Transport and versioning
 

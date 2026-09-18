@@ -8,7 +8,7 @@ Firmware for FARO's local obstacle-awareness module, running on the CENFOTEC Ide
   - `TRIG`: GPIO 25
   - `ECHO`: GPIO 26, through a voltage divider or level shifter. The HC-SR04 ECHO signal is 5 V and must not connect directly to the ESP32's 3.3 V GPIO.
 - **Required IdeaBoard jumper:** `SELECT` ↔ `Vin`
-- **Passive-buzzer POC:** GPIO 27 (`+` to GPIO 27, `−` to GND). This must be a small passive piezo unit suitable for 3.3 V GPIO drive; do not use the identified 5 V active buzzer here.
+- **Passive buzzer:** GPIO 27 (`+` to GPIO 27, `−` to GND). This must be a small passive piezo unit suitable for 3.3 V GPIO drive; do not use the identified 5 V active buzzer here.
 
 ## Safety behavior
 
@@ -29,16 +29,22 @@ boundary in [`../docs/ble-contract.md`](../docs/ble-contract.md):
   the autonomous local sonar-to-buzzer path continues until an explicit stop or
   board reset.
 
-## Build and physical acceptance
+## Test, build, and flash
 
 ```bash
-cd /home/plk3000/src/faro
+# Run from the repository root.
+c++ -std=c++17 -Iesp32 esp32/tests/protocol_test.cpp \
+  -o /tmp/faro-protocol-test
+/tmp/faro-protocol-test
 arduino-cli compile --fqbn esp32:esp32:esp32 esp32
-arduino-cli upload --port /dev/ttyACM0 --fqbn esp32:esp32:esp32 esp32
-arduino-cli monitor --port /dev/ttyACM0 --config baudrate=115200
+arduino-cli board list
+arduino-cli upload --port <PORT> --fqbn esp32:esp32:esp32 esp32
+arduino-cli monitor --port <PORT> --config baudrate=115200
 ```
 
-Before calling this feature complete on hardware, confirm all of the following:
+The iPhone connection and mode-control path passed physical acceptance on
+September 17, 2026. Recheck all of the following after Bluetooth, power, sonar,
+or mode-control changes:
 
 1. Fresh boot reports `Mode: Inactive (buzzer disarmed)` and remains silent
    near an obstacle.

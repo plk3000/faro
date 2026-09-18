@@ -6,8 +6,8 @@
 - Use `DEVELOPMENT.md` for contributor setup, project generation, device deployment, configuration, and troubleshooting.
 - The native iOS application lives under `ios/`. `ios/project.yml` is the source of truth for the generated Xcode project; do not hand-edit or commit `ios/FARO.xcodeproj`.
 - `IOS-TASKS.md` is the implementation roadmap. The checked-in `esp32/` folder
-  is the bench hardware POC; production ESP32 firmware is maintained
-  separately and implements `docs/ble-contract.md`.
+  contains the obstacle-module firmware and host protocol tests; keep it
+  aligned with `docs/ble-contract.md` and the iOS Bluetooth implementation.
 - Keep the project framed as a co-designed FHL prototype and secondary assistive companion, not as a replacement for a white cane, guide dog, or orientation-and-mobility training.
 
 ## Build and test
@@ -37,6 +37,15 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
 - Regenerate before building; XcodeGen discovers Swift source files from the configured source directories.
 - No standalone lint command is configured.
 
+For ESP32 changes, run from the repository root:
+
+```bash
+c++ -std=c++17 -Iesp32 esp32/tests/protocol_test.cpp \
+  -o /tmp/faro-protocol-test
+/tmp/faro-protocol-test
+arduino-cli compile --fqbn esp32:esp32:esp32 esp32
+```
+
 ## High-level architecture
 
 - The native iPhone app is the primary interface and system orchestrator. It owns AVFoundation camera capture, vision-language scene narration, visual-embedding generation and storage, place retrieval, speech output, phone motion/location context, user-visible mode state, and Core Bluetooth communication.
@@ -60,7 +69,7 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
 - Boot into **Inactive**. In this mode, proximity tones and hazard notifications remain silent regardless of sonar readings, although the ESP32 may stay powered and connected.
 - **Navigating** arms the ESP32's local sonar-to-buzzer path and enables navigation-oriented iPhone context.
 - The iPhone app is the prototype's primary mode control. Keep the current mode unambiguous in the app and provide distinct confirmation tones when entering or leaving Navigating mode.
-- Do not persist the iOS operating mode. Route “Where am I?” and future iPhone proximity output through `OperatingModeController` so every fresh launch is Inactive and leaving Navigating cancels spoken navigation output.
+- Do not persist the iOS operating mode. Route “Where am I?” and any iPhone proximity output through `OperatingModeController` so every fresh launch is Inactive and leaving Navigating cancels spoken navigation output.
 - Once Navigating mode is armed, local obstacle alerts must continue if Bluetooth, the app, or AI processing fails.
 - A BLE disconnect is never an implicit Inactive command. On reconnect, send
   the current in-memory iOS mode; every fresh app launch still begins Inactive.
@@ -71,7 +80,7 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
 - Voice `remember this as...` enrollment is a bounded nine-view, approximately 180-degree left-to-right scan: speak localized movement guidance, wait for it to finish, capture timed stills through the existing `ImageSource`, retain successful views if a later capture fails, and announce completion. Keep the touch enrollment sheet for manual enrollment and adding views.
 - Preserve explicit Start/Finish recording as a fallback. Hands-Free is a persisted user opt-in: after Siri or another path foregrounds FARO, wait for competing audio to release, play a ready tone, and detect only `Hey FARO` / `Hola FARO` on-device. The implementation uses iOS 26 `SpeechAnalyzer`, `SpeechTranscriber`, and `SpeechDetector`, with runtime locale support and local asset installation. A wake phrase opens one bounded command window that ends on silence or timeout. Stop wake listening whenever the app leaves the foreground; do not claim custom wake activation while suspended or terminated, send ambient audio off-device, retain it as user content, or let FARO's own speech trigger the detector.
 - Keep the video-only `AVCaptureSession` running, prevent it from configuring the shared audio session, suspend still-photo requests during bounded command capture, and never reintroduce camera stop/start cycles for voice input. Parse commands through `VoiceCommandParser`, route them through `VoiceCommandExecutor`, and preserve the Navigating gate for `where am I?` and `what is ahead?`.
-- Treat language as explicit data. The prototype supports `en-US` and `es-MX`, plus a persisted Follow iPhone preference. Pass the resolved language through API requests, generated descriptions, speech synthesis, accessibility announcements, and future command recognition.
+- Treat language as explicit data. The prototype supports `en-US` and `es-MX`, plus a persisted Follow iPhone preference. Pass the resolved language through API requests, generated descriptions, speech synthesis, accessibility announcements, and command recognition.
 - Put user-facing UI, accessibility, error, and permission text in the String Catalogs. Do not translate user-provided place labels.
 
 ## Hardware constraints

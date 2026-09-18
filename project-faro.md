@@ -1,7 +1,9 @@
 # Project FARO
 
-**Status:** concept / planned FHL prototype  
-**Created:** 2026-09-03  
+**Status:** implemented FHL prototype; Phases 0-6 complete, device-facing gates physically validated, Phase 7 evaluation pending
+
+**Created:** 2026-09-03
+
 **Origin:** Ghost's employer runs periodic week-long **FHL (Fix, Hack, Learn)** events.
 
 ## Purpose
@@ -29,7 +31,8 @@ FARO combines three separate functions:
 
 1. **Scene narration:** describe nearby objects and what lies ahead.
 2. **Personal place memory:** learn user-named places such as the kitchen, bedroom, living room, and front door, then recognize them later.
-3. **Immediate hazard warning:** detect nearby obstacles locally and issue vibration or audio alerts without waiting for a language model.
+3. **Immediate hazard warning:** detect nearby obstacles locally and issue
+   passive-buzzer tones without waiting for a language model.
 
 Example output:
 
@@ -55,14 +58,14 @@ is intentional rather than a constant nuisance around nearby people or objects.
   I?” and “what is ahead?” when requested.
 - Is intended only while the user is actively moving through the environment.
 
-The iPhone app will be the primary mode control for the FHL prototype. FARO
-must boot into **Inactive** mode and make the current mode unambiguous through
+The iPhone app is the primary mode control for the FHL prototype. FARO boots
+into **Inactive** mode and makes the current mode unambiguous through
 an app-visible state and a distinct confirmation tone when entering or leaving
 Navigating mode. A later hardware control may be added only after real-user
 validation.
 
 The iOS mode state is intentionally not persisted, so every fresh app launch
-returns to Inactive. “Where am I?” and future iPhone proximity output pass
+returns to Inactive. “Where am I?” and any iPhone proximity output pass
 through the same navigation gate, and leaving Navigating cancels any active
 spoken navigation output.
 
@@ -98,7 +101,7 @@ evaluated later.
 
 ### iPhone
 
-The preferred prototype platform is an iPhone running a native iOS app. It provides:
+The primary interface is a native iPhone app. It provides:
 
 - rear-camera capture through AVFoundation;
 - scene descriptions using a vision-language model;
@@ -112,9 +115,10 @@ The phone would be chest-mounted or carried in a forward-facing harness so the c
 
 ### Private Azure OpenAI vision service
 
-For FHL scene narration, the iPhone may send a user-requested camera frame to a
-private API backed by an Azure OpenAI vision deployment. The service returns a
-short accessibility-oriented description for the iPhone to speak.
+For FHL scene narration, live mode sends a user-requested camera frame to the
+private API under `backend/`, backed by an Azure OpenAI vision deployment. The
+service returns a short accessibility-oriented description for the iPhone to
+speak.
 
 ```text
 user-requested camera frame → authenticated FARO API → Azure OpenAI vision model
@@ -157,6 +161,12 @@ millimetres, and the warning classification. The iPhone rejects malformed or
 unknown packets and removes readings that become stale. The simulator uses a
 mock obstacle peripheral so scanning, mode synchronization, telemetry display,
 and disconnect handling remain testable without hardware.
+
+The checked-in firmware under `esp32/` implements this service and the local
+mode gate. The iPhone-to-ESP32 connection, boot-to-Inactive behavior, and
+Start/Stop navigation control were physically accepted on September 17, 2026.
+Disconnect retention and reset-to-Inactive remain explicit hardware regression
+checks.
 
 **Available output inventory:** no free vibration motor is available; the only
 DC motors are already soldered to another board. The confirmed audio parts are

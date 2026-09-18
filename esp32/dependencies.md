@@ -1,4 +1,4 @@
-# FARO ESP32 distance-feedback bench POC
+# FARO ESP32 hardware and dependencies
 
 ## Board
 
@@ -26,10 +26,14 @@
 
 ## LED and passive-buzzer behavior
 
-- No valid echo: purple LED and silent buzzer
-- Less than 0.5 m: red LED and 2.2 kHz urgent pulses
-- 0.5–1 m: amber LED and 1.6 kHz fast pulses
-- 1–2 m: blue LED and 1.2 kHz slow pulses
-- Over 2 m: LED and buzzer off
+- No valid echo: purple LED
+- Less than 0.5 m: red LED
+- 0.5–1 m: amber LED
+- 1–2 m: blue LED
+- Over 2 m: LED off
 
-This is a bench electronics proof of concept. It deliberately enables the buzzer to validate the hardware; it is not a user-facing hazard-warning feature and does not yet implement FARO's Inactive/Navigating mode gate.
+The firmware boots **Inactive**, where the buzzer is silent for every reading.
+After the encrypted BLE mode characteristic arms **Navigating**, the same bands
+produce 2.2 kHz urgent, 1.6 kHz fast, 1.2 kHz slow, or silent output. The bands
+remain prototype starting points and require Phase 7 user evaluation; they are
+not validated safety limits.

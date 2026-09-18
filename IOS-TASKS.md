@@ -1,4 +1,4 @@
-# FARO iOS Prototype — Implementation Plan
+# FARO Prototype — Implementation Plan
 
 ## Progress
 
@@ -10,15 +10,16 @@
 | Phase 3 — Place memory | Verified on physical device |
 | Phase 4 — Operating modes | Verified on physical device |
 | Phase 5 — Voice commands | Verified on physical device |
-| Phase 6 — ESP32 boundary | Implemented and simulator-verified |
+| Phase 6 — ESP32 boundary | Verified on physical device |
 | Phase 7 — Evaluation | Not started |
 
-## Problem
+## Current state
 
-FARO is currently documentation only (`project-faro.md`, `.github/copilot-instructions.md`). We need
-the iOS app built first: capture images, describe scenes through a FARO-owned vision API, and learn
-and recognize named places using image embeddings plus GPS. The ESP32 firmware lives in a separate
-repository, so this plan only prepares the iOS side of the BLE boundary.
+FARO now includes the native iPhone app, the private scene-description backend,
+and the ESP32 obstacle-module firmware. Phases 0-6 are complete, and all
+device-facing gates have been physically accepted. Phase 7 measures
+recognition, latency, wake behavior, and obstacle-alert usefulness with the
+actual user before thresholds are treated as validated.
 
 ## Approach
 
@@ -43,12 +44,12 @@ narration, memory, and mode control only.
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Scene description | Cloud-first via a FARO-owned API added to this repo later | Fastest path; swappable behind a protocol |
+| Scene description | Cloud-first via the FARO-owned API under `backend/` | Fastest path; swappable behind a protocol |
 | Project scaffolding | XcodeGen from committed `project.yml` | Reviewable in git, no merge conflicts, CLI-verifiable builds |
 | Embeddings | Vision `GenerateImageFeaturePrintRequest` | On-device, zero bundle cost, offline; CLIP kept as a measured fallback |
 | Persistence | SwiftData | Natural `Place` → `[PlaceSnapshot]` modelling, binds to SwiftUI |
 | Deployment target | iOS 26 | Matches installed SDK; modern Swift Vision API |
-| Repo layout | App under `ios/` | Keeps root for docs and the future API project |
+| Repo layout | App under `ios/`, service under `backend/`, firmware under `esp32/` | Keeps each runtime independently buildable while sharing contracts |
 | First interaction | Accessible buttons, voice added later | Gives a testable capture path before speech complexity |
 | Languages | Follow iPhone, English (US), and Español (México), established in Phase 2 | Prevents language assumptions from spreading into place, mode, voice, BLE, and metrics features |
 | Hands-free entry | Persisted opt-in; Siri opens FARO, then FARO arms after reaching the foreground and acquiring audio | Uses Siri's system-wide wake path without claiming unsupported custom background activation |
@@ -62,9 +63,11 @@ FARO/
 ├── DEVELOPMENT.md               # developer setup and contribution workflow
 ├── IOS-TASKS.md                 # task roadmap (deliverable of T01)
 ├── project-faro.md              # concept source of truth
+├── backend/                     # private scene-description service and tests
 ├── docs/
-│   ├── vision-api-contract.md   # HTTP contract for the future API project
-│   └── ble-contract.md          # GATT contract for the ESP32 repo
+│   ├── vision-api-contract.md   # iPhone/service HTTP contract
+│   └── ble-contract.md          # iPhone/ESP32 GATT contract
+├── esp32/                       # obstacle-module firmware and protocol tests
 ├── ios/
 │   ├── project.yml              # XcodeGen source of truth
 │   ├── FARO/                    # app sources and String Catalogs
@@ -118,8 +121,8 @@ Resolve the simulator name with `xcrun simctl list devices available` before har
   language tag. Speech selects its voice from that tag rather than assuming the
   current UI language.
 - **One preference controls the prototype.** The selected language applies to
-  UI, accessibility text, scene output, spoken feedback, and future voice
-  commands. `Follow iPhone` resolves to English or Mexican Spanish.
+  UI, accessibility text, scene output, spoken feedback, and voice commands.
+  `Follow iPhone` resolves to English or Mexican Spanish.
 - **Place labels are user data.** Preserve names exactly as entered; do not
   translate a saved place label when the app language changes.
 - **No hard-coded user-facing strings.** Visible text, accessibility labels and
@@ -171,7 +174,8 @@ debug list view.
 **T09 · vision-api-contract** — Write `docs/vision-api-contract.md`: endpoint, auth, multipart image
 upload, request options, response shape (description text, confidence, latency), versioning, error
 model, and image-retention expectations.
-*Done when:* contract is specific enough for the future API project to implement blind.
+*Done when:* the backend can implement the contract without relying on iOS
+implementation details.
 
 **T10 · describer-protocol** — `SceneDescribing` protocol plus `MockSceneDescriber` returning canned
 descriptions with simulated latency and injectable failures.
@@ -272,7 +276,7 @@ announcements, and a clearly exposed current mode.
 *Done when:* mode is announced and visible in both languages, and always starts
 Inactive.
 
-**T29 · mode-gating** — Gate navigation-oriented behaviour and future
+**T29 · mode-gating** — Gate navigation-oriented behaviour and any iPhone
 proximity feedback behind Navigating; disable “Where am I?” in Inactive and
 cancel spoken navigation output when navigation stops.
 *Done when:* tests prove no proximity output occurs while Inactive.
@@ -307,9 +311,9 @@ adding views.
 *Done when:* each command triggers its flow by voice alone in English and
 Spanish.
 
-*Implementation status:* Voice enrollment now performs the bounded nine-view,
-approximately 180-degree scan without opening the touch sheet. The final signed
-build is installed on the paired iPhone for physical acceptance.
+*Implementation status:* Complete and physically validated. Voice enrollment
+performs the bounded nine-view, approximately 180-degree scan without opening
+the touch sheet.
 
 **T33 · hands-free-state** — Add a persisted, explicit Hands-Free preference.
 When enabled and FARO becomes foreground-active — including after “Siri, open
@@ -414,11 +418,12 @@ surfacing distance and connection status in a localized debug view.
 *Done when:* mock peripheral drives the debug view in both languages and
 disconnects degrade gracefully.
 
-*Status:* Complete in code and simulator tests. The app scans and reconnects,
+*Status:* Complete and physically validated. The app scans and reconnects,
 subscribes to telemetry and mode confirmation, resends the current mode after
 connection, rejects malformed packets, removes stale readings, and exposes a
-bilingual diagnostic view. Simulator builds use `MockObstaclePeripheral`;
-physical interoperability awaits production firmware implementing T39.
+bilingual diagnostic view. Simulator builds use `MockObstaclePeripheral`. The
+user confirmed physical iPhone-to-ESP32 interoperability on September 17,
+2026.
 
 ### Phase 7 — Evaluation
 
@@ -444,12 +449,13 @@ behind `ImageEmbedder` and re-embed stored JPEGs in the background.
   messaging must not imply full hazard coverage.
 - FeaturePrint degrades with large viewpoint and lighting changes; multi-view enrollment (T22) and
   measurement (T41) are the planned mitigations, with T43 as the escape hatch.
-- The vision API does not exist yet, so Phase 2 stays fully functional on the mock until T13.
+- The private vision API is implemented under `backend/`; mock mode remains the
+  deterministic offline development baseline.
 - Bilingual support is intentionally completed now: retrofitting after place,
   mode, voice, BLE, and metrics work would multiply localization and regression
   work across every later surface.
 - iOS does not grant third-party apps Siri's system-wide custom wake-word
-  privilege. The planned route depends on Siri to foreground FARO first; FARO
+  privilege. The implemented route depends on Siri to foreground FARO first; FARO
   must stop its wake listener whenever it leaves the foreground.
 - `project-faro.md` and `.github/copilot-instructions.md` should be updated whenever behaviour,
   architecture, or scope changes.

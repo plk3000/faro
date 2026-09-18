@@ -4,6 +4,11 @@ This document defines the version 1 Bluetooth Low Energy boundary between the
 FARO iPhone app and the ESP32 obstacle module. It is the source of truth for
 both implementations.
 
+The iOS and ESP32 implementations of version 1 were physically integrated and
+accepted on September 17, 2026. The matching protocol definitions live in
+`ios/FARO/Core/Bluetooth/ObstacleModuleProtocol.swift` and
+`esp32/faro_protocol.h`.
+
 The ESP32 owns the immediate warning path:
 
 `sonar -> ESP32 -> passive buzzer`
@@ -25,10 +30,11 @@ The ESP32 advertises the primary service UUID. The iPhone scans for that UUID
 and connects to the first matching module. The FHL prototype assumes one FARO
 module is nearby.
 
-The ESP32 should use LE Secure Connections and bonding. At minimum, writes to
-the operating-mode characteristic must require an encrypted link. Pairing and
-bonding are enforced by the GATT server; Core Bluetooth handles the iPhone
-pairing prompt.
+The ESP32 uses LE Secure Connections with bonding and encrypted Just Works
+pairing because the module has no display or keypad. Writes to the
+operating-mode characteristic require an encrypted link. Pairing and bonding
+are enforced by the GATT server; Core Bluetooth handles the iPhone pairing
+prompt.
 
 ## Telemetry characteristic
 
