@@ -82,3 +82,15 @@ Physical iPhone validation confirmed:
 The immediate local sonar-to-buzzer path remains owned by the ESP32 while
 Navigating. Disconnect-retention and reset-to-Inactive should remain explicit
 regression checks whenever the BLE transport or power behavior changes.
+
+### BLE startup assertion regression — 2026-09-17
+
+The first BLE flash asserted in `BLECharacteristic::notify()` because firmware
+attempted to notify the initial mode before `BLEService::start()` attached the
+characteristic to a server. The initial Inactive byte is now set without a
+notification before service startup; notifications begin only after the service
+is live.
+
+The corrected image was compiled and flashed to the same IdeaBoard. A serial
+monitor remained running and emitted sonar samples without the assertion or a
+reset loop.

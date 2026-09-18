@@ -297,7 +297,8 @@ void startBleServer() {
       ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE_ENCRYPTED);
   operatingModeCharacteristic->setCallbacks(new OperatingModeCallbacks());
 
-  publishOperatingMode();
+  const uint8_t initialMode = static_cast<uint8_t>(operatingMode);
+  operatingModeCharacteristic->setValue(&initialMode, 1);
   service->start();
 
   BLEAdvertising* advertising = BLEDevice::getAdvertising();
