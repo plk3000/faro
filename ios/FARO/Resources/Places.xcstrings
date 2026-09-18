@@ -614,6 +614,7 @@
       }
     },
     "place.scan.instructions" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -834,6 +835,7 @@
       }
     },
     "status.placeScanComplete" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

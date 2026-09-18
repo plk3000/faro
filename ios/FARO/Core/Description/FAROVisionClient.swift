@@ -1,6 +1,12 @@
 import Foundation
+import OSLog
 
 struct FAROVisionClient: SceneDescribing {
+    private static let logger = Logger(
+        subsystem: "com.jdsolissmith.faro",
+        category: "VisionClient"
+    )
+
     private let baseURL: URL
     private let token: String
     private let session: URLSession
@@ -87,6 +93,9 @@ struct FAROVisionClient: SceneDescribing {
         request.setValue(
             language.rawValue,
             forHTTPHeaderField: "Accept-Language"
+        )
+        Self.logger.info(
+            "Uploading scene image mime_type=\(image.format.mimeType, privacy: .public) size_bytes=\(image.data.count)"
         )
         request.httpBody = try multipartBody(
             image: image,

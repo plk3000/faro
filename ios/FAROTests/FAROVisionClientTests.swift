@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import UniformTypeIdentifiers
 @testable import FARO
 
 @Suite(.serialized)
@@ -197,6 +198,58 @@ struct FAROVisionClientTests {
         } catch {
             #expect(error as? FAROVisionClientError == .invalidResponse)
         }
+    }
+
+    @Test
+    func detectedHEICUsesHEICMultipartMetadata() async throws {
+        let heicData = try await TestImageFixture.encoded(as: .heic)
+        let image = CapturedImage(
+            data: heicData,
+            format: try CapturedImage.Format.detect(from: heicData)
+        )
+        let session = makeSession { request in
+            let body = try requestBody(from: request)
+            let expectedHeaders = Data(
+                (
+                    "Content-Disposition: form-data; name=\"image\"; "
+                        + "filename=\"scene.heic\"\r\n"
+                        + "Content-Type: image/heic\r\n\r\n"
+                ).utf8
+            )
+            #expect(body.range(of: expectedHeaders) != nil)
+
+            let requestID = try requestID(from: request)
+            let response = """
+            {
+              "request_id": "\(requestID.uuidString)",
+              "description": "A clear path is ahead.",
+              "language": "en-US",
+              "confidence": 0.9,
+              "model": "test/model",
+              "processing_ms": 10
+            }
+            """
+            return (
+                HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!,
+                Data(response.utf8)
+            )
+        }
+        let client = FAROVisionClient(
+            baseURL: URL(string: "https://vision.example")!,
+            token: "test-token",
+            session: session,
+            maximumAttempts: 1
+        )
+
+        _ = try await client.describe(
+            image,
+            language: .englishUS
+        )
     }
 
     private var sampleImage: CapturedImage {

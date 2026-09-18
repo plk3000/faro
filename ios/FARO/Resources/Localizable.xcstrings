@@ -69,6 +69,23 @@
         }
       }
     },
+    "action.finishVoiceCommand" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish voice command"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finalizar comando de voz"
+          }
+        }
+      }
+    },
     "action.startNavigating" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -82,6 +99,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iniciar navegación"
+          }
+        }
+      }
+    },
+    "action.startVoiceCommand" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start voice command"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar comando de voz"
           }
         }
       }
@@ -290,6 +324,23 @@
         }
       }
     },
+    "error.microphonePermission" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Microphone permission is required for voice commands."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se necesita permiso para usar el micrófono con los comandos de voz."
+          }
+        }
+      }
+    },
     "error.missingVisionToken" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -303,6 +354,125 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "El modo de visión en vivo requiere un token de servicio."
+          }
+        }
+      }
+    },
+    "error.onDeviceSpeechUnavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On-device speech recognition is unavailable for the selected language."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El reconocimiento de voz en el dispositivo no está disponible para el idioma seleccionado."
+          }
+        }
+      }
+    },
+    "error.speechAlreadyListening" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO is already listening for a voice command."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO ya está escuchando un comando de voz."
+          }
+        }
+      }
+    },
+    "error.speechAudioInput" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO could not start microphone input."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO no pudo iniciar la entrada del micrófono."
+          }
+        }
+      }
+    },
+    "error.speechNoInput" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO did not hear a voice command."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO no escuchó un comando de voz."
+          }
+        }
+      }
+    },
+    "error.speechPermission" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speech recognition permission is required for voice commands."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se necesita permiso para reconocer voz con los comandos de voz."
+          }
+        }
+      }
+    },
+    "error.speechRecognition" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO could not recognize that speech."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FARO no pudo reconocer lo que dijiste."
+          }
+        }
+      }
+    },
+    "error.speechRecognizerUnavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speech recognition is temporarily unavailable."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El reconocimiento de voz no está disponible temporalmente."
           }
         }
       }
@@ -528,6 +698,40 @@
         }
       }
     },
+    "error.voiceCommandRequiresNavigating" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Navigating mode before using that command."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa el modo Navegando antes de usar ese comando."
+          }
+        }
+      }
+    },
+    "error.voiceCommandUnrecognized" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That command was not recognized. Try describe, where am I, remember this as, what is ahead, start navigation, or stop navigation."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se reconoció ese comando. Prueba describe, dónde estoy, recuerda este lugar como, qué hay delante, inicia navegación o detén navegación."
+          }
+        }
+      }
+    },
     "error.voiceUnavailable" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -541,6 +745,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "FARO no encontró una voz para %@."
+          }
+        }
+      }
+    },
+    "handsFree.instructions" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable once. While FARO is open in the foreground, say Hey FARO or Hola FARO, wait for the tone, then speak a command."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa una vez. Mientras FARO esté abierto en primer plano, di Hey FARO u Hola FARO, espera el tono y después di un comando."
+          }
+        }
+      }
+    },
+    "handsFree.toggle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hands-Free"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manos libres"
           }
         }
       }
@@ -579,6 +817,40 @@
         }
       }
     },
+    "hint.finishVoiceCommand" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stops recording and runs the recognized command"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detiene la grabación y ejecuta el comando reconocido"
+          }
+        }
+      }
+    },
+    "hint.handsFree" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keeps the microphone active while FARO is in the foreground. Say Hey FARO or Hola FARO, wait for the tone, then speak a command."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantiene activo el micrófono mientras FARO está en primer plano. Di Hey FARO u Hola FARO, espera el tono y luego di un comando."
+          }
+        }
+      }
+    },
     "hint.startNavigating" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -592,6 +864,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activa el contexto de navegación y permite avisos de proximidad"
+          }
+        }
+      }
+    },
+    "hint.startVoiceCommand" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts a short on-device recording. Speak, then tap again"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia una grabación breve en el dispositivo. Habla y vuelve a tocar el botón"
           }
         }
       }
@@ -1089,6 +1378,125 @@
         }
       }
     },
+    "status.handsFree.executing" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running hands-free command"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutando el comando de manos libres"
+          }
+        }
+      }
+    },
+    "status.handsFree.listening" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening for Hey FARO or Hola FARO"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escuchando Hey FARO u Hola FARO"
+          }
+        }
+      }
+    },
+    "status.handsFree.off" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hands-Free is off"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manos libres está desactivado"
+          }
+        }
+      }
+    },
+    "status.handsFree.preparing" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparing hands-free listening"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando la escucha de manos libres"
+          }
+        }
+      }
+    },
+    "status.handsFree.processing" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recognizing hands-free command"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconociendo el comando de manos libres"
+          }
+        }
+      }
+    },
+    "status.handsFree.recording" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening for your command"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escuchando tu comando"
+          }
+        }
+      }
+    },
+    "status.handsFree.wakeDetected" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wake phrase heard"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frase de activación detectada"
+          }
+        }
+      }
+    },
     "status.imageCapturedSaved" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1119,260 +1527,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Listo para capturar"
-          }
-        }
-      }
-    },
-    "action.finishVoiceCommand" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Finish voice command"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Finalizar comando de voz"
-          }
-        }
-      }
-    },
-    "action.startVoiceCommand" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start voice command"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Iniciar comando de voz"
-          }
-        }
-      }
-    },
-    "error.microphonePermission" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Microphone permission is required for voice commands."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se necesita permiso para usar el micrófono con los comandos de voz."
-          }
-        }
-      }
-    },
-    "error.onDeviceSpeechUnavailable" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On-device speech recognition is unavailable for the selected language."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El reconocimiento de voz en el dispositivo no está disponible para el idioma seleccionado."
-          }
-        }
-      }
-    },
-    "error.speechAlreadyListening" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FARO is already listening for a voice command."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FARO ya está escuchando un comando de voz."
-          }
-        }
-      }
-    },
-    "error.speechAudioInput" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FARO could not start microphone input."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FARO no pudo iniciar la entrada del micrófono."
-          }
-        }
-      }
-    },
-    "error.speechNoInput" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FARO did not hear a voice command."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FARO no escuchó un comando de voz."
-          }
-        }
-      }
-    },
-    "error.speechPermission" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Speech recognition permission is required for voice commands."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se necesita permiso para reconocer voz con los comandos de voz."
-          }
-        }
-      }
-    },
-    "error.speechRecognition" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FARO could not recognize that speech."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FARO no pudo reconocer lo que dijiste."
-          }
-        }
-      }
-    },
-    "error.speechRecognizerUnavailable" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Speech recognition is temporarily unavailable."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El reconocimiento de voz no está disponible temporalmente."
-          }
-        }
-      }
-    },
-    "error.voiceCommandRequiresNavigating" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start Navigating mode before using that command."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activa el modo Navegando antes de usar ese comando."
-          }
-        }
-      }
-    },
-    "error.voiceCommandUnrecognized" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That command was not recognized. Try describe, where am I, remember this as, what is ahead, start navigation, or stop navigation."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se reconoció ese comando. Prueba describe, dónde estoy, recuerda este lugar como, qué hay delante, inicia navegación o detén navegación."
-          }
-        }
-      }
-    },
-    "hint.finishVoiceCommand" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stops recording and runs the recognized command"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Detiene la grabación y ejecuta el comando reconocido"
-          }
-        }
-      }
-    },
-    "hint.handsFree" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keeps the microphone active while FARO is in the foreground. Say Hey FARO or Hola FARO, wait for the tone, then speak a command."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mantiene activo el micrófono mientras FARO está en primer plano. Di Hey FARO u Hola FARO, espera el tono y luego di un comando."
-          }
-        }
-      }
-    },
-    "hint.startVoiceCommand" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Starts a short on-device recording. Speak, then tap again"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Inicia una grabación breve en el dispositivo. Habla y vuelve a tocar el botón"
           }
         }
       }
@@ -1462,118 +1616,6 @@
         }
       }
     },
-    "status.handsFree.executing" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Running hands-free command"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ejecutando el comando de manos libres"
-          }
-        }
-      }
-    },
-    "status.handsFree.listening" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Listening for Hey FARO or Hola FARO"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escuchando Hey FARO u Hola FARO"
-          }
-        }
-      }
-    },
-    "status.handsFree.off" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hands-Free is off"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Manos libres está desactivado"
-          }
-        }
-      }
-    },
-    "status.handsFree.preparing" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preparing hands-free listening"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preparando la escucha de manos libres"
-          }
-        }
-      }
-    },
-    "status.handsFree.processing" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recognizing hands-free command"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reconociendo el comando de manos libres"
-          }
-        }
-      }
-    },
-    "status.handsFree.recording" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Listening for your command"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escuchando tu comando"
-          }
-        }
-      }
-    },
-    "status.handsFree.wakeDetected" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wake phrase heard"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Frase de activación detectada"
-          }
-        }
-      }
-    },
     "voice.command.describe" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1609,6 +1651,7 @@
       }
     },
     "voice.command.startNavigating" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1625,6 +1668,7 @@
       }
     },
     "voice.command.stopNavigating" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1670,38 +1714,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¿Dónde estoy?"
-          }
-        }
-      }
-    },
-    "handsFree.instructions" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enable once. While FARO is open in the foreground, say Hey FARO or Hola FARO, wait for the tone, then speak a command."
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activa una vez. Mientras FARO esté abierto en primer plano, di Hey FARO u Hola FARO, espera el tono y después di un comando."
-          }
-        }
-      }
-    },
-    "handsFree.toggle" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hands-Free"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Manos libres"
           }
         }
       }

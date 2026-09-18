@@ -153,9 +153,14 @@ final class CameraImageSource:
         let result: Result<CapturedImage, Error>
         if error != nil {
             result = .failure(ImageSourceError.captureFailed)
-        } else if let data = photo.fileDataRepresentation(),
-                  let format = CapturedImage.Format.detect(from: data) {
-            result = .success(CapturedImage(data: data, format: format))
+        } else if let data = photo.fileDataRepresentation(), !data.isEmpty {
+            do {
+                result = .success(
+                    try CameraPhotoProcessor.process(data)
+                )
+            } catch {
+                result = .failure(error)
+            }
         } else {
             result = .failure(ImageSourceError.invalidImageData)
         }
