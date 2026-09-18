@@ -37,6 +37,13 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
 - Regenerate before building; XcodeGen discovers Swift source files from the configured source directories.
 - No standalone lint command is configured.
 
+For backend changes, use Python 3.10 or newer. From `backend/`, activate a
+virtual environment with the development requirements installed, then run:
+
+```bash
+python -m pytest
+```
+
 For ESP32 changes, run from the repository root:
 
 ```bash
@@ -88,6 +95,8 @@ arduino-cli compile --fqbn esp32:esp32:esp32 esp32
 - Use the passive buzzer for programmable proximity cadence and pitch. Reserve the active buzzer for a simple fixed-pitch alarm.
 - Do not design around a vibration motor or speech-capable external speaker; neither is available. Speech comes from the iPhone or the user's connected audio device.
 - Never connect an HC-SR04's 5 V `ECHO` output directly to a 3.3 V ESP32 GPIO; require a voltage divider or level shifter.
+- `FARO-holder.stl` is the printable prototype holder model. STL files do not
+  encode units; verify slicer scale and physical fit before relying on it.
 - Treat the documented distance bands as prototype starting points, not validated safety limits: over 2 m silent, 1-2 m slow pulses, 0.5-1 m fast pulses, and under 0.5 m urgent repeating tones.
 - Do not claim that one forward sonar detects all hazards. Its known gaps include thin, soft, angled, high/low obstacles, stairs, and drop-offs.
 

@@ -111,14 +111,19 @@ The primary interface is a native iPhone app. It provides:
 - Core Bluetooth communication with the ESP32, including mode synchronization
   and diagnostic sonar telemetry.
 
-The phone would be chest-mounted or carried in a forward-facing harness so the camera does not depend on handheld aiming.
+The phone would be chest-mounted or carried in a forward-facing harness so the
+camera does not depend on handheld aiming. The repository includes the
+printable prototype model `FARO-holder.stl`; STL files do not encode units, and
+its slicer scale and physical fit still require validation before use.
 
 ### Private Azure OpenAI vision service
 
 For FHL scene narration, live mode sends a user-requested camera frame to the
 private API under `backend/`, backed by an Azure OpenAI vision deployment. The
 service returns a short accessibility-oriented description for the iPhone to
-speak.
+speak. The current client requests `brief` detail and supplies a localized
+safety-focused prompt; the service constrains that context behind its own
+grounding, language, and hazard-priority instructions.
 
 ```text
 user-requested camera frame → authenticated FARO API → Azure OpenAI vision model
@@ -133,8 +138,9 @@ The API is a **private, single-account service**, not a public provider proxy:
   private authenticated network path.
 - The service validates MIME type and image size, rate-limits calls, avoids
   logging image payloads or descriptions containing sensitive visual details,
-  and discards the upload after the request unless the user explicitly chooses
-  to save it for place learning.
+  and discards the upload after the request. Place-learning images are stored
+  separately in the iPhone app container only after an explicit enrollment
+  action.
 - The service must use a vision-capable deployment and return a clear
   unavailable/error response rather than silently sending an image to a
   text-only model.

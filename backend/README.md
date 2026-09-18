@@ -5,6 +5,10 @@ deployment and returns environment, object, hazard, and narration fields.
 
 ## Setup
 
+Use Python 3.10 or newer. The `pillow-heif>=1.7` dependency does not support
+Python 3.9. The commands below assume `python3` resolves to a compatible
+runtime; otherwise substitute an explicit executable such as `python3.13`.
+
 From `backend/`, create and activate a virtual environment, then install the
 dependencies.
 
@@ -29,16 +33,18 @@ Create a local `.env` file in `backend/`:
 ```dotenv
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
 AZURE_OPENAI_API_KEY=your-development-key
-AZURE_OPENAI_DEPLOYMENT_NAME=your-vision-deployment (e.g. faro-gpt-5-mini)
+AZURE_OPENAI_DEPLOYMENT_NAME=your-vision-deployment
 FARO_VISION_TOKEN=long-random-token-issued-to-the-iPhone
 ```
 
 `AZURE_OPENAI_ENDPOINT` may instead be an Azure OpenAI v1 endpoint ending in
-`/openai/v1`. Do not commit `.env` or credentials.
+`/openai/v1`. For example, the deployment name might be `faro-gpt-5-mini`.
+See `.env.example` for optional service settings. Do not commit `.env` or
+credentials.
 
 ## Run
 
-```powershell
+```bash
 python azure_vision_service.py
 ```
 
@@ -47,8 +53,8 @@ available at `http://localhost:8000/docs`.
 
 Check that the process is responding:
 
-```powershell
-curl.exe http://localhost:8000/health
+```bash
+curl http://127.0.0.1:8000/health
 ```
 
 Run the tests with:
@@ -60,7 +66,8 @@ python -m pytest
 ## Manual iOS-contract smoke test
 
 Use a JPEG, PNG, or HEIC still image and a token loaded from the local ignored
-`.env` file:
+`.env` file. Replace `scene.jpg` with the path to a user-supplied test image;
+the repository does not include a backend sample image.
 
 ```bash
 curl --fail-with-body -X POST http://127.0.0.1:8000/v1/scene-descriptions \
@@ -88,6 +95,11 @@ It accepts the `image` and JSON `options` multipart fields defined in
 10 MB original-image limit, and returns the compact speech response consumed by
 `FAROVisionClient`.
 
+- `request_id` and `locale` are required. `detail` defaults to `brief`;
+  `prompt` defaults to an empty string and is limited to 1,000 characters.
+- The current iOS client sends `detail: brief` plus a localized safety-focused
+  prompt. The prompt narrows visual focus but cannot override the service's
+  safety, grounding, or requested-language instructions.
 - JPEG and PNG are forwarded to Azure after content validation.
 - HEIC is decoded locally and normalized to JPEG before Azure inference.
 - Requests use a process-local limit of 10 per minute by default. Override only
@@ -101,6 +113,6 @@ unless the service is placed behind a private authenticated reverse proxy.
 ## Historical prototype implementation
 
 The former `/api/v1/upload-image` and `/api/v1/analyze-image` implementations
-are retained as unregistered code during the transition, but they have no HTTP
-route and return `404`. The iOS contract endpoint above is the only inference
-surface exposed by the service.
+remain as unregistered legacy helpers, but they have no HTTP route and return
+`404`. The iOS contract endpoint above is the only inference surface exposed by
+the service.

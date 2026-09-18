@@ -43,7 +43,8 @@ separate Arduino build/flash workflow.
 - Git and SSH access to the FARO remote;
 - an Apple ID and development team for physical-device signing;
 - an iPhone running iOS 26 for camera, microphone, speech, and production
-  FeaturePrint validation.
+  FeaturePrint validation;
+- Python 3.10 or newer for the private vision backend;
 - for ESP32 work, Arduino CLI with the `esp32:esp32` core and Adafruit
   NeoPixel library.
 
@@ -53,7 +54,12 @@ Verify the command-line setup:
 xcode-select -p
 xcodebuild -version
 xcodegen --version
+python3 --version
 ```
+
+If macOS's `python3` reports 3.9, use an installed Python 3.10-or-newer
+executable, such as `python3.13`, when creating the backend virtual
+environment.
 
 Install XcodeGen with Homebrew if needed:
 
@@ -227,12 +233,15 @@ The service contract is documented in
 [docs/vision-api-contract.md](docs/vision-api-contract.md).
 To run and exercise the included FastAPI service locally, follow
 [backend/README.md](backend/README.md).
+The current iOS client requests `brief` detail and supplies a localized
+safety-focused prompt; the backend validates and forwards both options.
 
 ## Repository map
 
 ```text
 FARO/
 |-- DEVELOPMENT.md                 Developer setup and contribution workflow
+|-- FARO-holder.stl                Printable prototype holder model
 |-- IOS-TASKS.md                   Canonical roadmap and phase status
 |-- project-faro.md                Product, architecture, and safety model
 |-- backend/                       Private FastAPI vision service and tests
@@ -444,7 +453,8 @@ When documentation disagrees, resolve it in this order:
 3. `ios/project.yml` for targets and generated build settings;
 4. `docs/vision-api-contract.md` for the remote scene-description boundary;
 5. `docs/ble-contract.md` for the iPhone/ESP32 wire boundary;
-6. `.github/copilot-instructions.md` for repository implementation invariants.
+6. `backend/README.md` and `esp32/README.md` for component operation;
+7. `.github/copilot-instructions.md` for repository implementation invariants.
 
 Update all affected documents in the same change when an architectural
 decision alters more than one source of truth.

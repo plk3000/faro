@@ -10,6 +10,10 @@ Firmware for FARO's local obstacle-awareness module, running on the CENFOTEC Ide
 - **Required IdeaBoard jumper:** `SELECT` ↔ `Vin`
 - **Passive buzzer:** GPIO 27 (`+` to GPIO 27, `−` to GND). This must be a small passive piezo unit suitable for 3.3 V GPIO drive; do not use the identified 5 V active buzzer here.
 
+The repository root also contains `FARO-holder.stl`, the printable prototype
+holder model. STL files do not encode units; verify slicer scale, orientation,
+and physical fit before deployment. No print/fit acceptance is recorded.
+
 ## Safety behavior
 
 FARO boots in **Inactive** mode. Sonar readings may be measured and reported over BLE, but the local buzzer must remain silent until **Navigating** mode is explicitly armed. Once armed, the local `sonar → ESP32 → passive buzzer` alert path must operate independently of Bluetooth, iOS, or any AI service.

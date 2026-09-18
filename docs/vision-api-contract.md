@@ -47,13 +47,18 @@ Use `multipart/form-data` with these parts:
 }
 ```
 
-- `request_id` is a client-generated UUID used for correlation and
-  idempotency.
+- `request_id` is a client-generated UUID used for correlation. The service
+  does not deduplicate repeated requests.
 - `locale` is a BCP 47 language tag. The iOS prototype sends `en-US` or
   `es-MX` according to its current language setting.
-- `detail` is `brief` or `detailed`; unknown values return `invalid_request`.
-- `prompt` is optional application context, not an instruction to identify
-  people or infer sensitive traits.
+- `detail` is optional, defaults to `brief`, and accepts `brief` or `detailed`;
+  unknown values return `invalid_request`.
+- `prompt` is optional application context, defaults to an empty string, and
+  is limited to 1,000 characters. It may focus the description but cannot
+  override hazard priority, visual grounding, or the requested language. It
+  must not request identification of people or inference of sensitive traits.
+- The current iOS client sends `brief` and a localized prompt about nearby
+  objects, relative position, and immediate obstacles.
 
 The service validates declared image type against decoded image content. HEIC uploads are decoded and normalized to JPEG before Azure inference. The request limit applies to the original upload; the backend does not retain the image after responding.
 

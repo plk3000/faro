@@ -21,6 +21,10 @@ device-facing gates have been physically accepted. Phase 7 measures
 recognition, latency, wake behavior, and obstacle-alert usefulness with the
 actual user before thresholds are treated as validated.
 
+The live iOS vision request sends `brief` detail plus a localized
+safety-focused prompt. The backend validates and forwards both options while
+preserving its own grounding, language, and hazard-priority instructions.
+
 ## Approach
 
 Build in small, independently verifiable tasks. Each task ends in something demonstrable and
@@ -61,6 +65,7 @@ narration, memory, and mode control only.
 ```
 FARO/
 ├── DEVELOPMENT.md               # developer setup and contribution workflow
+├── FARO-holder.stl              # printable prototype holder model
 ├── IOS-TASKS.md                 # task roadmap (deliverable of T01)
 ├── project-faro.md              # concept source of truth
 ├── backend/                     # private scene-description service and tests
@@ -84,16 +89,19 @@ cd ios && xcodegen generate
 
 # full build (from ios/)
 xcodebuild -project FARO.xcodeproj -scheme FARO \
-  -destination 'platform=iOS Simulator,name=iPhone 17' build
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  build CODE_SIGNING_ALLOWED=NO
 
 # full test suite (from ios/)
 xcodebuild test -project FARO.xcodeproj -scheme FARO \
-  -destination 'platform=iOS Simulator,name=iPhone 17'
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  CODE_SIGNING_ALLOWED=NO
 
 # a single test (from ios/)
 xcodebuild test -project FARO.xcodeproj -scheme FARO \
   -destination 'platform=iOS Simulator,name=iPhone 17' \
-  '-only-testing:FAROTests/ImageStoreTests/savesFixturesAsPersistentJPEGs()'
+  '-only-testing:FAROTests/ImageStoreTests/savesFixturesAsPersistentJPEGs()' \
+  CODE_SIGNING_ALLOWED=NO
 ```
 
 Resolve the simulator name with `xcrun simctl list devices available` before hardcoding it.
@@ -405,7 +413,8 @@ Phase 6.
 **T39 · ble-contract** — Write `docs/ble-contract.md`: service and characteristic UUIDs, distance and
 warning-state payloads, mode arming, and reconnection expectations, stating that the ESP32 alert path
 stays autonomous.
-*Done when:* the separate firmware repo can implement against it without further questions.
+*Done when:* the checked-in iOS and ESP32 implementations interoperate against
+it without undocumented assumptions.
 
 *Status:* Complete. `docs/ble-contract.md` defines fixed service and
 characteristic UUIDs, the version 1 eight-byte telemetry packet, confirmed

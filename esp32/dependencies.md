@@ -24,6 +24,12 @@
 - Connect HC-SR04 VCC and GND to the IdeaBoard as specified by the CENFOTEC reference hardware.
 - Never connect the sonar's 5 V ECHO output directly to ESP32 GPIO 26.
 
+## Mechanical asset
+
+- `../FARO-holder.stl` is the printable prototype holder model.
+- STL files do not encode units. Confirm slicer scale, print orientation, and
+  physical fit before using the holder; no print/fit acceptance is recorded.
+
 ## LED and passive-buzzer behavior
 
 - No valid echo: purple LED
