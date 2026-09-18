@@ -5,7 +5,7 @@
 - Treat `project-faro.md` as the canonical product, architecture, hardware, and prototype-scope document.
 - Use `DEVELOPMENT.md` for contributor setup, project generation, device deployment, configuration, and troubleshooting.
 - The native iOS application lives under `ios/`. `ios/project.yml` is the source of truth for the generated Xcode project; do not hand-edit or commit `ios/FARO.xcodeproj`.
-- `IOS-TASKS.md` is the implementation roadmap. The ESP32 firmware is intentionally maintained in a separate repository.
+- `IOS-TASKS.md` is the implementation roadmap. ESP32 firmware lives under `esp32/`; it has a separate build/flash workflow from the native iOS application.
 - Keep the project framed as a co-designed FHL prototype and secondary assistive companion, not as a replacement for a white cane, guide dog, or orientation-and-mobility training.
 
 ## Build and test

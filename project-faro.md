@@ -101,6 +101,37 @@ The preferred prototype platform is an iPhone running a native iOS app. It provi
 
 The phone would be chest-mounted or carried in a forward-facing harness so the camera does not depend on handheld aiming.
 
+### Private Azure OpenAI vision service
+
+For FHL scene narration, the iPhone may send a user-requested camera frame to a
+private API backed by an Azure OpenAI vision deployment. The service returns a
+short accessibility-oriented description for the iPhone to speak.
+
+```text
+user-requested camera frame → authenticated FARO API → Azure OpenAI vision model
+                                                     → concise description → iPhone speech
+```
+
+The API is a **private, single-account service**, not a public provider proxy:
+
+- The iPhone authenticates to the FARO API; it never receives or stores the
+  Azure credential.
+- The server keeps Azure credentials server-side and binds locally or behind a
+  private authenticated network path.
+- The service validates MIME type and image size, rate-limits calls, avoids
+  logging image payloads or descriptions containing sensitive visual details,
+  and discards the upload after the request unless the user explicitly chooses
+  to save it for place learning.
+- The service must use a vision-capable deployment and return a clear
+  unavailable/error response rather than silently sending an image to a
+  text-only model.
+- This path is advisory narration only. It is never in the immediate obstacle
+  warning path and cannot delay or suppress the local sonar alert.
+
+This design is appropriate for personal FHL testing. A multi-user or public
+deployment needs a separate credential and access-control model; it must not
+share one account's provider credential across users.
+
 ### ESP32 obstacle module
 
 An ESP32 with an ultrasonic/sonar sensor provides the fast local reflex:
@@ -229,5 +260,6 @@ Free provisioning requires the app to be rebuilt/reprovisioned periodically (typ
 - [Apple AVFoundation capture setup](https://developer.apple.com/documentation/avfoundation/capture-setup)
 - [Apple Core Bluetooth](https://developer.apple.com/documentation/corebluetooth)
 - [ESP32 BLE GATT server documentation](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/bluetooth/esp_gatts.html)
+- [Azure OpenAI vision-enabled chat completions](https://learn.microsoft.com/azure/ai-foundry/openai/how-to/gpt-with-vision)
 - [Seeing AI](https://www.seeingai.com/)
 - [Visual Place Recognition research example](https://openaccess.thecvf.com/content/CVPR2024W/FedVision-2024/papers/Dutto_Collaborative_Visual_Place_Recognition_through_Federated_Learning_CVPRW_2024_paper.pdf)

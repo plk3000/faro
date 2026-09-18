@@ -9,19 +9,27 @@ import base64
 import binascii
 import io
 import logging
+import secrets
+import time
 import uuid
+from collections import deque
 from datetime import datetime, timezone
+from threading import Lock
 from typing import Optional, Dict, Any, List, Literal
 
 import requests
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from PIL import Image, UnidentifiedImageError
-from pydantic import BaseModel, Field
+import pillow_heif
+from pydantic import BaseModel, Field, ValidationError
 import dotenv
 
 # Load environment variables
 dotenv.load_dotenv()
+pillow_heif.register_heif_opener()
 
 # Configure logging (NO image payloads)
 logging.basicConfig(
@@ -42,6 +50,13 @@ AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-08-01-pre
 MAX_IMAGE_SIZE_MB = int(os.getenv("MAX_IMAGE_SIZE_MB", "5"))
 REQUEST_TIMEOUT_SEC = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
 IMAGE_DETAIL = os.getenv("AZURE_OPENAI_IMAGE_DETAIL", "low")
+FARO_VISION_TOKEN = os.getenv("FARO_VISION_TOKEN", "")
+CONTRACT_MAX_IMAGE_SIZE_MB = int(os.getenv("FARO_VISION_MAX_IMAGE_SIZE_MB", "10"))
+RATE_LIMIT_REQUESTS_PER_MINUTE = int(
+    os.getenv("FARO_VISION_RATE_LIMIT_PER_MINUTE", "10")
+)
+_contract_request_times: deque[float] = deque()
+_contract_rate_limit_lock = Lock()
 
 # System prompt for environment and object categorization
 SYSTEM_PROMPT = """You are an accessibility assistant analyzing camera images for a blind user's navigation system called FARO.
@@ -133,6 +148,33 @@ class ErrorResponse(BaseModel):
     request_id: str
 
 
+class SceneDescriptionOptions(BaseModel):
+    request_id: uuid.UUID
+    locale: Literal["en-US", "es-MX"]
+    detail: Literal["brief", "detailed"] = "brief"
+    prompt: str = Field(default="", max_length=1000)
+
+
+class SceneDescriptionResponse(BaseModel):
+    request_id: uuid.UUID
+    description: str
+    language: Literal["en-US", "es-MX"]
+    confidence: Optional[float] = None
+    model: str
+    processing_ms: int
+
+
+class ContractErrorDetail(BaseModel):
+    code: str
+    message: str
+    retryable: bool
+
+
+class ContractErrorResponse(BaseModel):
+    request_id: str
+    error: ContractErrorDetail
+
+
 # Initialize FastAPI app
 app = FastAPI(
     title="FARO Azure Vision Service",
@@ -140,14 +182,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Configure for specific domains in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+@app.exception_handler(RequestValidationError)
+async def handle_request_validation_error(
+    request: Request, error: RequestValidationError
+):
+    if request.url.path == "/v1/scene-descriptions":
+        return contract_error(
+            request.headers.get("X-Request-ID", "unknown"),
+            400,
+            "invalid_request",
+            "The request is invalid.",
+            False,
+        )
+    return await request_validation_exception_handler(request, error)
 
 
 IMAGE_FORMATS_BY_MIME_TYPE = {
@@ -155,6 +203,7 @@ IMAGE_FORMATS_BY_MIME_TYPE = {
     "image/png": "PNG",
     "image/webp": "WEBP",
     "image/gif": "GIF",
+    "image/heic": "HEIF",
 }
 
 REQUEST_INSTRUCTIONS = {
@@ -171,6 +220,117 @@ LANGUAGE_INSTRUCTIONS = {
         "and immediate warnings. Do not return those values in English."
     ),
 }
+
+CONTRACT_IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/heic"}
+
+
+def contract_error(
+    request_id: str,
+    status_code: int,
+    code: str,
+    message: str,
+    retryable: bool,
+    headers: Optional[Dict[str, str]] = None,
+) -> JSONResponse:
+    """Return the stable error envelope consumed by FAROVisionClient."""
+    payload = ContractErrorResponse(
+        request_id=request_id,
+        error=ContractErrorDetail(
+            code=code,
+            message=message,
+            retryable=retryable,
+        ),
+    )
+    return JSONResponse(
+        status_code=status_code,
+        content=payload.model_dump(mode="json"),
+        headers=headers,
+    )
+
+
+def authenticate_contract_request(
+    authorization: Optional[str], request_id: str
+) -> Optional[JSONResponse]:
+    """Authenticate the iOS contract without exposing token details."""
+    if not FARO_VISION_TOKEN:
+        logger.error("FARO vision token is not configured")
+        return contract_error(
+            request_id,
+            503,
+            "model_unavailable",
+            "Scene description is temporarily unavailable.",
+            True,
+        )
+
+    scheme, _, presented_token = (authorization or "").partition(" ")
+    if (
+        scheme.lower() != "bearer"
+        or not presented_token
+        or not secrets.compare_digest(presented_token, FARO_VISION_TOKEN)
+    ):
+        return contract_error(
+            request_id,
+            401,
+            "unauthorized",
+            "Authorization is required.",
+            False,
+        )
+    return None
+
+
+def check_contract_rate_limit() -> Optional[int]:
+    """Return Retry-After seconds when the private-process rate limit is full."""
+    if RATE_LIMIT_REQUESTS_PER_MINUTE <= 0:
+        return None
+
+    now = time.monotonic()
+    cutoff = now - 60
+    with _contract_rate_limit_lock:
+        while _contract_request_times and _contract_request_times[0] <= cutoff:
+            _contract_request_times.popleft()
+
+        if len(_contract_request_times) >= RATE_LIMIT_REQUESTS_PER_MINUTE:
+            return max(1, int(60 - (now - _contract_request_times[0])))
+
+        _contract_request_times.append(now)
+    return None
+
+
+def map_contract_provider_error(request_id: str, error: HTTPException) -> JSONResponse:
+    """Translate provider failures into the public iOS error contract."""
+    if error.status_code == 429:
+        retry_after = error.headers.get("Retry-After", "30") if error.headers else "30"
+        return contract_error(
+            request_id,
+            429,
+            "rate_limited",
+            "Scene description is temporarily unavailable.",
+            True,
+            headers={"Retry-After": retry_after},
+        )
+    if error.status_code == 504:
+        return contract_error(
+            request_id,
+            504,
+            "model_timeout",
+            "Scene description timed out.",
+            True,
+        )
+    if error.status_code == 503:
+        return contract_error(
+            request_id,
+            503,
+            "model_unavailable",
+            "Scene description is temporarily unavailable.",
+            True,
+        )
+    return contract_error(
+        request_id,
+        500,
+        "internal_error",
+        "Scene description failed.",
+        True,
+    )
 
 
 def validate_image_bytes(content: bytes, mime_type: str, max_size_mb: int = 5) -> None:
@@ -364,17 +524,175 @@ def call_azure_openai_vision(
         )
 
 
+@app.post("/v1/scene-descriptions", response_model=SceneDescriptionResponse)
+async def create_scene_description(
+    image: UploadFile = File(...),
+    options: str = Form(...),
+    authorization: Optional[str] = Header(default=None),
+    x_request_id: Optional[str] = Header(default=None),
+):
+    """Implement the stable, authenticated HTTP boundary used by the iOS app."""
+    response_request_id = x_request_id or "unknown"
+    authentication_error = authenticate_contract_request(
+        authorization, response_request_id
+    )
+    if authentication_error:
+        return authentication_error
+
+    try:
+        parsed_options = SceneDescriptionOptions.model_validate_json(options)
+    except (ValidationError, ValueError):
+        return contract_error(
+            response_request_id,
+            400,
+            "invalid_request",
+            "The options part is invalid.",
+            False,
+        )
+
+    request_id = str(parsed_options.request_id)
+    try:
+        header_request_id = uuid.UUID(x_request_id) if x_request_id else None
+    except (TypeError, ValueError, AttributeError):
+        header_request_id = None
+
+    if header_request_id != parsed_options.request_id:
+        return contract_error(
+            response_request_id,
+            400,
+            "invalid_request",
+            "X-Request-ID must match options.request_id.",
+            False,
+        )
+
+    if image.content_type not in CONTRACT_IMAGE_MIME_TYPES:
+        logger.warning(
+            "[%s] Rejected image with unsupported declared MIME type: %s",
+            request_id,
+            image.content_type,
+        )
+        return contract_error(
+            request_id,
+            415,
+            "unsupported_image",
+            "Only JPEG, PNG, and HEIC images are supported.",
+            False,
+        )
+
+    max_image_bytes = CONTRACT_MAX_IMAGE_SIZE_MB * 1024 * 1024
+    content = await image.read(max_image_bytes + 1)
+    if len(content) > max_image_bytes:
+        return contract_error(
+            request_id,
+            413,
+            "image_too_large",
+            f"Image exceeds {CONTRACT_MAX_IMAGE_SIZE_MB} MB limit.",
+            False,
+        )
+
+    try:
+        validate_image_bytes(
+            content,
+            image.content_type,
+            max_size_mb=CONTRACT_MAX_IMAGE_SIZE_MB,
+        )
+    except HTTPException as error:
+        logger.warning(
+            "[%s] Rejected image after validation: declared MIME type=%s reason=%s",
+            request_id,
+            image.content_type,
+            error.detail,
+        )
+        status_code = 413 if error.status_code == 413 else 415
+        code = "image_too_large" if status_code == 413 else "unsupported_image"
+        return contract_error(
+            request_id,
+            status_code,
+            code,
+            "Image is invalid or does not match its declared MIME type.",
+            False,
+        )
+
+    provider_content = content
+    provider_mime_type = image.content_type
+    if image.content_type == "image/heic":
+        try:
+            with Image.open(io.BytesIO(content)) as heic_image:
+                converted = io.BytesIO()
+                heic_image.convert("RGB").save(converted, format="JPEG")
+                provider_content = converted.getvalue()
+                provider_mime_type = "image/jpeg"
+        except (UnidentifiedImageError, OSError, ValueError):
+            return contract_error(
+                request_id,
+                415,
+                "unsupported_image",
+                "The HEIC image could not be decoded.",
+                False,
+            )
+
+    retry_after = check_contract_rate_limit()
+    if retry_after is not None:
+        return contract_error(
+            request_id,
+            429,
+            "rate_limited",
+            "Scene description is temporarily unavailable.",
+            True,
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    started_at = time.monotonic()
+    try:
+        analysis = call_azure_openai_vision(
+            base64.b64encode(provider_content).decode("ascii"),
+            provider_mime_type,
+            "scene_narration",
+            parsed_options.locale,
+        )
+    except HTTPException as error:
+        return map_contract_provider_error(request_id, error)
+
+    description = analysis.get("narration")
+    if not isinstance(description, str) or not description.strip():
+        logger.error("[%s] Provider response had no usable narration", request_id)
+        return contract_error(
+            request_id,
+            500,
+            "internal_error",
+            "Scene description failed.",
+            True,
+        )
+    if parsed_options.detail == "brief" and len(description) > 500:
+        return contract_error(
+            request_id,
+            500,
+            "internal_error",
+            "Scene description failed.",
+            True,
+        )
+
+    environment = analysis.get("environment")
+    confidence = environment.get("confidence") if isinstance(environment, dict) else None
+    if not isinstance(confidence, (int, float)) or not 0 <= confidence <= 1:
+        confidence = None
+
+    return SceneDescriptionResponse(
+        request_id=parsed_options.request_id,
+        description=description,
+        language=parsed_options.locale,
+        confidence=confidence,
+        model=AZURE_OPENAI_DEPLOYMENT or "unknown",
+        processing_ms=round((time.monotonic() - started_at) * 1000),
+    )
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "service": "FARO Azure Vision Service",
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+    return {"status": "ok", "api_version": "v1"}
 
 
-@app.post("/api/v1/analyze-image", response_model=ImageAnalysisResponse)
 async def analyze_image(request: ImageAnalysisRequest) -> ImageAnalysisResponse:
     """
     Analyze an image and categorize environment, objects, and hazards.
@@ -462,7 +780,6 @@ async def analyze_image(request: ImageAnalysisRequest) -> ImageAnalysisResponse:
         )
 
 
-@app.post("/api/v1/upload-image")
 async def upload_image_file(
     file: UploadFile = File(...),
     request_type: Literal[
@@ -515,6 +832,7 @@ if __name__ == "__main__":
     import uvicorn
     
     port = int(os.getenv("API_PORT", "8000"))
+    host = os.getenv("API_HOST", "127.0.0.1")
     
     logger.info("=" * 50)
     logger.info("Starting FARO Azure Vision Service")
@@ -524,7 +842,7 @@ if __name__ == "__main__":
     
     uvicorn.run(
         app,
-        host="0.0.0.0",
+        host=host,
         port=port,
         log_level="info"
     )

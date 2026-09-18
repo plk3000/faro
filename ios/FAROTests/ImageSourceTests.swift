@@ -10,5 +10,6 @@ struct ImageSourceTests {
 
         #expect(!image.data.isEmpty)
         #expect(image.format == .png)
+        #expect(CapturedImage.Format.detect(from: image.data) == .png)
     }
 }

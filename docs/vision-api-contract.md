@@ -33,8 +33,8 @@ Use `multipart/form-data` with these parts:
 
 | Part | Content type | Required | Constraints |
 |---|---|---:|---|
-| `image` | `image/jpeg` or `image/heic` | yes | One still image, maximum 10 MB |
-| `options` | `application/json` | no | Description options shown below |
+| `image` | `image/jpeg`, `image/png`, or `image/heic` | yes | One still image, maximum 10 MB |
+| `options` | `application/json` | yes | Description options shown below |
 
 `options`:
 
@@ -55,8 +55,7 @@ Use `multipart/form-data` with these parts:
 - `prompt` is optional application context, not an instruction to identify
   people or infer sensitive traits.
 
-The server should honor repeated `request_id` values without performing
-duplicate billable inference where practical.
+The service validates declared image type against decoded image content. HEIC uploads are decoded and normalized to JPEG before Azure inference. The request limit applies to the original upload; the backend does not retain the image after responding.
 
 ## Success response
 

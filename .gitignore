@@ -11,3 +11,6 @@ venv/
 __pycache__/
 *.py[cod]
 .vscode/
+
+# ESP32 firmware: local Wi-Fi/BLE credentials or device-specific configuration.
+esp32/secrets.h

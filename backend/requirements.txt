@@ -5,3 +5,4 @@ python-dotenv>=1.0,<2
 python-multipart>=0.0.18,<1
 requests>=2.32,<3
 pillow>=11.0,<13
+pillow-heif>=1.7,<2

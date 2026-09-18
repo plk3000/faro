@@ -4,6 +4,7 @@ import json
 
 import pytest
 import requests
+import pillow_heif
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from PIL import Image
@@ -47,10 +48,6 @@ def client():
     return TestClient(service.app)
 
 
-def encoded_image(content):
-    return base64.b64encode(content).decode("ascii")
-
-
 def mock_analysis(monkeypatch):
     monkeypatch.setattr(
         service,
@@ -63,103 +60,6 @@ def configure_provider(monkeypatch):
     monkeypatch.setattr(service, "AZURE_OPENAI_ENDPOINT", "https://example.test")
     monkeypatch.setattr(service, "AZURE_OPENAI_API_KEY", "test-key")
     monkeypatch.setattr(service, "AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
-
-
-def test_analyze_image_accepts_valid_jpeg(client, jpeg_bytes, monkeypatch):
-    mock_analysis(monkeypatch)
-
-    response = client.post(
-        "/api/v1/analyze-image",
-        json={
-            "image_base64": encoded_image(jpeg_bytes),
-            "image_mime_type": "image/jpeg",
-            "request_type": "scene_narration",
-            "language": "en-US",
-        },
-    )
-
-    assert response.status_code == 200
-    assert response.json()["environment"] == {
-        "name": "kitchen",
-        "confidence": 0.95,
-    }
-
-
-def test_upload_image_passes_form_options(client, jpeg_bytes, monkeypatch):
-    received = {}
-
-    def fake_analysis(image_base64, mime_type, request_type, language):
-        received["request_type"] = request_type
-        received["language"] = language
-        return ANALYSIS_RESULT
-
-    monkeypatch.setattr(service, "call_azure_openai_vision", fake_analysis)
-
-    response = client.post(
-        "/api/v1/upload-image",
-        files={"file": ("room.jpg", jpeg_bytes, "image/jpeg")},
-        data={"request_type": "hazard_assessment", "language": "es-MX"},
-    )
-
-    assert response.status_code == 200
-    assert received == {
-        "request_type": "hazard_assessment",
-        "language": "es-MX",
-    }
-
-
-@pytest.mark.parametrize(
-    ("payload", "mime_type", "expected_detail"),
-    [
-        (b"not an image", "image/jpeg", "Invalid or corrupt image"),
-        (b"not-base64!", "image/jpeg", "Invalid base64 image data"),
-    ],
-)
-def test_analyze_image_rejects_invalid_data(
-    client, payload, mime_type, expected_detail
-):
-    image_base64 = (
-        payload.decode("ascii")
-        if payload == b"not-base64!"
-        else encoded_image(payload)
-    )
-
-    response = client.post(
-        "/api/v1/analyze-image",
-        json={"image_base64": image_base64, "image_mime_type": mime_type},
-    )
-
-    assert response.status_code == 400
-    assert response.json()["detail"] == expected_detail
-
-
-def test_analyze_image_rejects_mime_mismatch(client, jpeg_bytes):
-    response = client.post(
-        "/api/v1/analyze-image",
-        json={
-            "image_base64": encoded_image(jpeg_bytes),
-            "image_mime_type": "image/png",
-        },
-    )
-
-    assert response.status_code == 400
-    assert "does not match" in response.json()["detail"]
-
-
-def test_analyze_image_rejects_oversized_file(
-    client, jpeg_bytes, monkeypatch
-):
-    monkeypatch.setattr(service, "MAX_IMAGE_SIZE_MB", 0)
-
-    response = client.post(
-        "/api/v1/analyze-image",
-        json={
-            "image_base64": encoded_image(jpeg_bytes),
-            "image_mime_type": "image/jpeg",
-        },
-    )
-
-    assert response.status_code == 413
 
 
 @pytest.mark.parametrize(
@@ -253,3 +153,144 @@ def test_provider_requires_configuration(monkeypatch):
         service.call_azure_openai_vision("data", "image/jpeg")
 
     assert error.value.status_code == 503
+
+
+CONTRACT_REQUEST_ID = "018f3f51-7f78-7b72-b941-f2c20aca1742"
+
+
+def contract_headers(token="test-contract-token", request_id=CONTRACT_REQUEST_ID):
+    return {
+        "Authorization": f"Bearer {token}",
+        "X-Request-ID": request_id,
+    }
+
+
+def contract_options(request_id=CONTRACT_REQUEST_ID, locale="en-US"):
+    return json.dumps(
+        {
+            "request_id": request_id,
+            "locale": locale,
+            "detail": "brief",
+            "prompt": "Describe nearby obstacles.",
+        }
+    )
+
+
+def configure_contract_token(monkeypatch):
+    monkeypatch.setattr(service, "FARO_VISION_TOKEN", "test-contract-token")
+    monkeypatch.setattr(service, "AZURE_OPENAI_DEPLOYMENT", "faro-vision-test")
+
+
+def test_ios_contract_requires_bearer_token(client, jpeg_bytes, monkeypatch):
+    configure_contract_token(monkeypatch)
+
+    response = client.post(
+        "/v1/scene-descriptions",
+        files={"image": ("room.jpg", jpeg_bytes, "image/jpeg")},
+        data={"options": contract_options()},
+        headers={"X-Request-ID": CONTRACT_REQUEST_ID},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "request_id": CONTRACT_REQUEST_ID,
+        "error": {
+            "code": "unauthorized",
+            "message": "Authorization is required.",
+            "retryable": False,
+        },
+    }
+
+
+def test_ios_contract_rejects_mismatched_request_ids(client, jpeg_bytes, monkeypatch):
+    configure_contract_token(monkeypatch)
+
+    response = client.post(
+        "/v1/scene-descriptions",
+        files={"image": ("room.jpg", jpeg_bytes, "image/jpeg")},
+        data={"options": contract_options()},
+        headers=contract_headers(request_id="not-the-options-request-id"),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["request_id"] == "not-the-options-request-id"
+    assert response.json()["error"]["code"] == "invalid_request"
+
+
+def test_ios_contract_accepts_uppercase_uuid_header(client, jpeg_bytes, monkeypatch):
+    configure_contract_token(monkeypatch)
+    mock_analysis(monkeypatch)
+    uppercase_request_id = CONTRACT_REQUEST_ID.upper()
+
+    response = client.post(
+        "/v1/scene-descriptions",
+        files={"image": ("room.jpg", jpeg_bytes, "image/jpeg")},
+        data={"options": contract_options(request_id=uppercase_request_id)},
+        headers=contract_headers(request_id=uppercase_request_id),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["request_id"] == CONTRACT_REQUEST_ID
+
+
+def test_ios_contract_translates_azure_analysis(client, jpeg_bytes, monkeypatch):
+    configure_contract_token(monkeypatch)
+    mock_analysis(monkeypatch)
+
+    response = client.post(
+        "/v1/scene-descriptions",
+        files={"image": ("room.jpg", jpeg_bytes, "image/jpeg")},
+        data={"options": contract_options()},
+        headers=contract_headers(),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["request_id"] == CONTRACT_REQUEST_ID
+    assert payload["description"] == "Kitchen ahead."
+    assert payload["language"] == "en-US"
+    assert payload["confidence"] == 0.95
+    assert payload["model"] == service.AZURE_OPENAI_DEPLOYMENT
+    assert isinstance(payload["processing_ms"], int)
+
+
+def test_ios_contract_normalizes_heic_for_azure(client, monkeypatch):
+    configure_contract_token(monkeypatch)
+    mock_analysis(monkeypatch)
+    pillow_heif.register_heif_opener()
+    output = io.BytesIO()
+    Image.new("RGB", (2, 2), "white").save(output, format="HEIF")
+
+    response = client.post(
+        "/v1/scene-descriptions",
+        files={"image": ("room.heic", output.getvalue(), "image/heic")},
+        data={"options": contract_options()},
+        headers=contract_headers(),
+    )
+
+    assert response.status_code == 200
+
+
+def test_contract_health_response(client):
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "api_version": "v1"}
+
+
+def test_ios_contract_wraps_missing_multipart_parts(client, monkeypatch):
+    configure_contract_token(monkeypatch)
+
+    response = client.post(
+        "/v1/scene-descriptions",
+        headers=contract_headers(),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["request_id"] == CONTRACT_REQUEST_ID
+    assert response.json()["error"]["code"] == "invalid_request"
+
+
+def test_legacy_inference_routes_are_not_registered(client):
+    assert client.post("/api/v1/analyze-image", json={}).status_code == 404
+    assert client.post("/api/v1/upload-image").status_code == 404
