@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import logging
 
 import pytest
 import requests
@@ -94,6 +95,38 @@ def test_provider_payload_uses_request_type_and_language(
     assert expected_instruction in instruction
     assert "Mexican Spanish" in instruction
     assert "Do not return those values in English" in instruction
+
+
+def test_provider_payload_uses_detail_and_application_context(monkeypatch):
+    configure_provider(monkeypatch)
+    captured = {}
+
+    def fake_post(url, headers, json, timeout):
+        captured.update(json)
+        result = {
+            "choices": [{"message": {"content": json_module.dumps(ANALYSIS_RESULT)}}]
+        }
+        return FakeResponse(result)
+
+    json_module = json
+    monkeypatch.setattr(service.requests, "post", fake_post)
+
+    service.call_azure_openai_vision(
+        "image-data",
+        "image/jpeg",
+        detail="detailed",
+        prompt="Focus on the walking path.",
+    )
+
+    instruction = captured["messages"][1]["content"][1]["text"]
+    assert "more detailed narration" in instruction
+    assert "prioritize relevant visible details" in instruction
+    assert "immediately after any safety-critical hazard" in instruction
+    assert "If the requested detail is not visible, do not invent it" in instruction
+    assert (
+        "<requested-focus>Focus on the walking path.</requested-focus>"
+        in instruction
+    )
 
 
 def test_provider_timeout_returns_gateway_timeout(monkeypatch):
@@ -217,6 +250,35 @@ def test_ios_contract_rejects_mismatched_request_ids(client, jpeg_bytes, monkeyp
     assert response.json()["error"]["code"] == "invalid_request"
 
 
+def test_ios_contract_logs_safe_options_validation_details(
+    client, jpeg_bytes, monkeypatch, caplog
+):
+    configure_contract_token(monkeypatch)
+    sensitive_prompt = "private room details"
+    invalid_options = json.dumps(
+        {
+            "request_id": CONTRACT_REQUEST_ID,
+            "locale": "en-US",
+            "detail": "verbose",
+            "prompt": sensitive_prompt,
+        }
+    )
+
+    with caplog.at_level(logging.INFO, logger=service.logger.name):
+        response = client.post(
+            "/v1/scene-descriptions",
+            files={"image": ("room.jpg", jpeg_bytes, "image/jpeg")},
+            data={"options": invalid_options},
+            headers=contract_headers(),
+        )
+
+    assert response.status_code == 400
+    assert "detail" in caplog.text
+    assert "literal_error" in caplog.text
+    assert "length=" in caplog.text
+    assert sensitive_prompt not in caplog.text
+
+
 def test_ios_contract_accepts_uppercase_uuid_header(client, jpeg_bytes, monkeypatch):
     configure_contract_token(monkeypatch)
     mock_analysis(monkeypatch)
@@ -254,6 +316,40 @@ def test_ios_contract_translates_azure_analysis(client, jpeg_bytes, monkeypatch)
     assert isinstance(payload["processing_ms"], int)
 
 
+def test_ios_contract_passes_detail_and_prompt_to_provider(
+    client, jpeg_bytes, monkeypatch
+):
+    configure_contract_token(monkeypatch)
+    captured = {}
+
+    def fake_analysis(*args, **kwargs):
+        captured.update(kwargs)
+        return ANALYSIS_RESULT
+
+    monkeypatch.setattr(service, "call_azure_openai_vision", fake_analysis)
+    options = json.dumps(
+        {
+            "request_id": CONTRACT_REQUEST_ID,
+            "locale": "en-US",
+            "detail": "detailed",
+            "prompt": "Focus on the walking path.",
+        }
+    )
+
+    response = client.post(
+        "/v1/scene-descriptions",
+        files={"image": ("room.jpg", jpeg_bytes, "image/jpeg")},
+        data={"options": options},
+        headers=contract_headers(),
+    )
+
+    assert response.status_code == 200
+    assert captured == {
+        "detail": "detailed",
+        "prompt": "Focus on the walking path.",
+    }
+
+
 def test_ios_contract_normalizes_heic_for_azure(client, monkeypatch):
     configure_contract_token(monkeypatch)
     mock_analysis(monkeypatch)
@@ -269,6 +365,22 @@ def test_ios_contract_normalizes_heic_for_azure(client, monkeypatch):
     )
 
     assert response.status_code == 200
+
+
+def test_ios_contract_rejects_webp(client, monkeypatch):
+    configure_contract_token(monkeypatch)
+    output = io.BytesIO()
+    Image.new("RGB", (2, 2), "white").save(output, format="WEBP")
+
+    response = client.post(
+        "/v1/scene-descriptions",
+        files={"image": ("room.webp", output.getvalue(), "image/webp")},
+        data={"options": contract_options()},
+        headers=contract_headers(),
+    )
+
+    assert response.status_code == 415
+    assert response.json()["error"]["code"] == "unsupported_image"
 
 
 def test_contract_health_response(client):
