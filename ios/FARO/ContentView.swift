@@ -23,6 +23,8 @@ struct ContentView: View {
     @State private var modeController = OperatingModeController()
     @State private var voiceModel = VoiceCommandViewModel()
     @State private var handsFreeModel = HandsFreeVoiceViewModel()
+    @State private var obstacleModuleModel =
+        ObstacleModuleViewModel()
     @State private var navigationTask: Task<Void, Never>?
     @State private var voiceInputTask: Task<Void, Never>?
     @State private var voiceInputOperationID: UUID?
@@ -46,6 +48,7 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     languagePicker
                     modeCard
+                    obstacleModuleLink
                     voiceCommandCard
                     preview
                     describeButton
@@ -63,6 +66,9 @@ struct ContentView: View {
             }
             .navigationTitle("FARO")
             .task {
+                obstacleModuleModel.start(
+                    mode: modeController.currentMode
+                )
                 await captureModel.prepare(language: language)
                 activateHandsFreeIfNeeded()
             }
@@ -87,6 +93,9 @@ struct ContentView: View {
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .active:
+                    obstacleModuleModel.start(
+                        mode: modeController.currentMode
+                    )
                     activateHandsFreeIfNeeded(
                         after: .milliseconds(450)
                     )
@@ -97,14 +106,19 @@ struct ContentView: View {
                     voiceInputTask?.cancel()
                     voiceCommandTask?.cancel()
                     captureModel.stopNavigationOutput()
+                    obstacleModuleModel.stop()
                     suspendHandsFree(cancelCommand: true)
                 @unknown default:
                     navigationTask?.cancel()
                     voiceInputTask?.cancel()
                     voiceCommandTask?.cancel()
                     captureModel.stopNavigationOutput()
+                    obstacleModuleModel.stop()
                     suspendHandsFree(cancelCommand: true)
                 }
+            }
+            .onChange(of: modeController.currentMode) { _, mode in
+                obstacleModuleModel.updateOperatingMode(mode)
             }
             .onChange(of: languagePreferenceRaw) {
                 _, _ in
@@ -580,6 +594,7 @@ struct ContentView: View {
                     )
                     .foregroundStyle(.secondary)
                 }
+
             }
 
             if !voiceModel.transcript.isEmpty {
@@ -646,6 +661,42 @@ struct ContentView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var obstacleModuleLink: some View {
+        NavigationLink {
+            ObstacleModuleDebugView(
+                model: obstacleModuleModel,
+                language: language
+            )
+            .onAppear {
+                suspendHandsFree(cancelCommand: false)
+            }
+            .onDisappear {
+                activateHandsFreeIfNeeded(
+                    after: .milliseconds(500)
+                )
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Label(
+                    language.text(.bleTitle),
+                    systemImage: "sensor"
+                )
+                .font(.headline)
+                Spacer()
+                Text(
+                    obstacleModuleModel.summaryText(
+                        language: language
+                    )
+                )
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.trailing)
+            }
+            .frame(maxWidth: .infinity, minHeight: 56)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityHint(language.text(.bleHint))
     }
 
     private func beginVoiceCommand() {

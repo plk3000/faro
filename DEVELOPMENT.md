@@ -19,10 +19,9 @@ FARO is an iOS-first assistive prototype. The iPhone app currently supports:
 The physically verified voice flow keeps the video-only camera session running,
 records one short command to a temporary local file, releases the microphone,
 and then performs on-device transcription. The Phase 5 hands-free extension is
-implemented and awaiting physical-device validation: after a persisted opt-in,
-Siri can foreground FARO, and FARO listens on-device for "Hey FARO" or "Hola
-FARO" before opening one automatic command window. See T33-T38 in
-`IOS-TASKS.md`.
+also verified on a physical iPhone: after a persisted opt-in, Siri can
+foreground FARO, and FARO listens on-device for "Hey FARO" or "Hola FARO"
+before opening one automatic command window. See T33-T38 in `IOS-TASKS.md`.
 
 The voice command "Remember this as..." now provides localized movement
 guidance and automatically captures nine still views about one second apart
@@ -31,8 +30,9 @@ deliberately reuses the proven photo path instead of recording video or
 reconfiguring the camera session. The touch enrollment screen remains available
 for manual enrollment and adding views.
 
-The ESP32 firmware is intentionally maintained in a separate repository. This
-repository will only define and implement the iOS side of the BLE boundary.
+The checked-in `esp32/` folder is the bench hardware POC. Production ESP32
+firmware is maintained separately against `docs/ble-contract.md`; this
+repository defines and implements the iOS side of that boundary.
 
 ## Prerequisites
 
@@ -154,6 +154,36 @@ xcodebuild -project FARO.xcodeproj -scheme FARO \
   -destination 'generic/platform=iOS' \
   build CODE_SIGNING_ALLOWED=NO
 ```
+
+## Bluetooth obstacle-module development
+
+`docs/ble-contract.md` defines the service UUIDs, versioned telemetry packet,
+operating-mode values, and reconnect behavior shared with the ESP32 firmware.
+The iPhone app scans for the FARO service while running and exposes connection,
+distance, warning, requested-mode, and confirmed-mode state in the localized
+**Obstacle module** diagnostic view.
+
+Simulator builds automatically use `MockObstaclePeripheral`. It connects
+without Bluetooth hardware and cycles through clear, slow, fast, urgent, and
+unavailable sonar readings. This lets the complete diagnostic UI and
+Inactive/Navigating synchronization path be tested in either supported
+language.
+
+For a physical integration test:
+
+1. Flash ESP32 firmware implementing `docs/ble-contract.md`.
+2. Power the module and confirm it advertises `FARO-Obstacle`.
+3. Launch FARO and open **Obstacle module**.
+4. Confirm the connection reaches **Connected**, telemetry updates, and the
+   confirmed ESP32 mode matches the iPhone mode.
+5. Enter Navigating, disconnect or move the iPhone out of range, and confirm
+   local sonar-to-buzzer warnings continue without the phone.
+6. Reconnect, leave Navigating, and confirm the ESP32 reports Inactive and
+   silences its local buzzer.
+
+Do not infer a clear path from missing or stale telemetry. The iPhone removes a
+reading after two seconds without a valid packet, while immediate warnings
+remain entirely local to the ESP32.
 
 ## Mock and live vision configuration
 

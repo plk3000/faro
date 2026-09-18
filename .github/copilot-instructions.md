@@ -5,7 +5,9 @@
 - Treat `project-faro.md` as the canonical product, architecture, hardware, and prototype-scope document.
 - Use `DEVELOPMENT.md` for contributor setup, project generation, device deployment, configuration, and troubleshooting.
 - The native iOS application lives under `ios/`. `ios/project.yml` is the source of truth for the generated Xcode project; do not hand-edit or commit `ios/FARO.xcodeproj`.
-- `IOS-TASKS.md` is the implementation roadmap. ESP32 firmware lives under `esp32/`; it has a separate build/flash workflow from the native iOS application.
+- `IOS-TASKS.md` is the implementation roadmap. The checked-in `esp32/` folder
+  is the bench hardware POC; production ESP32 firmware is maintained
+  separately and implements `docs/ble-contract.md`.
 - Keep the project framed as a co-designed FHL prototype and secondary assistive companion, not as a replacement for a white cane, guide dog, or orientation-and-mobility training.
 
 ## Build and test
@@ -39,6 +41,10 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
 
 - The native iPhone app is the primary interface and system orchestrator. It owns AVFoundation camera capture, vision-language scene narration, visual-embedding generation and storage, place retrieval, speech output, phone motion/location context, user-visible mode state, and Core Bluetooth communication.
 - The ESP32 obstacle module is the independent low-latency warning subsystem. It reads and filters the forward sonar distance, drives the local passive buzzer, and publishes distance and warning state to the iPhone over BLE.
+- Keep `docs/ble-contract.md`, `ObstacleModuleProtocol`, and the ESP32
+  implementation aligned. Version 1 uses the published service UUID, an
+  eight-byte little-endian telemetry packet, and a one-byte confirmed mode
+  characteristic.
 - Preserve the separation between the two paths:
   - Immediate warning: `sonar -> ESP32 -> passive buzzer`.
   - Context and narration: camera, phone sensors, and BLE telemetry -> iPhone recognition/narration -> speech.
@@ -56,6 +62,10 @@ xcodebuild test -project FARO.xcodeproj -scheme FARO \
 - The iPhone app is the prototype's primary mode control. Keep the current mode unambiguous in the app and provide distinct confirmation tones when entering or leaving Navigating mode.
 - Do not persist the iOS operating mode. Route “Where am I?” and future iPhone proximity output through `OperatingModeController` so every fresh launch is Inactive and leaving Navigating cancels spoken navigation output.
 - Once Navigating mode is armed, local obstacle alerts must continue if Bluetooth, the app, or AI processing fails.
+- A BLE disconnect is never an implicit Inactive command. On reconnect, send
+  the current in-memory iOS mode; every fresh app launch still begins Inactive.
+  Reject malformed telemetry and remove stale readings rather than presenting
+  old distance data as current.
 - Use uncertainty rather than a confident guess when place-recognition confidence is insufficient. False confident identifications are a primary prototype metric.
 - Keep scene and place commands minimal: `describe`, `where am I?`, `remember this as...`, and `what is ahead?`. Hands-Free additionally exposes bilingual `start navigation` and `stop navigation` commands as explicit safety-mode controls.
 - Voice `remember this as...` enrollment is a bounded nine-view, approximately 180-degree left-to-right scan: speak localized movement guidance, wait for it to finish, capture timed stills through the existing `ImageSource`, retain successful views if a later capture fails, and announce completion. Keep the touch enrollment sheet for manual enrollment and adding views.

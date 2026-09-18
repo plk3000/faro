@@ -14,10 +14,11 @@ Firmware for FARO's local obstacle-awareness module, running on the CENFOTEC Ide
 
 FARO boots in **Inactive** mode. Sonar readings may be measured and reported over BLE, but the local buzzer must remain silent until **Navigating** mode is explicitly armed. Once armed, the local `sonar → ESP32 → passive buzzer` alert path must operate independently of Bluetooth, iOS, or any AI service.
 
-## Planned contents
+## Firmware boundary
 
-- Arduino sketch and supporting C++ source
-- `secrets.example.h` if device-specific configuration becomes necessary
-- BLE implementation matching `docs/ble-contract.md` once that contract exists
+The bench sketch validates the sonar and passive buzzer. Production firmware is
+maintained separately and must implement [`docs/ble-contract.md`](../docs/ble-contract.md),
+including its boot-to-Inactive rule, telemetry packet, confirmed mode
+characteristic, and disconnect behavior.
 
 Do not commit `secrets.h`; it is ignored by the repository.

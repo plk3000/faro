@@ -9,8 +9,8 @@
 | Phase 2 — Scene description | Verified on physical device |
 | Phase 3 — Place memory | Verified on physical device |
 | Phase 4 — Operating modes | Verified on physical device |
-| Phase 5 — Voice commands | Hands-free device validation in progress |
-| Phase 6 — ESP32 boundary | Not started |
+| Phase 5 — Voice commands | Verified on physical device |
+| Phase 6 — ESP32 boundary | Implemented and simulator-verified |
 | Phase 7 — Evaluation | Not started |
 
 ## Problem
@@ -322,8 +322,8 @@ operating mode.
 ready tone confirms wake listening without a screen tap; disabling Hands-Free
 stops microphone use.
 
-*Implementation status:* Complete in code and simulator tests; physical
-acceptance remains part of T38.
+*Implementation status:* Complete in code, simulator tests, and physical-device
+validation through T38.
 
 **T34 · wake-engine-spike** — Define a `WakePhraseDetecting` boundary and
 compare viable fully on-device engines for “Hey FARO” and “Hola FARO,” including
@@ -339,7 +339,8 @@ is selected for phrase recognition, with `SpeechDetector` providing on-device
 voice-activity gating. FARO checks runtime/locale support and installs the
 required local assets. If unavailable, it reports a localized error and keeps
 the verified bounded `SFSpeechRecognizer` Start/Finish path as the fallback.
-Latency, energy, and false-activation measurements remain part of T38.
+Physical-device acceptance is complete through T38. Longer-run latency, energy,
+and false-activation measurements remain part of Phase 7 evaluation.
 
 **T35 · wake-phrase-listener** — Implement the selected detector while
 Hands-Free is armed. Debounce duplicate detections, ignore FARO's own tones and
@@ -351,8 +352,8 @@ Navigating by voice.
 room noise, ordinary conversation does not trigger, FARO never triggers itself,
 and backgrounding the app stops listening.
 
-*Implementation status:* Complete in code and simulator tests; acoustic and
-background lifecycle behavior awaits T38.
+*Implementation status:* Complete in code, simulator tests, and physical-device
+validation through T38.
 
 **T36 · automatic-command-window** — After a wake phrase, play a distinct
 acknowledgement tone, capture the next utterance, and finish automatically on
@@ -362,8 +363,8 @@ error. Keep the audio handoff serialized and never restart the camera session.
 *Done when:* after opening FARO, all existing English and Spanish commands can
 complete repeatedly without Start or Finish taps.
 
-*Implementation status:* Complete in code and simulator tests; silence levels
-and repeated camera/microphone handoffs await T38.
+*Implementation status:* Complete in code, simulator tests, and physical-device
+validation through T38.
 
 **T37 · voice-mode-control** — Add bilingual `start navigation` / `inicia
 navegación` and `stop navigation` / `detén navegación` commands. Route them
@@ -374,8 +375,8 @@ speech immediately.
 → stop navigation workflow requires no touch and preserves every mode-gating
 test.
 
-*Implementation status:* Complete in code and simulator tests; end-to-end
-hands-free acceptance awaits T38.
+*Implementation status:* Complete in code, simulator tests, and physical-device
+validation through T38.
 
 **T38 · hands-free-validation** — Run the physical-device matrix: Siri audio
 handoff, both wake phrases and languages, first-run permissions, repeated
@@ -387,26 +388,13 @@ terminated remains explicitly out of scope.
 *Done when:* the hands-free flow is accepted on the physical iPhone and its
 measured limitations are documented before Phase 6 begins.
 
-*Status:* In progress. Initial device testing confirmed foreground wake phrases
-and automatic commands work. The first pass found that the acknowledgement
-sound was interrupted by the command recorder's audio-session transition; FARO
-now awaits the system-sound completion callback before starting capture. That
-first implementation exposed a Swift actor-isolation trap because the system
-invokes its completion on `SSClientCompletionQueue`; the callback bridge is now
-nonisolated. The corrected build has launched successfully on the physical
-iPhone with Hands-Free already enabled. Audio completion and the remaining
-device matrix still require physical retesting. A subsequent “Hola FARO” →
-“dónde estoy” pass showed that spoken place output could begin and then be cut
-off because `AVSpeechSynthesizer.isSpeaking` briefly reports false before or
-between queued phrases. FARO now tracks every queued utterance through
-`AVSpeechSynthesizerDelegate` and does not re-arm wake listening until all
-phrases finish; this build is installed for device retesting. Voice place
-enrollment now waits through first-run permission prompts, speaks turning
-guidance, captures nine timed still views across an approximately 180-degree
-sweep without restarting the camera, and announces completion before re-arming.
-The signed build containing this flow is installed; automated launch was
-blocked because the paired iPhone was locked, so its physical enrollment pass
-remains part of this gate.
+*Status:* Complete. The user confirmed Phase 5 physical-device acceptance on
+September 17, 2026. The accepted flow includes foreground wake phrases,
+automatic bilingual commands, complete spoken output before wake listening
+re-arms, explicit voice mode control, manual fallback, and the guided nine-view
+place-enrollment sweep. Longer-run latency, false-activation, battery, and
+thermal measurements remain Phase 7 evaluation work rather than blockers for
+Phase 6.
 
 ### Phase 6 — ESP32 boundary
 
@@ -415,11 +403,22 @@ warning-state payloads, mode arming, and reconnection expectations, stating that
 stays autonomous.
 *Done when:* the separate firmware repo can implement against it without further questions.
 
+*Status:* Complete. `docs/ble-contract.md` defines fixed service and
+characteristic UUIDs, the version 1 eight-byte telemetry packet, confirmed
+mode writes, secure-link expectations, stale-data handling, and reconnect
+behavior that preserves the autonomous local warning path.
+
 **T40 · ble-central** — CoreBluetooth central that scans, connects, and
 subscribes, with a mock peripheral so it is testable without hardware,
 surfacing distance and connection status in a localized debug view.
 *Done when:* mock peripheral drives the debug view in both languages and
 disconnects degrade gracefully.
+
+*Status:* Complete in code and simulator tests. The app scans and reconnects,
+subscribes to telemetry and mode confirmation, resends the current mode after
+connection, rejects malformed packets, removes stale readings, and exposes a
+bilingual diagnostic view. Simulator builds use `MockObstaclePeripheral`;
+physical interoperability awaits production firmware implementing T39.
 
 ### Phase 7 — Evaluation
 

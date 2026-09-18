@@ -66,6 +66,14 @@ returns to Inactive. “Where am I?” and future iPhone proximity output pass
 through the same navigation gate, and leaving Navigating cancels any active
 spoken navigation output.
 
+The iPhone synchronizes each mode transition to the ESP32 over the versioned
+GATT contract in `docs/ble-contract.md`. The app distinguishes its requested
+mode from the mode confirmed by the ESP32. A BLE disconnect never acts as an
+Inactive command: if the ESP32 was already armed, its local warning path
+continues until an explicit Inactive command or a device reset. On reconnect,
+the iPhone sends its current in-memory mode; a fresh app process therefore
+resynchronizes the module to Inactive.
+
 ## Place-recognition approach
 
 When the user says “remember this as the kitchen,” FARO captures several views, creates image embeddings, and stores them with the label `kitchen`.
@@ -97,7 +105,8 @@ The preferred prototype platform is an iPhone running a native iOS app. It provi
 - embedding generation and storage for visual place recognition;
 - speech output;
 - phone motion/location context;
-- BLE communication with the ESP32.
+- Core Bluetooth communication with the ESP32, including mode synchronization
+  and diagnostic sonar telemetry.
 
 The phone would be chest-mounted or carried in a forward-facing harness so the camera does not depend on handheld aiming.
 
@@ -140,6 +149,14 @@ An ESP32 with an ultrasonic/sonar sensor provides the fast local reflex:
 - filter noisy readings;
 - drive a local audible alert directly;
 - send distance and warning state to the iPhone over BLE.
+
+The version 1 BLE service uses separate telemetry and operating-mode
+characteristics. Telemetry is an eight-byte, little-endian packet carrying a
+protocol version, validity and mode flags, a sequence number, distance in
+millimetres, and the warning classification. The iPhone rejects malformed or
+unknown packets and removes readings that become stale. The simulator uses a
+mock obstacle peripheral so scanning, mode synchronization, telemetry display,
+and disconnect handling remain testable without hardware.
 
 **Available output inventory:** no free vibration motor is available; the only
 DC motors are already soldered to another board. The confirmed audio parts are
