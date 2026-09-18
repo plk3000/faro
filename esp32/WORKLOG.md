@@ -65,10 +65,20 @@ Validated on the physical hardware:
 - WS2812B color bands track the distance;
 - passive-buzzer pitch/cadence tracks the same distance bands.
 
-### Scope boundary / next step
+### BLE operating-mode validation — 2026-09-17
 
-This is a bench POC. `kBenchBuzzerEnabled` is intentionally enabled to test
-the physical alert path. It is not the final FARO safety behavior. Production
-firmware must boot in **Inactive** mode and remain silent until **Navigating**
-mode is explicitly armed, with that state ultimately controlled over BLE by the
-iPhone.
+The ESP32 BLE firmware was compiled with Arduino CLI and flashed to the physical
+IdeaBoard on `/dev/ttyUSB0`. Flash verification completed successfully and the
+serial monitor continued to report filtered sonar distances after reset.
+
+Physical iPhone validation confirmed:
+
+- the phone discovered and connected to `FARO-Obstacle`;
+- the module started in **Inactive** mode with its local buzzer disarmed;
+- switching to **Navigating** from the phone armed the local distance-feedback
+  behavior;
+- switching back to **Inactive** stopped it.
+
+The immediate local sonar-to-buzzer path remains owned by the ESP32 while
+Navigating. Disconnect-retention and reset-to-Inactive should remain explicit
+regression checks whenever the BLE transport or power behavior changes.

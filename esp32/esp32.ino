@@ -1,4 +1,4 @@
-// FARO ESP32 distance-feedback bench proof of concept.
+// FARO ESP32 obstacle module.
 //
 // Hardware:
 // - CENFOTEC IdeaBoard (ESP32)
@@ -10,11 +10,19 @@
 // shifter must be installed before connecting it to the ESP32's 3.3 V GPIO 26.
 // The IdeaBoard SELECT-to-Vin jumper must be installed for the sonar.
 //
-// This is a bench hardware bring-up only. kBenchBuzzerEnabled is deliberately
-// true to validate the passive buzzer. Production FARO must boot Inactive and
-// remain silent until Navigating mode is explicitly armed.
+// The GATT layout and packet encoding are defined in ../docs/ble-contract.md.
+// The module always boots Inactive. BLE disconnection does not disarm an
+// already-Navigating module; a reset or explicit encrypted Inactive command
+// does.
 
 #include <Adafruit_NeoPixel.h>
+#include <BLE2902.h>
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLESecurity.h>
+
+#include "faro_protocol.h"
 
 namespace {
 constexpr uint8_t kSonarTriggerPin = 25;
@@ -22,7 +30,6 @@ constexpr uint8_t kSonarEchoPin = 26;
 constexpr uint8_t kLedPin = 2;
 constexpr uint8_t kLedCount = 1;
 constexpr uint8_t kBuzzerPin = 27;
-constexpr bool kBenchBuzzerEnabled = true;
 
 constexpr unsigned long kEchoTimeoutMicros = 25000;
 constexpr unsigned long kSampleIntervalMillis = 100;
@@ -31,6 +38,13 @@ constexpr size_t kSampleCount = 5;
 constexpr float kNearDistanceCm = 50.0F;
 constexpr float kMediumDistanceCm = 100.0F;
 constexpr float kFarDistanceCm = 200.0F;
+
+constexpr char kDeviceName[] = "FARO-Obstacle";
+constexpr char kServiceUuid[] = "F0A00001-5E9B-4D7A-8C31-6B7E2D490001";
+constexpr char kTelemetryCharacteristicUuid[] =
+    "F0A00002-5E9B-4D7A-8C31-6B7E2D490001";
+constexpr char kOperatingModeCharacteristicUuid[] =
+    "F0A00003-5E9B-4D7A-8C31-6B7E2D490001";
 
 struct BuzzerPattern {
   unsigned int frequencyHz;
@@ -44,6 +58,9 @@ constexpr BuzzerPattern kMediumPattern = {1600, 150, 500};
 constexpr BuzzerPattern kNearPattern = {2200, 120, 240};
 
 Adafruit_NeoPixel pixel(kLedCount, kLedPin, NEO_GRB + NEO_KHZ800);
+BLECharacteristic* telemetryCharacteristic = nullptr;
+BLECharacteristic* operatingModeCharacteristic = nullptr;
+
 float samples[kSampleCount] = {};
 size_t sampleIndex = 0;
 size_t samplesCollected = 0;
@@ -52,6 +69,8 @@ unsigned long lastSampleAt = 0;
 unsigned long buzzerPatternStartedAt = 0;
 bool buzzerIsOn = false;
 unsigned int activeBuzzerFrequencyHz = 0;
+uint16_t telemetrySequence = 0;
+volatile faro::OperatingMode operatingMode = faro::OperatingMode::Inactive;
 
 float measureDistanceCm() {
   digitalWrite(kSonarTriggerPin, LOW);
@@ -99,15 +118,15 @@ void setLed(uint8_t red, uint8_t green, uint8_t blue) {
 
 void showDistanceBand(float distanceCm) {
   if (distanceCm < 0.0F) {
-    setLed(128, 0, 128); // Purple: no valid echo received.
+    setLed(128, 0, 128);  // Purple: no valid echo received.
   } else if (distanceCm < kNearDistanceCm) {
-    setLed(255, 0, 0); // Red: under 0.5 m.
+    setLed(255, 0, 0);  // Red: under 0.5 m.
   } else if (distanceCm < kMediumDistanceCm) {
-    setLed(255, 128, 0); // Amber: 0.5–1 m.
+    setLed(255, 128, 0);  // Amber: 0.5-1 m.
   } else if (distanceCm < kFarDistanceCm) {
-    setLed(0, 0, 255); // Blue: 1–2 m.
+    setLed(0, 0, 255);  // Blue: 1-2 m.
   } else {
-    setLed(0, 0, 0); // Off: over 2 m.
+    setLed(0, 0, 0);  // Off: over 2 m.
   }
 }
 
@@ -124,7 +143,7 @@ BuzzerPattern patternForDistance(float distanceCm) {
   return kFarPattern;
 }
 
-bool patternsMatch(const BuzzerPattern &left, const BuzzerPattern &right) {
+bool patternsMatch(const BuzzerPattern& left, const BuzzerPattern& right) {
   return left.frequencyHz == right.frequencyHz &&
          left.toneDurationMillis == right.toneDurationMillis &&
          left.periodMillis == right.periodMillis;
@@ -140,7 +159,9 @@ void silenceBuzzer() {
 
 void updateBuzzer(float distanceCm, unsigned long now) {
   const BuzzerPattern pattern =
-      kBenchBuzzerEnabled ? patternForDistance(distanceCm) : kSilentPattern;
+      operatingMode == faro::OperatingMode::Navigating
+          ? patternForDistance(distanceCm)
+          : kSilentPattern;
   static BuzzerPattern currentPattern = kSilentPattern;
 
   if (!patternsMatch(pattern, currentPattern)) {
@@ -179,7 +200,115 @@ void addSample(float distanceCm) {
     ++samplesCollected;
   }
 }
-} // namespace
+
+uint16_t distanceMillimeters(float distanceCm) {
+  const float millimeters = distanceCm * 10.0F;
+  if (millimeters >= 65534.0F) {
+    return 65534;
+  }
+  return static_cast<uint16_t>(millimeters);
+}
+
+void publishOperatingMode() {
+  if (operatingModeCharacteristic == nullptr) {
+    return;
+  }
+  const uint8_t value = static_cast<uint8_t>(operatingMode);
+  operatingModeCharacteristic->setValue(&value, 1);
+  operatingModeCharacteristic->notify();
+}
+
+void publishTelemetry(float distanceCm) {
+  if (telemetryCharacteristic == nullptr) {
+    return;
+  }
+  const bool distanceValid = distanceCm >= 0.0F;
+  const uint16_t distance =
+      distanceValid ? distanceMillimeters(distanceCm) : 0;
+  const faro::Telemetry telemetry = {
+      telemetrySequence++,
+      distanceValid,
+      distance,
+      faro::classifyWarning(distanceValid, distance),
+      operatingMode,
+  };
+  uint8_t packet[faro::kTelemetryPacketLength] = {};
+  faro::encodeTelemetry(telemetry, packet);
+  telemetryCharacteristic->setValue(packet, sizeof(packet));
+  telemetryCharacteristic->notify();
+}
+
+class OperatingModeCallbacks : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic* characteristic) override {
+    const String value = characteristic->getValue();
+    faro::OperatingMode requestedMode = faro::OperatingMode::Inactive;
+    if (!faro::decodeOperatingMode(
+            reinterpret_cast<const uint8_t*>(value.c_str()), value.length(),
+            &requestedMode)) {
+      Serial.println("BLE mode write rejected: expected exactly 0x00 or 0x01");
+      publishOperatingMode();
+      return;
+    }
+
+    operatingMode = requestedMode;
+    silenceBuzzer();
+    publishOperatingMode();
+    Serial.print("BLE mode: ");
+    Serial.println(operatingMode == faro::OperatingMode::Navigating
+                       ? "Navigating"
+                       : "Inactive");
+  }
+};
+
+class ServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer*) override { Serial.println("BLE client connected"); }
+
+  void onDisconnect(BLEServer* server) override {
+    Serial.println("BLE client disconnected; retaining current mode");
+    server->startAdvertising();
+  }
+};
+
+void startBleServer() {
+  BLEDevice::init(kDeviceName);
+
+  // LE Secure Connections + bonding. With no physical display or keypad on
+  // this module, pairing uses encrypted Just Works rather than a claimed-MITM
+  // passkey flow. The mode characteristic still rejects unencrypted writes.
+  BLESecurity::setCapability(ESP_IO_CAP_NONE);
+  BLESecurity::setAuthenticationMode(true, false, true);
+
+  BLEServer* server = BLEDevice::createServer();
+  server->setCallbacks(new ServerCallbacks());
+  server->advertiseOnDisconnect(true);
+
+  BLEService* service = server->createService(kServiceUuid);
+  telemetryCharacteristic = service->createCharacteristic(
+      kTelemetryCharacteristicUuid,
+      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+  operatingModeCharacteristic = service->createCharacteristic(
+      kOperatingModeCharacteristicUuid,
+      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE |
+          BLECharacteristic::PROPERTY_NOTIFY);
+
+  telemetryCharacteristic->addDescriptor(new BLE2902());
+  operatingModeCharacteristic->addDescriptor(new BLE2902());
+  operatingModeCharacteristic->setAccessPermissions(
+      ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE_ENCRYPTED);
+  operatingModeCharacteristic->setCallbacks(new OperatingModeCallbacks());
+
+  publishOperatingMode();
+  service->start();
+
+  BLEAdvertising* advertising = BLEDevice::getAdvertising();
+  advertising->addServiceUUID(kServiceUuid);
+  advertising->setScanResponse(true);
+  advertising->setMinPreferred(0x06);
+  advertising->setMaxPreferred(0x12);
+  BLEDevice::startAdvertising();
+  Serial.println("BLE advertising as FARO-Obstacle");
+}
+}  // namespace
 
 void setup() {
   Serial.begin(115200);
@@ -192,9 +321,13 @@ void setup() {
   pixel.clear();
   pixel.show();
 
-  Serial.println("FARO ESP32 distance-feedback bench POC");
+  // Explicit before BLE initialization: a reboot can never restore armed mode.
+  operatingMode = faro::OperatingMode::Inactive;
+  Serial.println("FARO ESP32 obstacle module");
+  Serial.println("Mode: Inactive (buzzer disarmed)");
   Serial.println("HC-SR04: TRIG=GPIO25, ECHO=GPIO26 (level-shifted)");
   Serial.println("Passive buzzer: GPIO27");
+  startBleServer();
 }
 
 void loop() {
@@ -213,6 +346,7 @@ void loop() {
 
   showDistanceBand(latestDistanceCm);
   updateBuzzer(latestDistanceCm, now);
+  publishTelemetry(latestDistanceCm);
 
   if (rawDistanceCm < 0.0F) {
     Serial.println("distance: no echo");

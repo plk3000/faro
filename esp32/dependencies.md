@@ -6,9 +6,10 @@
 - Arduino-ESP32 board package index:
   `https://espressif.github.io/arduino-esp32/package_esp32_index.json`
 
-## Library
+## Libraries
 
 - Adafruit NeoPixel
+- ESP32 Arduino core BLE library (`BLEDevice.h`, included with `esp32:esp32`)
 
 ## Pins
 

@@ -14,11 +14,41 @@ Firmware for FARO's local obstacle-awareness module, running on the CENFOTEC Ide
 
 FARO boots in **Inactive** mode. Sonar readings may be measured and reported over BLE, but the local buzzer must remain silent until **Navigating** mode is explicitly armed. Once armed, the local `sonar → ESP32 → passive buzzer` alert path must operate independently of Bluetooth, iOS, or any AI service.
 
-## Firmware boundary
+## BLE control and telemetry
 
-The bench sketch validates the sonar and passive buzzer. Production firmware is
-maintained separately and must implement [`docs/ble-contract.md`](../docs/ble-contract.md),
-including its boot-to-Inactive rule, telemetry packet, confirmed mode
-characteristic, and disconnect behavior.
+The module advertises as `FARO-Obstacle` and implements the versioned GATT
+boundary in [`../docs/ble-contract.md`](../docs/ble-contract.md):
+
+- It boots **Inactive** and keeps the passive buzzer silent until iOS writes
+  **Navigating** to the encrypted, bonded operating-mode characteristic.
+- It accepts only one-byte mode values: `0x00` (Inactive) and `0x01`
+  (Navigating), then reads/notifies the resulting mode.
+- It publishes an eight-byte telemetry packet after each filtered sonar sample
+  (up to 10 Hz), including distance validity, warning band, sequence, and mode.
+- A BLE disconnect does **not** silently disarm an already-Navigating module;
+  the autonomous local sonar-to-buzzer path continues until an explicit stop or
+  board reset.
+
+## Build and physical acceptance
+
+```bash
+cd /home/plk3000/src/faro
+arduino-cli compile --fqbn esp32:esp32:esp32 esp32
+arduino-cli upload --port /dev/ttyACM0 --fqbn esp32:esp32:esp32 esp32
+arduino-cli monitor --port /dev/ttyACM0 --config baudrate=115200
+```
+
+Before calling this feature complete on hardware, confirm all of the following:
+
+1. Fresh boot reports `Mode: Inactive (buzzer disarmed)` and remains silent
+   near an obstacle.
+2. The iPhone discovers `FARO-Obstacle`, pairs, and receives mode/telemetry
+   notifications.
+3. Start navigation writes `0x01`, the module reports Navigating, and distance
+   bands drive the local buzzer.
+4. Stop navigation writes `0x00`, the module reports Inactive, and silences the
+   buzzer immediately.
+5. Disconnecting iPhone while Navigating leaves the local alert active; resetting
+   the ESP32 returns it to silent Inactive mode.
 
 Do not commit `secrets.h`; it is ignored by the repository.
