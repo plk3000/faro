@@ -1520,13 +1520,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spanish (Mexico)"
+            "value" : "Spanish"
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Español (México)"
+            "value" : "Español"
           }
         }
       }

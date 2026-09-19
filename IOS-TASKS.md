@@ -11,15 +11,16 @@
 | Phase 4 — Operating modes | Verified on physical device |
 | Phase 5 — Voice commands | Verified on physical device |
 | Phase 6 — ESP32 boundary | Verified on physical device |
-| Phase 7 — Evaluation | Not started |
+| Phase 7 — Evaluation | Harness complete; real-user field evaluation pending |
 
 ## Current state
 
 FARO now includes the native iPhone app, the private scene-description backend,
 and the ESP32 obstacle-module firmware. Phases 0-6 are complete, and all
-device-facing gates have been physically accepted. Phase 7 measures
-recognition, latency, wake behavior, and obstacle-alert usefulness with the
-actual user before thresholds are treated as validated.
+device-facing gates have been physically accepted. The Phase 7 harness now
+records and exports recognition and field observations. Real-user trials still
+need to measure recognition, latency, wake behavior, and obstacle-alert
+usefulness before thresholds are treated as validated.
 
 The live iOS vision request sends `brief` detail plus a localized
 safety-focused prompt. The backend validates and forwards both options while
@@ -55,7 +56,7 @@ narration, memory, and mode control only.
 | Deployment target | iOS 26 | Matches installed SDK; modern Swift Vision API |
 | Repo layout | App under `ios/`, service under `backend/`, firmware under `esp32/` | Keeps each runtime independently buildable while sharing contracts |
 | First interaction | Accessible buttons, voice added later | Gives a testable capture path before speech complexity |
-| Languages | Follow iPhone, English (US), and Español (México), established in Phase 2 | Prevents language assumptions from spreading into place, mode, voice, BLE, and metrics features |
+| Languages | Follow iPhone, English (US), and Spanish, established in Phase 2 | Prevents language assumptions from spreading into place, mode, voice, BLE, and metrics features |
 | Hands-free entry | Persisted opt-in; Siri opens FARO, then FARO arms after reaching the foreground and acquiring audio | Uses Siri's system-wide wake path without claiming unsupported custom background activation |
 | Wake phrases | “Hey FARO” and “Hola FARO,” detected fully on-device | Two-word phrases reduce false activations; manual Start/Finish remains a fallback |
 | Roadmap file | `IOS-TASKS.md` in repo root | Requested deliverable |
@@ -67,6 +68,8 @@ FARO/
 ├── DEVELOPMENT.md               # developer setup and contribution workflow
 ├── FARO-holder.stl              # printable prototype holder model
 ├── IOS-TASKS.md                 # task roadmap (deliverable of T01)
+├── PRESENTATION-SUMMARY.md      # presentation-ready project brief
+├── presentation/                # reveal.js deck, PDF, assets, screenshots
 ├── project-faro.md              # concept source of truth
 ├── backend/                     # private scene-description service and tests
 ├── docs/
@@ -74,6 +77,7 @@ FARO/
 │   └── ble-contract.md          # iPhone/ESP32 GATT contract
 ├── esp32/                       # obstacle-module firmware and protocol tests
 ├── ios/
+│   ├── HIGH-LEVEL-DESIGN.md     # iPhone architecture and file guide
 │   ├── project.yml              # XcodeGen source of truth
 │   ├── FARO/                    # app sources and String Catalogs
 │   └── FAROTests/               # unit tests
@@ -130,7 +134,7 @@ Resolve the simulator name with `xcrun simctl list devices available` before har
   current UI language.
 - **One preference controls the prototype.** The selected language applies to
   UI, accessibility text, scene output, spoken feedback, and voice commands.
-  `Follow iPhone` resolves to English or Mexican Spanish.
+  `Follow iPhone` resolves to English or Spanish.
 - **Place labels are user data.** Preserve names exactly as entered; do not
   translate a saved place label when the app language changes.
 - **No hard-coded user-facing strings.** Visible text, accessibility labels and
@@ -219,7 +223,7 @@ and spoken response without relaunching the app.
 **T17 · string-catalogs** — Add `Localizable.xcstrings` and
 `InfoPlist.xcstrings`; migrate current visible strings, accessibility labels and
 hints, errors, status messages, and privacy permission descriptions into
-English and Mexican Spanish.
+English and Spanish.
 *Done when:* the current capture and description surfaces contain no
 user-facing hard-coded language and both localizations render correctly.
 
@@ -441,14 +445,31 @@ and lighting, false confident identifications, end-to-end latency, and selected
 language.
 *Done when:* a run produces an exportable results summary.
 
+*Status:* Complete in code and simulator validation. The bilingual Evaluation
+screen records known and unknown ground truth, angle, lighting, selected
+language, final outcome, raw nearest/competing distances, active thresholds,
+candidate counts, and capture-to-match latency. It persists raw trials and
+exports versioned JSON with overall and per-angle, per-lighting, and
+per-language summaries. Simulator data validates the workflow only; physical
+Vision FeaturePrint trials provide production evidence.
+
 **T42 · field-test** — Tune thresholds, language behavior, narration pacing,
 and proximity bands with the actual user and record findings.
 *Done when:* thresholds and language defaults are updated from real
 observations, not assumptions.
 
+*Status:* Recording infrastructure is complete. Field observations capture
+category, language, usefulness/annoyance ratings, operator notes, and, for
+proximity trials, measured distance, alert-heard state, BLE telemetry, warning
+band, and ESP32 mode. The actual user session and any resulting default changes
+remain pending.
+
 **T43 · clip-fallback** *(conditional)* — Only if T41 shows poor recall: add a CLIP Core ML embedder
 behind `ImageEmbedder` and re-embed stored JPEGs in the background.
 *Done when:* both embedders are comparable on the same fixture set.
+
+*Status:* Gated. Do not implement unless exported physical-device results show
+that Vision FeaturePrint recall is insufficient.
 
 ## Notes and risks
 

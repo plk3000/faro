@@ -213,7 +213,7 @@ REQUEST_INSTRUCTIONS = {
 LANGUAGE_INSTRUCTIONS = {
     "en-US": "Write every human-readable JSON value in English (United States).",
     "es-MX": (
-        "Write every human-readable JSON value in Mexican Spanish. "
+        "Write every human-readable JSON value in Spanish. "
         "Translate environment names, object names, hazard descriptions, narration, "
         "and immediate warnings. Do not return those values in English."
     ),

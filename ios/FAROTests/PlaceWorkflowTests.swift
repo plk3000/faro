@@ -426,7 +426,7 @@ struct PlaceWorkflowTests {
                 && $0.embeddingComponentCount == 256
         } == true)
 
-        await model.recognizePlace(
+        let attempt = await model.recognizePlace(
             in: place.map { [$0] } ?? [],
             modelContext: resources.context,
             language: language
@@ -440,6 +440,54 @@ struct PlaceWorkflowTests {
         #expect(model.latestPlaceResult?.language == language)
         #expect(speech.spoken.last?.text == expected)
         #expect(speech.spoken.last?.language == language)
+        #expect(attempt?.modelIdentifier == PixelGridEmbedder.identifier)
+        #expect(attempt?.latencyMilliseconds ?? -1 >= 0)
+        guard let attempt,
+              case let .matched(match) = attempt.evaluation.result else {
+            Issue.record("Expected a structured place match")
+            return
+        }
+        #expect(match.placeID == place?.id)
+    }
+
+    @Test
+    func evaluationRecognitionDoesNotPublishOrSpeak() async throws {
+        let resources = try makeResources()
+        defer {
+            try? FileManager.default.removeItem(
+                at: resources.directory
+            )
+        }
+        let speech = RecordingSpeechOutput()
+        let model = CaptureViewModel(
+            imageSource: FixtureImageSource(
+                resourceNames: ["kitchen-a", "kitchen-a"]
+            ),
+            imageStore: ImageStore(directoryURL: resources.directory),
+            sceneDescriber: MockSceneDescriber(delayNanoseconds: 0),
+            speechOutput: speech,
+            imageEmbedder: PixelGridEmbedder(),
+            locationProvider: FixedLocationProvider()
+        )
+        let place = await model.capturePlaceView(
+            label: "Kitchen",
+            into: nil,
+            modelContext: resources.context,
+            language: .englishUS
+        )
+        let spokenBeforeTrial = speech.spoken.count
+
+        let attempt = await model.recognizePlace(
+            in: place.map { [$0] } ?? [],
+            modelContext: resources.context,
+            language: .englishUS,
+            speakResult: false,
+            publishResult: false
+        )
+
+        #expect(attempt != nil)
+        #expect(model.latestPlaceResult == nil)
+        #expect(speech.spoken.count == spokenBeforeTrial)
     }
 
     @Test

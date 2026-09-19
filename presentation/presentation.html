@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FARO — Remembering places. Recognizing hazards.</title>
+
+  <!-- Reveal.js core -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <section id="title" class="section-divider dark-slide title-slide" data-background-color="#0b1d33">
+        <div class="title-grid">
+          <div style="text-align: left;">
+            <p class="eyebrow">FHL assistive prototype</p>
+            <h1>FARO</h1>
+            <p class="expansion">Familiar-space Awareness, Recognition, and Orientation</p>
+            <p class="tagline">Remembering places. Recognizing hazards. Co-designed with lived experience.</p>
+            <div class="status-badge">
+              <i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i>
+              <p>Native iPhone app + private vision service + ESP32 module</p>
+            </div>
+          </div>
+          <div>
+            <img class="app-icon" src="assets/faro-app-icon.png" alt="FARO app icon showing a lighthouse casting a beam over dark blue waves">
+          </div>
+        </div>
+        <aside class="notes">
+          <p>FARO means lighthouse in Spanish. Frame the project as a personalized secondary companion, never as a replacement for established mobility aids.</p>
+        </aside>
+      </section>
+
+      <section id="the-problem">
+        <h2>Familiar spaces can still be disorienting</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 0.85fr 1.35fr; gap: 34px; align-items: center;">
+            <div>
+              <p class="eyebrow" style="color: var(--teal) !important;">The personal question</p>
+              <p class="quote-question">“Where am I in my own environment?”</p>
+              <p class="text-muted" style="margin-top: 22px;">Generic object recognition cannot answer this by itself.</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+              <div class="card">
+                <div class="icon-disc"><i class="fa-solid fa-compass" aria-hidden="true"></i></div>
+                <h3>Orientation</h3>
+                <p>Entering the wrong room or losing track of location.</p>
+              </div>
+              <div class="card">
+                <div class="icon-disc teal"><i class="fa-solid fa-eye" aria-hidden="true"></i></div>
+                <h3>Context</h3>
+                <p>Understanding nearby objects without a visually demanding interface.</p>
+              </div>
+              <div class="card">
+                <div class="icon-disc coral"><i class="fa-solid fa-chair" aria-hidden="true"></i></div>
+                <h3>Obstacles</h3>
+                <p>Noticing furniture or another object in the forward path.</p>
+              </div>
+            </div>
+          </div>
+          <div class="boundary-strip" style="margin-top: 30px;">
+            <p>FARO is a secondary assistive companion—not a replacement for a white cane, guide dog, or mobility training.</p>
+          </div>
+        </div>
+        <aside class="notes">
+          <p>The motivation is personal and familiar-space specific: orientation, requested visual context, and immediate forward-obstacle awareness.</p>
+        </aside>
+      </section>
+
+      <section id="three-part-solution">
+        <h2>One companion, three distinct jobs</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;">
+            <div class="card feature-card">
+              <div class="icon-disc"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></div>
+              <p class="feature-kicker">Personal memory</p>
+              <h3>Remember</h3>
+              <p>Learn user-named places from several camera views, then recognize them on-device—or report uncertainty.</p>
+            </div>
+            <div class="card feature-card teal-card">
+              <div class="icon-disc teal"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i></div>
+              <p class="feature-kicker">Requested context</p>
+              <h3>Describe</h3>
+              <p>Send one user-requested still to a private vision service and speak a concise bilingual description.</p>
+            </div>
+            <div class="card feature-card coral-card">
+              <div class="icon-disc coral"><i class="fa-solid fa-volume-high" aria-hidden="true"></i></div>
+              <p class="feature-kicker">Local reflex</p>
+              <h3>Warn</h3>
+              <p>Measure forward distance on the ESP32 and drive passive-buzzer tones without waiting for cloud AI.</p>
+            </div>
+          </div>
+          <div class="path-ribbon" style="margin-top: 24px;">
+            <p><i class="fa-solid fa-universal-access" aria-hidden="true"></i>&nbsp; Large controls, VoiceOver, English and Spanish, touch and voice access</p>
+          </div>
+        </div>
+        <aside class="notes">
+          <p>Keep the three jobs distinct. The cloud narration path is advisory; the obstacle tone path is local and independent.</p>
+        </aside>
+      </section>
+
+      <section id="operating-modes">
+        <h2>Intentional by design</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 26px;">
+            <div class="mode-card inactive">
+              <p class="mode-label"><i class="fa-solid fa-circle-pause" aria-hidden="true"></i>&nbsp; Default at launch</p>
+              <h3>Inactive</h3>
+              <ul>
+                <li>Local proximity tones stay silent</li>
+                <li>Navigation-oriented output is gated</li>
+                <li>Mode is never persisted by the iPhone</li>
+              </ul>
+            </div>
+            <div class="mode-card navigating">
+              <p class="mode-label"><i class="fa-solid fa-person-walking" aria-hidden="true"></i>&nbsp; Explicitly armed</p>
+              <h3>Navigating</h3>
+              <ul>
+                <li>Arms the ESP32 sonar-to-buzzer path</li>
+                <li>Enables “Where am I?” and “What is ahead?”</li>
+                <li>Distinct confirmation tone marks transition</li>
+              </ul>
+            </div>
+          </div>
+          <div class="pill-row" style="justify-content: center; margin-top: 24px;">
+            <p class="pill">Remember</p>
+            <p class="arrow-label">→</p>
+            <p class="pill gold">Navigate</p>
+            <p class="arrow-label">→</p>
+            <p class="pill teal">Recognize</p>
+            <p class="arrow-label">→</p>
+            <p class="pill">Describe</p>
+          </div>
+        </div>
+        <aside class="notes">
+          <p>If BLE disconnects while already Navigating, the ESP32 remains armed. A board reset always returns it to Inactive.</p>
+        </aside>
+      </section>
+
+      <section id="system-architecture">
+        <h2>Three components, two paths</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1.05fr 0.18fr 1fr; grid-template-rows: 1fr 1fr; gap: 16px; align-items: stretch;">
+            <div class="system-node primary-node" style="grid-column: 1; grid-row: 1 / 3;">
+              <div class="icon-disc"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></div>
+              <h3>Native iPhone app</h3>
+              <p>Camera, personal place memory, speech, language, mode control, and BLE orchestration.</p>
+              <div class="pill-row" style="margin-top: 18px;">
+                <p class="pill">AVFoundation</p>
+                <p class="pill teal">Vision</p>
+                <p class="pill">SwiftData</p>
+                <p class="pill teal">Speech</p>
+              </div>
+            </div>
+            <p class="arrow-label" style="grid-column: 2; grid-row: 1; align-self: center;">⇄</p>
+            <div class="system-node" style="grid-column: 3; grid-row: 1;">
+              <div class="icon-disc teal"><i class="fa-solid fa-cloud" aria-hidden="true"></i></div>
+              <h3>Private vision service</h3>
+              <p>Authenticated still-image request → concise description in the selected language.</p>
+            </div>
+            <p class="arrow-label" style="grid-column: 2; grid-row: 2; align-self: center;">⇄</p>
+            <div class="system-node" style="grid-column: 3; grid-row: 2;">
+              <div class="icon-disc coral"><i class="fa-solid fa-microchip" aria-hidden="true"></i></div>
+              <h3>ESP32 module</h3>
+              <p>Forward sonar, local passive buzzer, and versioned BLE telemetry.</p>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px;">
+            <div class="path-ribbon">
+              <p>Advisory: camera + context → iPhone → speech</p>
+            </div>
+            <div class="path-ribbon critical">
+              <p>Immediate: sonar → ESP32 → buzzer</p>
+            </div>
+          </div>
+        </div>
+        <aside class="notes">
+          <p>The iPhone is the orchestrator, but it is deliberately not the immediate warning path. BLE telemetry adds context and diagnostics.</p>
+        </aside>
+      </section>
+
+      <section id="autonomous-safety" class="dark-slide" data-background-color="#0b1d33">
+        <h2>The immediate warning never waits</h2>
+        <div class="content">
+          <p class="eyebrow">The critical invariant</p>
+          <div class="safety-path">
+            <p><i class="fa-solid fa-wave-square" aria-hidden="true"></i>&nbsp; sonar → ESP32 → passive buzzer</p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+            <div class="failure-card">
+              <p><i class="fa-brands fa-bluetooth-b" aria-hidden="true"></i><br>Bluetooth lost</p>
+            </div>
+            <div class="failure-card">
+              <p><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i><br>App unavailable</p>
+            </div>
+            <div class="failure-card">
+              <p><i class="fa-solid fa-wifi" aria-hidden="true"></i><br>Network down</p>
+            </div>
+            <div class="failure-card">
+              <p><i class="fa-solid fa-robot" aria-hidden="true"></i><br>AI unavailable</p>
+            </div>
+          </div>
+          <p class="text-center text-xl" style="margin: 24px 0 0 0;">Once Navigating is armed, the local alert continues.</p>
+          <p class="never-path">sonar → iPhone → AI → warning</p>
+          <p class="text-center text-muted" style="margin-top: 15px; color: #c7d6e3 !important;">A reset or power cycle always returns the ESP32 to silent Inactive mode.</p>
+        </div>
+        <aside class="notes">
+          <p>This is the most important architecture decision. Immediate warning timing never depends on radio, phone, network, or model latency.</p>
+        </aside>
+      </section>
+
+      <section id="accessible-interaction">
+        <h2>Accessible in English and Spanish</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 28px;">
+            <div>
+              <p class="eyebrow" style="color: var(--teal) !important;">Six commands, two languages</p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="command-chip"><p>“Describe” · “Describe”</p></div>
+                <div class="command-chip"><p>“Where am I?” · “¿Dónde estoy?”</p></div>
+                <div class="command-chip"><p>“Remember this as…” · “Recuerda este lugar como…”</p></div>
+                <div class="command-chip"><p>“What is ahead?” · “¿Qué hay delante?”</p></div>
+                <div class="command-chip"><p>“Start navigation” · “Inicia navegación”</p></div>
+                <div class="command-chip"><p>“Stop navigation” · “Detén navegación”</p></div>
+              </div>
+              <div class="pill-row" style="margin-top: 18px;">
+                <p class="pill"><i class="fa-solid fa-universal-access" aria-hidden="true"></i>&nbsp; VoiceOver</p>
+                <p class="pill teal"><i class="fa-solid fa-language" aria-hidden="true"></i>&nbsp; English + Spanish</p>
+                <p class="pill"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>&nbsp; Large touch targets</p>
+              </div>
+            </div>
+            <div>
+              <div class="wake-callout">
+                <p class="feature-kicker" style="color: #c7d6e3 !important;">Opt-in Hands-Free</p>
+                <p class="wake-phrase">“Hey FARO”<br>“Hola FARO”</p>
+                <p style="margin-top: 12px !important;">Siri opens FARO first. One wake phrase opens one bounded command window.</p>
+              </div>
+              <div class="card" style="margin-top: 18px;">
+                <h3><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>&nbsp; Honest constraints</h3>
+                <ul>
+                  <li>Foreground only</li>
+                  <li>On-device recognition</li>
+                  <li>Manual Start/Finish fallback</li>
+                  <li>FARO suppresses its own speech</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <aside class="notes">
+          <p>FARO never claims a custom background wake word. Siri provides system-wide entry; FARO detects its custom phrase only after reaching the foreground.</p>
+        </aside>
+      </section>
+
+      <section id="demo-story">
+        <h2>A seven-step demonstration</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 34px;">
+            <div>
+              <div class="timeline-step"><p class="step-number">1</p><p class="step-copy"><strong>Start safe:</strong> boot Inactive and silent.</p></div>
+              <div class="timeline-step"><p class="step-number">2</p><p class="step-copy"><strong>Choose access:</strong> switch language or use voice.</p></div>
+              <div class="timeline-step"><p class="step-number">3</p><p class="step-copy"><strong>Teach:</strong> “Remember this as Kitchen.”</p></div>
+              <div class="timeline-step"><p class="step-number">4</p><p class="step-copy"><strong>Recognize:</strong> return from another angle.</p></div>
+              <div class="timeline-step"><p class="step-number">5</p><p class="step-copy"><strong>Describe:</strong> request nearby context.</p></div>
+              <div class="timeline-step"><p class="step-number">6</p><p class="step-copy"><strong>Warn:</strong> move an obstacle through sonar bands.</p></div>
+              <div class="timeline-step"><p class="step-number">7</p><p class="step-copy"><strong>Stop:</strong> leave Navigating and confirm silence.</p></div>
+            </div>
+            <div>
+              <p class="eyebrow" style="color: var(--teal) !important;">Guided place enrollment</p>
+              <div class="enrollment-panel">
+                <div class="view-row" aria-label="Nine still views captured from left to right">
+                  <p class="view-dot">1</p>
+                  <p class="view-dot">2</p>
+                  <p class="view-dot">3</p>
+                  <p class="view-dot">4</p>
+                  <p class="view-dot center-view"><i class="fa-solid fa-camera" aria-hidden="true"></i></p>
+                  <p class="view-dot">6</p>
+                  <p class="view-dot">7</p>
+                  <p class="view-dot">8</p>
+                  <p class="view-dot">9</p>
+                </div>
+                <div class="direction-row">
+                  <p><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>&nbsp; Start left</p>
+                  <p class="sweep-label">9 still views · about 180°</p>
+                  <p>Finish right &nbsp;<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></p>
+                </div>
+              </div>
+              <div class="recognition-flow">
+                <div class="flow-step">
+                  <i class="fa-solid fa-images" aria-hidden="true"></i>
+                  <p>Capture several angles</p>
+                </div>
+                <p class="flow-arrow">→</p>
+                <div class="flow-step">
+                  <i class="fa-solid fa-fingerprint" aria-hidden="true"></i>
+                  <p>Create on-device embedding</p>
+                </div>
+                <p class="flow-arrow">→</p>
+                <div class="flow-step">
+                  <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                  <p>Match—or report uncertainty</p>
+                </div>
+              </div>
+              <div class="pill-row">
+                <p class="pill">Kitchen</p>
+                <p class="pill teal">Living room</p>
+                <p class="pill">Bedroom</p>
+                <p class="pill teal">Front door</p>
+                <p class="pill">Office entrance</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <aside class="notes">
+          <p>Voice enrollment captures nine timed stills across approximately 180 degrees, stores model-tagged embeddings, and preserves uncertainty rather than forcing a place name.</p>
+        </aside>
+      </section>
+
+      <section id="validated">
+        <h2>Implemented and physically integrated</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;">
+            <div class="stat-card">
+              <p class="stat-value">117</p>
+              <p class="stat-label">iOS tests passed</p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-value">168</p>
+              <p class="stat-label">Parameterized test runs</p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-value">0</p>
+              <p class="stat-label">Test failures</p>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 24px;">
+            <div class="evidence-item"><p><i class="fa-solid fa-camera" aria-hidden="true"></i>&nbsp; Physical iPhone camera and spoken description</p></div>
+            <div class="evidence-item"><p><i class="fa-solid fa-server" aria-hidden="true"></i>&nbsp; Authenticated live backend requests</p></div>
+            <div class="evidence-item"><p><i class="fa-solid fa-location-dot" aria-hidden="true"></i>&nbsp; Place enrollment, storage, and uncertainty</p></div>
+            <div class="evidence-item"><p><i class="fa-solid fa-microphone-lines" aria-hidden="true"></i>&nbsp; Manual and foreground Hands-Free voice</p></div>
+            <div class="evidence-item"><p><i class="fa-brands fa-bluetooth-b" aria-hidden="true"></i>&nbsp; Automatic iPhone-to-ESP32 connection</p></div>
+            <div class="evidence-item"><p><i class="fa-solid fa-volume-high" aria-hidden="true"></i>&nbsp; Boot-to-Inactive and local buzzer behavior</p></div>
+          </div>
+          <div class="path-ribbon critical" style="margin-top: 24px;">
+            <p><i class="fa-solid fa-circle-check" aria-hidden="true"></i>&nbsp; Phases 0–6 complete · device-facing gates physically accepted</p>
+          </div>
+        </div>
+        <aside class="notes">
+          <p>The simulator suite is not the only evidence. Camera, speech, backend requests, voice flows, BLE integration, and ESP32 mode behavior were exercised on physical hardware.</p>
+        </aside>
+      </section>
+
+      <section id="honest-limits">
+        <h2>Clear boundaries are part of the design</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+            <div class="limit-card">
+              <div class="icon-disc coral"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+              <h3>One forward sonar</h3>
+              <p>Can miss thin, soft, angled, high or low obstacles, stairs, and drop-offs.</p>
+            </div>
+            <div class="limit-card">
+              <div class="icon-disc teal"><i class="fa-solid fa-robot" aria-hidden="true"></i></div>
+              <h3>Advisory AI</h3>
+              <p>Scene narration can be wrong or unavailable and never controls the local warning.</p>
+            </div>
+            <div class="limit-card">
+              <div class="icon-disc"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i></div>
+              <h3>Coarse location</h3>
+              <p>GPS may filter different sites; it is never presented as room-level evidence.</p>
+            </div>
+            <div class="limit-card">
+              <div class="icon-disc teal"><i class="fa-solid fa-microphone-slash" aria-hidden="true"></i></div>
+              <h3>Foreground wake</h3>
+              <p>Siri or another supported action must first bring FARO to the foreground.</p>
+            </div>
+            <div class="limit-card">
+              <div class="icon-disc"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></div>
+              <h3>Recognition uncertainty</h3>
+              <p>Large viewpoint or lighting changes can reduce confidence; FARO must not force a guess.</p>
+            </div>
+            <div class="limit-card">
+              <div class="icon-disc coral"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i></div>
+              <h3>Prototype hardware</h3>
+              <p>Distance bands are starting points, and the printable holder still needs fit validation.</p>
+            </div>
+          </div>
+          <div class="boundary-strip" style="margin-top: 20px;">
+            <p>Assistive prototype · secondary companion · not clinically validated or production-ready</p>
+          </div>
+        </div>
+        <aside class="notes">
+          <p>Responsible framing is a product feature. Avoid claims that one sensor covers every hazard or that the prototype replaces established mobility tools.</p>
+        </aside>
+      </section>
+
+      <section id="closing" class="section-divider dark-slide closing-slide" data-background-color="#0b1d33">
+        <img class="app-icon" src="assets/faro-app-icon.png" alt="FARO lighthouse app icon">
+        <h1>FARO</h1>
+        <p class="closing-tagline">Remembering places. Recognizing hazards.</p>
+        <div class="closing-principles">
+          <p><strong>Personalized</strong><br>Places are named and learned by the user.</p>
+          <p><strong>Local where it matters</strong><br>The immediate warning stays on the ESP32.</p>
+          <p><strong>Explicit about uncertainty</strong><br>FARO reports limits instead of pretending certainty.</p>
+        </div>
+        <div class="status-badge" style="margin-top: 28px;">
+          <i class="fa-solid fa-people-arrows-left-right" aria-hidden="true"></i>
+          <p>Co-designed with lived experience</p>
+        </div>
+        <aside class="notes">
+          <p>Close on the design philosophy: personalized assistance, local safety behavior, and honest uncertainty working together.</p>
+        </aside>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js-plugins@latest/chart/plugin.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0,
+      controls: true,
+      progress: true,
+      slideNumber: 'c/t',
+      hash: true,
+      transition: 'slide',
+      center: false,
+      plugins: [ RevealChart ],
+      chart: {
+        defaults: Object.assign({
+          color: 'rgba(0, 0, 0, 0.8)',
+          borderColor: 'rgba(0, 0, 0, 0.8)',
+          devicePixelRatio: 2
+        }, window.location.search.includes('export') ? { animation: false } : {})
+      }
+    });
+  </script>
+</body>
+</html>

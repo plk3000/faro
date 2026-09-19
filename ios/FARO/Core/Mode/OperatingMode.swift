@@ -1,6 +1,6 @@
 import Observation
 
-enum OperatingMode: Equatable, Sendable {
+enum OperatingMode: String, Codable, Equatable, Sendable {
     case inactive
     case navigating
 

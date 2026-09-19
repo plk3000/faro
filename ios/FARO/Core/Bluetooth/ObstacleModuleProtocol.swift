@@ -25,7 +25,13 @@ enum ObstacleModuleBluetoothUUID {
     }
 }
 
-enum ObstacleWarningState: UInt8, CaseIterable, Equatable, Sendable {
+enum ObstacleWarningState:
+    UInt8,
+    CaseIterable,
+    Codable,
+    Equatable,
+    Sendable
+{
     case clear = 0
     case slow = 1
     case fast = 2
@@ -53,17 +59,26 @@ enum ObstacleWarningState: UInt8, CaseIterable, Equatable, Sendable {
         guard let distanceMillimeters else {
             return .sensorUnavailable
         }
-        switch distanceMillimeters {
-        case 2_000...:
+        if distanceMillimeters
+            >= ObstacleDistanceBands.clearMinimumMillimeters {
             return .clear
-        case 1_000..<2_000:
-            return .slow
-        case 500..<1_000:
-            return .fast
-        default:
-            return .urgent
         }
+        if distanceMillimeters
+            >= ObstacleDistanceBands.slowMinimumMillimeters {
+            return .slow
+        }
+        if distanceMillimeters
+            >= ObstacleDistanceBands.fastMinimumMillimeters {
+            return .fast
+        }
+        return .urgent
     }
+}
+
+enum ObstacleDistanceBands {
+    static let clearMinimumMillimeters: UInt16 = 2_000
+    static let slowMinimumMillimeters: UInt16 = 1_000
+    static let fastMinimumMillimeters: UInt16 = 500
 }
 
 struct ObstacleTelemetry: Equatable, Sendable {

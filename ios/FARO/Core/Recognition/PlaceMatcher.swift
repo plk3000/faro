@@ -24,6 +24,17 @@ enum PlaceMatchResult: Equatable, Sendable {
     case uncertain
 }
 
+struct PlaceMatchEvaluation: Equatable, Sendable {
+    let result: PlaceMatchResult
+    let nearestPlaceID: UUID?
+    let nearestLabel: String?
+    let nearestDistance: Double?
+    let nearestCompetingDistance: Double?
+    let candidateCount: Int
+    let snapshotCount: Int
+    let policy: PlaceMatchingPolicy
+}
+
 struct PlaceMatchingPolicy: Equatable, Sendable {
     let maximumDistance: Double
     let minimumSeparation: Double
@@ -126,6 +137,18 @@ struct PlaceMatcher: Sendable {
         candidates: [PlaceCandidate],
         queryLocation: LocationSnapshot?
     ) throws -> PlaceMatchResult {
+        try evaluate(
+            query: query,
+            candidates: candidates,
+            queryLocation: queryLocation
+        ).result
+    }
+
+    func evaluate(
+        query: ImageEmbedding,
+        candidates: [PlaceCandidate],
+        queryLocation: LocationSnapshot?
+    ) throws -> PlaceMatchEvaluation {
         let filtered = gpsFilter.candidates(
             from: candidates,
             near: queryLocation
@@ -140,45 +163,76 @@ struct PlaceMatcher: Sendable {
                     between: query,
                     and: snapshot.embedding
                 )
-                if distance <= policy.maximumDistance {
-                    neighbors.append(
-                        Neighbor(
-                            placeID: candidate.id,
-                            label: candidate.label,
-                            distance: distance
-                        )
+                neighbors.append(
+                    Neighbor(
+                        placeID: candidate.id,
+                        label: candidate.label,
+                        distance: distance
                     )
-                }
+                )
             }
         }
 
         guard let winner = neighbors.min(
             by: { $0.distance < $1.distance }
         ) else {
-            return .uncertain
+            return PlaceMatchEvaluation(
+                result: .uncertain,
+                nearestPlaceID: nil,
+                nearestLabel: nil,
+                nearestDistance: nil,
+                nearestCompetingDistance: nil,
+                candidateCount: filtered.count,
+                snapshotCount: 0,
+                policy: policy
+            )
         }
 
         let competingDistance = neighbors
             .filter { $0.placeID != winner.placeID }
             .map(\.distance)
             .min()
-        if let competingDistance,
-           competingDistance - winner.distance
-                < policy.minimumSeparation {
-            return .uncertain
+        let decisionCompetingDistance = neighbors
+            .filter {
+                $0.placeID != winner.placeID
+                    && $0.distance <= policy.maximumDistance
+            }
+            .map(\.distance)
+            .min()
+        let isWithinMaximumDistance =
+            winner.distance <= policy.maximumDistance
+        let hasRequiredSeparation =
+            decisionCompetingDistance.map {
+                $0 - winner.distance >= policy.minimumSeparation
+            } ?? true
+
+        let result: PlaceMatchResult
+        if isWithinMaximumDistance && hasRequiredSeparation {
+            let confidence = max(
+                0,
+                min(1, 1 - winner.distance / policy.maximumDistance)
+            )
+            result = .matched(
+                PlaceMatch(
+                    placeID: winner.placeID,
+                    label: winner.label,
+                    distance: winner.distance,
+                    confidence: confidence
+                )
+            )
+        } else {
+            result = .uncertain
         }
 
-        let confidence = max(
-            0,
-            min(1, 1 - winner.distance / policy.maximumDistance)
-        )
-        return .matched(
-            PlaceMatch(
-                placeID: winner.placeID,
-                label: winner.label,
-                distance: winner.distance,
-                confidence: confidence
-            )
+        return PlaceMatchEvaluation(
+            result: result,
+            nearestPlaceID: winner.placeID,
+            nearestLabel: winner.label,
+            nearestDistance: winner.distance,
+            nearestCompetingDistance: competingDistance,
+            candidateCount: filtered.count,
+            snapshotCount: neighbors.count,
+            policy: policy
         )
     }
 }

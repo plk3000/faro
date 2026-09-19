@@ -4,7 +4,14 @@
 
 - Treat `project-faro.md` as the canonical product, architecture, hardware, and prototype-scope document.
 - Use `DEVELOPMENT.md` for contributor setup, project generation, device deployment, configuration, and troubleshooting.
+- Use `PRESENTATION-SUMMARY.md` for presentation source material, keeping its
+  status and claims aligned with the canonical product and roadmap documents.
+- The generated reveal.js deck lives under `presentation/`. When presentation
+  content changes, keep the HTML, CSS, PDF, portable assets, and final reviewed
+  screenshot set synchronized.
 - The native iOS application lives under `ios/`. `ios/project.yml` is the source of truth for the generated Xcode project; do not hand-edit or commit `ios/FARO.xcodeproj`.
+- Use `ios/HIGH-LEVEL-DESIGN.md` for the iPhone runtime architecture and
+  tracked-file guide; update it when iOS files or responsibilities change.
 - `IOS-TASKS.md` is the implementation roadmap. The checked-in `esp32/` folder
   contains the obstacle-module firmware and host protocol tests; keep it
   aligned with `docs/ble-contract.md` and the iOS Bluetooth implementation.
@@ -69,6 +76,13 @@ arduino-cli compile --fqbn esp32:esp32:esp32 esp32
 - Place data uses SwiftData `Place` and `PlaceSnapshot` models. Keep original JPEGs alongside model-tagged embedding payloads and automatically re-embed retained views when the production representation identifier changes.
 - Use the complete Codable Vision FeaturePrint observation and Vision's official distance API on physical devices. The deterministic `PixelGridEmbedder` and its Euclidean distance are simulator-only test infrastructure and must not be treated as the production recognition model.
 - Use recent coarse GPS only to filter candidates by site. Recognition must continue without location access, and GPS must never be presented as room-level evidence.
+- The Phase 7 evaluation harness records explicit ground truth, angle,
+  lighting, selected language, raw matcher diagnostics, and
+  capture-to-match latency. Include unknown-place trials so false confident
+  identifications remain measurable.
+- Evaluation exports may contain user-provided place labels and operator notes,
+  but never images, audio, GPS coordinates, or scene descriptions. Treat the
+  export as user-controlled potentially sensitive data.
 
 ## Behavioral invariants
 
@@ -89,6 +103,9 @@ arduino-cli compile --fqbn esp32:esp32:esp32 esp32
 - Keep the video-only `AVCaptureSession` running, prevent it from configuring the shared audio session, suspend still-photo requests during bounded command capture, and never reintroduce camera stop/start cycles for voice input. Parse commands through `VoiceCommandParser`, route them through `VoiceCommandExecutor`, and preserve the Navigating gate for `where am I?` and `what is ahead?`.
 - Treat language as explicit data. The prototype supports `en-US` and `es-MX`, plus a persisted Follow iPhone preference. Pass the resolved language through API requests, generated descriptions, speech synthesis, accessibility announcements, and command recognition.
 - Put user-facing UI, accessibility, error, and permission text in the String Catalogs. Do not translate user-provided place labels.
+- Do not tune recognition thresholds, narration pacing, language defaults, or
+  proximity bands without recorded real-user evidence. Do not add CLIP unless
+  the exported results show that Vision FeaturePrint recall is insufficient.
 
 ## Hardware constraints
 

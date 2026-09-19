@@ -89,6 +89,35 @@ struct PlaceMatcherTests {
     }
 
     @Test
+    func evaluationRetainsRawDistanceBeyondThreshold() throws {
+        let matcher = PlaceMatcher(
+            embedder: embedder,
+            policy: PlaceMatchingPolicy(
+                maximumDistance: 0.25,
+                minimumSeparation: 0.1
+            )
+        )
+
+        let evaluation = try matcher.evaluate(
+            query: embedding(1),
+            candidates: [
+                candidate(
+                    id: kitchenID,
+                    label: "Kitchen",
+                    values: [0]
+                )
+            ],
+            queryLocation: nil
+        )
+
+        #expect(evaluation.result == .uncertain)
+        #expect(evaluation.nearestPlaceID == kitchenID)
+        #expect(evaluation.nearestDistance == 1)
+        #expect(evaluation.snapshotCount == 1)
+        #expect(evaluation.policy.maximumDistance == 0.25)
+    }
+
+    @Test
     func reportsUncertainForTiedPlaces() throws {
         let matcher = PlaceMatcher(
             embedder: embedder,

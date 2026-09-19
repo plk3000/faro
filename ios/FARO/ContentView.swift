@@ -49,6 +49,7 @@ struct ContentView: View {
                     languagePicker
                     modeCard
                     obstacleModuleLink
+                    evaluationLink
                     voiceCommandCard
                     preview
                     describeButton
@@ -697,6 +698,34 @@ struct ContentView: View {
         }
         .buttonStyle(.bordered)
         .accessibilityHint(language.text(.bleHint))
+    }
+
+    private var evaluationLink: some View {
+        NavigationLink {
+            EvaluationView(
+                captureModel: captureModel,
+                obstacleModuleModel: obstacleModuleModel,
+                language: language
+            )
+            .onAppear {
+                suspendHandsFree(cancelCommand: false)
+            }
+            .onDisappear {
+                activateHandsFreeIfNeeded(
+                    after: .milliseconds(500)
+                )
+            }
+        } label: {
+            Label(
+                language.text(.evaluationTitle),
+                systemImage: "chart.xyaxis.line"
+            )
+            .font(.headline)
+            .frame(maxWidth: .infinity, minHeight: 56)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityHint(language.text(.evaluationHint))
+        .disabled(isBusy)
     }
 
     private func beginVoiceCommand() {

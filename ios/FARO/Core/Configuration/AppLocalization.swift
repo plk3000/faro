@@ -61,6 +61,96 @@ enum AppStringKey: String, CaseIterable, Sendable {
     case bleStateDiscovering = "ble.state.discovering"
     case bleStateConnected = "ble.state.connected"
     case bleStateDisconnected = "ble.state.disconnected"
+    case evaluationTitle = "evaluation.title"
+    case evaluationHint = "evaluation.hint"
+    case evaluationInstructions = "evaluation.instructions"
+    case evaluationSummarySection = "evaluation.summary.section"
+    case evaluationNoTrials = "evaluation.summary.noTrials"
+    case evaluationTrialCount = "evaluation.summary.trialCount"
+    case evaluationAccuracy = "evaluation.summary.accuracy"
+    case evaluationFalseConfident =
+        "evaluation.summary.falseConfident"
+    case evaluationAverageLatency =
+        "evaluation.summary.averageLatency"
+    case evaluationObservationCount =
+        "evaluation.summary.observationCount"
+    case evaluationRecognitionSection =
+        "evaluation.recognition.section"
+    case evaluationExpectedPlace =
+        "evaluation.recognition.expectedPlace"
+    case evaluationUnknownPlace =
+        "evaluation.recognition.unknownPlace"
+    case evaluationAngle = "evaluation.recognition.angle"
+    case evaluationLighting = "evaluation.recognition.lighting"
+    case evaluationRunTrial = "evaluation.recognition.run"
+    case evaluationRunningTrial = "evaluation.recognition.running"
+    case evaluationLatestResult =
+        "evaluation.recognition.latestResult"
+    case evaluationNoPrediction =
+        "evaluation.recognition.noPrediction"
+    case evaluationOutcomeCorrectMatch =
+        "evaluation.outcome.correctMatch"
+    case evaluationOutcomeCorrectRejection =
+        "evaluation.outcome.correctRejection"
+    case evaluationOutcomeUncertain =
+        "evaluation.outcome.uncertain"
+    case evaluationOutcomeFalseConfident =
+        "evaluation.outcome.falseConfident"
+    case evaluationAngleEnrollmentLike =
+        "evaluation.angle.enrollmentLike"
+    case evaluationAngleLeftOblique =
+        "evaluation.angle.leftOblique"
+    case evaluationAngleRightOblique =
+        "evaluation.angle.rightOblique"
+    case evaluationAngleReverse = "evaluation.angle.reverse"
+    case evaluationAngleOther = "evaluation.angle.other"
+    case evaluationLightingSimilar =
+        "evaluation.lighting.similar"
+    case evaluationLightingBrighter =
+        "evaluation.lighting.brighter"
+    case evaluationLightingDimmer =
+        "evaluation.lighting.dimmer"
+    case evaluationLightingArtificial =
+        "evaluation.lighting.artificial"
+    case evaluationLightingMixed =
+        "evaluation.lighting.mixed"
+    case evaluationFieldSection = "evaluation.field.section"
+    case evaluationCategory = "evaluation.field.category"
+    case evaluationCategoryLanguage =
+        "evaluation.category.language"
+    case evaluationCategoryNarration =
+        "evaluation.category.narration"
+    case evaluationCategoryProximity =
+        "evaluation.category.proximity"
+    case evaluationCategoryWake = "evaluation.category.wake"
+    case evaluationCategoryGeneral =
+        "evaluation.category.general"
+    case evaluationUsefulnessRating =
+        "evaluation.field.usefulnessRating"
+    case evaluationAnnoyanceRating =
+        "evaluation.field.annoyanceRating"
+    case evaluationMeasuredDistance =
+        "evaluation.field.measuredDistance"
+    case evaluationAlertHeard = "evaluation.field.alertHeard"
+    case evaluationTelemetrySnapshot =
+        "evaluation.field.telemetrySnapshot"
+    case evaluationTelemetryUnavailable =
+        "evaluation.field.telemetryUnavailable"
+    case evaluationNotesPlaceholder =
+        "evaluation.field.notesPlaceholder"
+    case evaluationSaveObservation =
+        "evaluation.field.saveObservation"
+    case evaluationSavingObservation =
+        "evaluation.field.savingObservation"
+    case evaluationExportSection =
+        "evaluation.export.section"
+    case evaluationShareExport = "evaluation.export.share"
+    case evaluationClearData = "evaluation.export.clear"
+    case evaluationClearTitle = "evaluation.export.clearTitle"
+    case evaluationClearMessage = "evaluation.export.clearMessage"
+    case evaluationPrivacyNote = "evaluation.export.privacyNote"
+    case evaluationNotAvailable = "evaluation.value.notAvailable"
+    case evaluationMilliseconds = "evaluation.value.milliseconds"
     case voiceCommandDescribe = "voice.command.describe"
     case voiceCommandWhereAmI = "voice.command.whereAmI"
     case voiceCommandRememberPlace = "voice.command.rememberPlace"
@@ -204,9 +294,20 @@ enum AppStringKey: String, CaseIterable, Sendable {
     case errorBLECharacteristics = "error.ble.characteristics"
     case errorBLETelemetry = "error.ble.telemetry"
     case errorBLEMode = "error.ble.mode"
+    case errorEvaluationDirectory = "error.evaluation.directory"
+    case errorEvaluationRead = "error.evaluation.read"
+    case errorEvaluationWrite = "error.evaluation.write"
+    case errorEvaluationExport = "error.evaluation.export"
+    case errorEvaluationRecognition =
+        "error.evaluation.recognition"
+    case errorEvaluationDistance = "error.evaluation.distance"
 
     var tableName: String? {
-        switch self {
+        if rawValue.hasPrefix("evaluation.")
+            || rawValue.hasPrefix("error.evaluation.") {
+            return "Evaluation"
+        }
+        return switch self {
         case .actionWhereAmI,
              .actionCheckingPlace,
              .actionRememberPlace,

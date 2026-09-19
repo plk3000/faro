@@ -1,4 +1,5 @@
 @preconcurrency import AVFoundation
+import Dispatch
 import Foundation
 import Observation
 import OSLog
@@ -11,6 +12,12 @@ struct PlaceRecognitionOutput: Equatable, Sendable {
     var text: String {
         message.localized(in: language)
     }
+}
+
+struct PlaceRecognitionAttempt: Equatable, Sendable {
+    let evaluation: PlaceMatchEvaluation
+    let modelIdentifier: String
+    let latencyMilliseconds: Int
 }
 
 struct PlaceScanConfiguration: Equatable, Sendable {
@@ -396,27 +403,32 @@ final class CaptureViewModel {
         }
     }
 
+    @discardableResult
     func recognizePlace(
         in places: [Place],
         modelContext: ModelContext,
-        language: SupportedLanguage
-    ) async {
+        language: SupportedLanguage,
+        speakResult: Bool = true,
+        publishResult: Bool = true
+    ) async -> PlaceRecognitionAttempt? {
         guard !isBusy else {
-            return
+            return nil
         }
         guard !places.isEmpty else {
             report(
                 PlaceWorkflowError.noRememberedPlaces,
                 language: language,
-                speak: true
+                speak: speakResult
             )
-            return
+            return nil
         }
 
         isRecognizing = true
         statusMessage = AppMessage(.statusCheckingLocation)
         errorMessage = nil
-        latestPlaceResult = nil
+        if publishResult {
+            latestPlaceResult = nil
+        }
         defer { isRecognizing = false }
 
         do {
@@ -427,20 +439,30 @@ final class CaptureViewModel {
             try Task.checkCancellation()
             statusMessage = AppMessage(.statusCheckingLocation)
 
+            let startedAt = DispatchTime.now().uptimeNanoseconds
             let image = try await imageSource.capture()
             try Task.checkCancellation()
             latestImageData = image.data
             let query = try await imageEmbedder.embed(image)
             try Task.checkCancellation()
             let candidates = try placeCandidates(from: places)
-            let result = try placeMatcher.match(
+            let evaluation = try placeMatcher.evaluate(
                 query: query,
                 candidates: candidates,
                 queryLocation: locationProvider.latestSnapshot
             )
+            let elapsedNanoseconds =
+                DispatchTime.now().uptimeNanoseconds - startedAt
+            let attempt = PlaceRecognitionAttempt(
+                evaluation: evaluation,
+                modelIdentifier: imageEmbedder.modelIdentifier,
+                latencyMilliseconds: Int(
+                    elapsedNanoseconds / 1_000_000
+                )
+            )
 
             let message: AppMessage
-            switch result {
+            switch evaluation.result {
             case let .matched(match):
                 message = AppMessage(
                     .placeMatched,
@@ -453,18 +475,25 @@ final class CaptureViewModel {
                 message: message,
                 language: language
             )
-            latestPlaceResult = output
+            if publishResult {
+                latestPlaceResult = output
+            }
             statusMessage = AppMessage(.statusPlaceRecognitionComplete)
             try Task.checkCancellation()
-            try speechOutput.speak(
-                output.text,
-                language: language
-            )
+            if speakResult {
+                try speechOutput.speak(
+                    output.text,
+                    language: language
+                )
+            }
+            return attempt
         } catch is CancellationError {
             statusMessage = AppMessage(.statusReady)
             errorMessage = nil
+            return nil
         } catch {
-            report(error, language: language, speak: true)
+            report(error, language: language, speak: speakResult)
+            return nil
         }
     }
 

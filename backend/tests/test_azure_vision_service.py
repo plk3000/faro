@@ -93,7 +93,7 @@ def test_provider_payload_uses_request_type_and_language(
 
     instruction = captured["messages"][1]["content"][1]["text"]
     assert expected_instruction in instruction
-    assert "Mexican Spanish" in instruction
+    assert "Spanish" in instruction
     assert "Do not return those values in English" in instruction
 
 

@@ -3,14 +3,16 @@
 This guide takes a new contributor from a fresh clone to a running FARO build.
 Read [project-faro.md](project-faro.md) for the product and safety model, and
 [IOS-TASKS.md](IOS-TASKS.md) for the current implementation phase and device
-validation gate.
+validation gate. Read
+[ios/HIGH-LEVEL-DESIGN.md](ios/HIGH-LEVEL-DESIGN.md) for the iPhone runtime
+architecture and a concise guide to every tracked iOS file.
 
 ## Project status
 
 FARO is an iOS-first assistive prototype. The iPhone app currently supports:
 
 - rear-camera still capture;
-- bilingual English (US) and Spanish (Mexico) UI and speech;
+- bilingual English (US) and Spanish UI and speech;
 - mock and HTTP-backed scene descriptions;
 - on-device visual place enrollment and recognition;
 - explicit Inactive and Navigating operating modes;
@@ -197,6 +199,59 @@ Do not infer a clear path from missing or stale telemetry. The iPhone removes a
 reading after two seconds without a valid packet, while immediate warnings
 remain entirely local to the ESP32.
 
+## Phase 7 evaluation workflow
+
+Open **Evaluation** from the main FARO screen. The harness persists its records
+under Application Support separately from saved images.
+
+For recognition trials:
+
+1. Enroll the scoped demonstration places first.
+2. On the physical iPhone, choose the ground-truth place or **Unknown or none
+   of the saved places** before each capture.
+3. Select the approach angle and lighting condition, then run the trial.
+4. Repeat known and unknown locations in both supported languages. Unknown
+   trials are required to measure false confident identifications.
+5. Use simulator trials only to verify the workflow; they use
+   `PixelGridEmbedder` and are not production threshold evidence.
+
+Each trial records the final result, nearest raw distance even when it exceeds
+the current threshold, nearest competing distance, active thresholds,
+candidate/snapshot counts, embedding model, selected language, and
+capture-to-match latency.
+
+Use **Field observation** to record language behavior, narration pacing,
+proximity alerts, wake behavior, or general findings. Proximity observations
+can include a separately measured distance, whether the local alert was heard,
+and the current BLE distance, warning band, and ESP32 mode. The usefulness and
+annoyance ratings are starting points for discussion with the actual user, not
+validated scores by themselves.
+
+**Share JSON report** exports:
+
+- aggregate accuracy, known-place recall, unknown-place rejection,
+  false-confident rate, average latency, and p95 latency;
+- the same metrics broken down by angle, lighting, and language;
+- raw recognition trials and field observations;
+- the current speech and proximity configuration.
+
+The report contains user-provided place labels and operator notes. It contains
+no images, audio, GPS coordinates, or scene descriptions; review it before
+sharing. Do not change recognition thresholds, narration pacing, language
+defaults, or proximity bands until the exported physical-device observations
+support the change. Add a CLIP fallback only if measured FeaturePrint recall is
+insufficient.
+
+Run the focused evaluation tests from `ios/` with:
+
+```bash
+xcodebuild test -project FARO.xcodeproj -scheme FARO \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  '-only-testing:FAROTests/EvaluationTests' \
+  '-only-testing:FAROTests/PlaceMatcherTests' \
+  CODE_SIGNING_ALLOWED=NO
+```
+
 ## Mock and live vision configuration
 
 `ios/Config/Shared.xcconfig` defaults to:
@@ -243,6 +298,8 @@ FARO/
 |-- DEVELOPMENT.md                 Developer setup and contribution workflow
 |-- FARO-holder.stl                Printable prototype holder model
 |-- IOS-TASKS.md                   Canonical roadmap and phase status
+|-- PRESENTATION-SUMMARY.md        Presentation-ready project brief
+|-- presentation/                  Reveal.js deck, PDF, assets, and screenshots
 |-- project-faro.md                Product, architecture, and safety model
 |-- backend/                       Private FastAPI vision service and tests
 |-- docs/
@@ -251,6 +308,7 @@ FARO/
 |-- esp32/                         Obstacle firmware and host protocol tests
 |-- ios/
 |   |-- project.yml               XcodeGen source of truth
+|   |-- HIGH-LEVEL-DESIGN.md      iPhone architecture and file guide
 |   |-- Config/                    Mock/live build configuration
 |   |-- FARO/
 |   |   |-- Core/                 Camera, speech, recognition, mode, and clients
@@ -340,7 +398,7 @@ The supported choices are:
 
 - Follow iPhone;
 - English (United States), `en-US`;
-- Spanish (Mexico), `es-MX`.
+- Spanish, `es-MX`.
 
 User-facing UI, accessibility labels, errors, permission text, and spoken
 messages belong in:
@@ -352,7 +410,7 @@ messages belong in:
 When adding a string:
 
 1. Add or reuse an `AppStringKey`.
-2. Supply both English and Mexican Spanish translations.
+2. Supply both English and Spanish translations.
 3. Pass `SupportedLanguage` explicitly through the feature.
 4. Preserve user-provided place labels exactly; do not translate them.
 5. Add or update parameterized localization tests.
@@ -428,7 +486,7 @@ a valid base URL and token, and was present before regenerating/building.
 ### On-device speech is unavailable
 
 Confirm Speech Recognition and Microphone permissions, verify that the selected
-English or Mexican Spanish on-device assets are available, and test without a
+English or Spanish on-device assets are available, and test without a
 Bluetooth route before investigating route-specific behavior.
 
 ### A camera/voice transition crashes in AVFoundation

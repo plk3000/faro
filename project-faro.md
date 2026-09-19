@@ -1,10 +1,14 @@
 # Project FARO
 
-**Status:** implemented FHL prototype; Phases 0-6 complete, device-facing gates physically validated, Phase 7 evaluation pending
+**Status:** implemented FHL prototype; Phases 0-6 complete, device-facing gates physically validated, Phase 7 harness implemented and real-user evaluation pending
 
 **Created:** 2026-09-03
 
 **Origin:** Ghost's employer runs periodic week-long **FHL (Fix, Hack, Learn)** events.
+
+Presentation source material is maintained in
+[`PRESENTATION-SUMMARY.md`](PRESENTATION-SUMMARY.md).
+The generated reveal.js deck and PDF live under `presentation/`.
 
 ## Purpose
 
@@ -20,7 +24,8 @@ FARO is intended as a secondary assistive companion, not a replacement for a whi
 
 ## Name and tagline
 
-**FARO** — Familiar-space Awareness, Recognition, and Orientation.  
+**FARO** — Familiar-space Awareness, Recognition, and Orientation.
+
 “Faro” means lighthouse in Spanish.
 
 **Tagline:** Remembering places. Recognizing hazards. Co-designed with lived experience.
@@ -110,6 +115,9 @@ The primary interface is a native iPhone app. It provides:
 - phone motion/location context;
 - Core Bluetooth communication with the ESP32, including mode synchronization
   and diagnostic sonar telemetry.
+
+The runtime layers and responsibilities of every tracked iOS file are mapped in
+`ios/HIGH-LEVEL-DESIGN.md`.
 
 The phone would be chest-mounted or carried in a forward-facing harness so the
 camera does not depend on handheld aiming. The repository includes the
@@ -209,7 +217,7 @@ Keep commands minimal:
 - “stop navigation”
 
 The validated fallback recognizes commands on-device with
-`SFSpeechRecognizer` in the selected English or Mexican Spanish locale using
+`SFSpeechRecognizer` in the selected English or Spanish locale using
 explicit Start and Finish controls. The Phase 5 hands-free extension keeps
 those controls while adding a persisted opt-in flow: the user says “Siri, open
 FARO”; after FARO reaches the foreground and Siri releases the microphone, FARO
@@ -242,7 +250,7 @@ transcribed on-device only after capture finishes.
 
 ### Prototype languages
 
-The iPhone prototype supports English (United States) and Spanish (Mexico).
+The iPhone prototype supports English (United States) and Spanish.
 The user may follow the iPhone language or select either language explicitly.
 That preference applies consistently to visible UI, accessibility labels,
 scene-description requests, spoken output, and later voice commands. Personal
@@ -276,6 +284,19 @@ Measure:
 - response latency;
 - obstacle-detection range and misses;
 - whether alerts are useful or annoying to the actual user.
+
+The Phase 7 iPhone harness records known and unknown ground truth, angle,
+lighting, selected language, raw matcher distances, active thresholds, and
+capture-to-match latency. It also records structured field observations for
+language, narration pacing, wake behavior, and proximity alerts. Its versioned
+JSON export contains aggregate and raw results, but no images, audio, GPS
+coordinates, or scene descriptions.
+
+The harness makes evaluation repeatable; it is not itself evidence that the
+defaults are correct. Recognition thresholds, narration pacing, language
+defaults, and proximity bands remain unchanged until the actual user trials
+support an adjustment. CLIP remains conditional on measured FeaturePrint
+recall.
 
 ## Apple developer requirement
 
