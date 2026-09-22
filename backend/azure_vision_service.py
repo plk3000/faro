@@ -18,6 +18,8 @@ from threading import Lock
 from typing import Optional, Dict, Any, List, Literal
 
 import requests
+from azure.core.exceptions import ClientAuthenticationError
+from azure.identity import DefaultAzureCredential
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Request
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -57,6 +59,57 @@ RATE_LIMIT_REQUESTS_PER_MINUTE = int(
 )
 _contract_request_times: deque[float] = deque()
 _contract_rate_limit_lock = Lock()
+
+# Microsoft Entra ID auth for Azure OpenAI when local (key-based) auth is
+# disabled on the resource. Falls back to AZURE_OPENAI_API_KEY when set, so
+# existing key-based deployments keep working unchanged.
+AZURE_OPENAI_AAD_SCOPE = "https://cognitiveservices.azure.com/.default"
+_aad_credential: Optional[DefaultAzureCredential] = None
+_aad_token_cache: Dict[str, Any] = {"token": None, "expires_on": 0.0}
+_aad_token_lock = Lock()
+
+
+def _get_aad_credential() -> DefaultAzureCredential:
+    global _aad_credential
+    if _aad_credential is None:
+        # Tries, in order: environment vars, workload identity, managed
+        # identity, az login, and other locally configured credentials.
+        _aad_credential = DefaultAzureCredential()
+    return _aad_credential
+
+
+def _get_aad_bearer_token() -> str:
+    """Return a cached Entra ID access token, refreshing it before expiry."""
+    with _aad_token_lock:
+        now = time.time()
+        cached_token = _aad_token_cache["token"]
+        if cached_token and now < _aad_token_cache["expires_on"] - 60:
+            return cached_token
+
+        try:
+            token = _get_aad_credential().get_token(AZURE_OPENAI_AAD_SCOPE)
+        except ClientAuthenticationError as exc:
+            logger.error("Failed to acquire Entra ID access token: %s", exc)
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Azure OpenAI local auth appears disabled and Entra ID "
+                    "authentication failed. Assign the service identity the "
+                    "'Cognitive Services OpenAI User' role on the resource, "
+                    "or set AZURE_OPENAI_API_KEY if local auth is enabled."
+                ),
+            ) from exc
+
+        _aad_token_cache["token"] = token.token
+        _aad_token_cache["expires_on"] = token.expires_on
+        return token.token
+
+
+def _build_azure_openai_auth_headers() -> Dict[str, str]:
+    """Build the Azure OpenAI auth header, preferring an API key when set."""
+    if AZURE_OPENAI_API_KEY:
+        return {"api-key": AZURE_OPENAI_API_KEY}
+    return {"Authorization": f"Bearer {_get_aad_bearer_token()}"}
 
 # System prompt for environment and object categorization
 SYSTEM_PROMPT = """You are an accessibility assistant analyzing camera images for a blind user's navigation system called FARO.
@@ -391,10 +444,10 @@ def call_azure_openai_vision(
     Call Azure OpenAI GPT-4 Vision to analyze image.
     Returns categorized environment and objects.
     """
-    if not AZURE_OPENAI_ENDPOINT or not AZURE_OPENAI_API_KEY:
+    if not AZURE_OPENAI_ENDPOINT:
         raise HTTPException(
             status_code=503,
-            detail="Azure OpenAI endpoint or API key is not configured"
+            detail="Azure OpenAI endpoint is not configured"
         )
 
     if not AZURE_OPENAI_DEPLOYMENT:
@@ -414,7 +467,7 @@ def call_azure_openai_vision(
     )
     
     headers = {
-        "api-key": AZURE_OPENAI_API_KEY,
+        **_build_azure_openai_auth_headers(),
         "Content-Type": "application/json"
     }
     

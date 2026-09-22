@@ -42,6 +42,16 @@ FARO_VISION_TOKEN=long-random-token-issued-to-the-iPhone
 See `.env.example` for optional service settings. Do not commit `.env` or
 credentials.
 
+### Authentication
+
+If local (key-based) auth is disabled on the Azure OpenAI resource, omit
+`AZURE_OPENAI_API_KEY`. The service then falls back to Microsoft Entra ID
+via `DefaultAzureCredential`, using (in order) environment credentials,
+workload identity, managed identity, or `az login`. Assign the resolved
+identity the **Cognitive Services OpenAI User** role on the Azure OpenAI
+resource so token acquisition succeeds. When `AZURE_OPENAI_API_KEY` is set,
+the service keeps using key-based auth instead.
+
 ## Run
 
 ```bash
